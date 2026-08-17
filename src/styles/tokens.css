@@ -1,0 +1,50 @@
+/* Design Tokens */
+:root {
+  /* Surfaces */
+  --surface-0: #F7F8FA;
+  --surface-1: #FFFFFF;
+  --border: #E4E7EC;
+
+  /* Ink */
+  --ink-900: #111417;
+  --ink-600: #5B6470;
+  --ink-400: #9AA2AC;
+
+  /* Brand */
+  --brand: #2F5CFF;
+  --brand-appt: #0F9D77;
+
+  /* Status */
+  --success: #12875A;
+  --success-bg: #E7F6EF;
+  --warning: #B25E09;
+  --warning-bg: #FDF1E1;
+  --danger: #C22E2E;
+  --danger-bg: #FBEAEA;
+  --info: #2F5CFF;
+  --info-bg: #EAF0FF;
+
+  /* Channel colors */
+  --instagram: #E4405F;
+  --whatsapp: #25D366;
+  --facebook: #1877F2;
+  --tiktok: #000000;
+  --website: #6B7280;
+
+  /* Typography */
+  --font-ui: Inter, "SF Pro Text", -apple-system, sans-serif;
+  --font-mono: "SF Mono", "JetBrains Mono", monospace;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  /* Shadows */
+  --shadow-card: 0 1px 3px rgba(16, 24, 40, 0.04);
+
+  /* Layout */
+  --sidebar-width: 232px;
+  --sidebar-collapsed: 72px;
+  --topbar-height: 64px;
+}
