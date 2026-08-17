@@ -11,7 +11,7 @@ export function Analytics() {
   const { vertical, isCommerce, accentColor } = useVertical();
   const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('30d');
 
-  const data = analyticsData[vertical][period];
+  const data: any = analyticsData[vertical][period];
   const chartColor = accentColor;
 
   const sharedStats = [

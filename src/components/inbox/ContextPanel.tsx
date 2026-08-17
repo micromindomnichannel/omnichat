@@ -6,7 +6,7 @@ import { ChannelIcon } from '../../components/shared/ChannelIcon';
 import { Drawer } from '../../components/shared/Drawer';
 import { OrderDrawer } from '../../components/commerce/OrderDrawer';
 import { BookingDrawer } from '../../components/appointments/BookingDrawer';
-import { Tag, X, Plus, ShoppingCart, Calendar } from 'lucide-react';
+import { Tag, X, Plus, ShoppingCart, Calendar, Check } from 'lucide-react';
 
 interface Props {
   conversationId: string;

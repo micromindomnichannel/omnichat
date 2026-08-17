@@ -51,7 +51,7 @@ export function ConversationThread({ conversationId }: Props) {
           id: `m-${Date.now() + 1}`,
           conversationId,
           sender: 'ai',
-          content: 'Thank you for your message. I'll help you with that right away.',
+          content: "Thank you for your message. I'll help you with that right away.",
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
         dispatch({ type: 'ADD_MESSAGE', conversationId, message: aiReply });

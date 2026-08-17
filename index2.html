@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SELLER — AI Omnichannel Sales & Booking Platform</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    :root {
+      --surface-0: #F7F8FA;
+      --surface-1: #FFFFFF;
+      --border: #E4E7EC;
+      --ink-900: #111417;
+      --ink-700: #3A4148;
+      --ink-600: #5B6470;
+      --ink-400: #9AA2AC;
+      --ink-200: #C8CED6;
+      --brand: #2F5CFF;
+      --brand-appt: #0F9D77;
+      --brand-tint: rgba(47, 92, 255, .08);
+      --brand-appt-tint: rgba(15, 157, 119, .08);
+      --success: #12875A;
+      --success-bg: #E7F6EF;
+      --warning: #B25E09;
+      --warning-bg: #FDF1E1;
+      --danger: #C22E2E;
+      --danger-bg: #FBEAEA;
+      --info: #2F5CFF;
+      --info-bg: #EAF0FF;
+      --shadow-card: 0 1px 3px rgba(16, 24, 40, .04);
+      --shadow-pop: 0 8px 24px rgba(16, 24, 40, .12);
+      --font-ui: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-mono: "SF Mono", "JetBrains Mono", monospace;
+      --accent: var(--brand);
+      --accent-tint: var(--brand-tint)
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html,
+    body,
+    #root {
+      height: 100%;
+      margin: 0
+    }
+
+    body {
+      font-family: var(--font-ui);
+      font-size: 13.5px;
+      line-height: 1.5;
+      color: var(--ink-900);
+      background: var(--surface-0);
+      -webkit-font-smoothing: antialiased
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer
+    }
+
+    input,
+    textarea,
+    select {
+      font-family: inherit;
+      font-size: inherit
+    }
+
+    .mono {
+      font-family: var(--font-mono);
+      font-feature-settings: "tnum"
+    }
+
+    .tnum {
+      font-variant-numeric: tabular-nums
+    }
+
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--ink-200);
+      border-radius: 8px
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 34px;
+      padding: 0 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface-1);
+      color: var(--ink-900);
+      font-weight: 600;
+      font-size: 13px;
+      transition: background .12s
+    }
+
+    .btn:hover {
+      background: var(--surface-0)
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff
+    }
+
+    .btn-primary:hover {
+      background: var(--accent);
+      filter: brightness(1.08)
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border-color: transparent
+    }
+
+    .btn-ghost:hover {
+      background: var(--surface-0)
+    }
+
+    .btn-sm {
+      height: 28px;
+      padding: 0 10px;
+      font-size: 12px
+    }
+
+    .btn-icon {
+      width: 32px;
+      height: 32px;
+      padding: 0
+    }
+
+    .btn-block {
+      width: 100%
+    }
+
+    .btn:disabled {
+      opacity: .5;
+      cursor: not-allowed
+    }
+
+    .input,
+    .select,
+    .textarea {
+      width: 100%;
+      height: 34px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface-1);
+      color: var(--ink-900)
+    }
+
+    .textarea {
+      height: auto;
+      padding: 8px 10px;
+      min-height: 64px;
+      resize: vertical
+    }
+
+    .input:focus,
+    .select:focus,
+    .textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-tint)
+    }
+
+    .card {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: var(--shadow-card)
+    }
+
+    .eyebrow {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--ink-400)
+    }
+
+    .h-title {
+      font-size: 20px;
+      font-weight: 650;
+      letter-spacing: -0.01em
+    }
+
+    .muted {
+      color: var(--ink-600)
+    }
+
+    .faint {
+      color: var(--ink-400)
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 22px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600
+    }
+
+    .pill-accent {
+      background: var(--accent-tint);
+      color: var(--accent)
+    }
+
+    .pill-ink {
+      background: #EEF0F3;
+      color: var(--ink-700)
+    }
+
+    .pill-success {
+      background: var(--success-bg);
+      color: var(--success)
+    }
+
+    .pill-warning {
+      background: var(--warning-bg);
+      color: var(--warning)
+    }
+
+    .pill-danger {
+      background: var(--danger-bg);
+      color: var(--danger)
+    }
+
+    .pill-info {
+      background: var(--info-bg);
+      color: var(--info)
+    }
+
+    .fade-in {
+      animation: fadeIn .2s ease-out
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
+    }
+
+    table {
+      border-collapse: collapse
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="text/babel" data-presets="react">
+    const { useState, useEffect, useRef, createContext, useContext, useReducer } = React;
+
+    /* ===== ICONS ===== */
+    const I = {
+      Inbox: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2" /><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11Z" /></svg>,
+      Users: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /></svg>,
+      Layout: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" /></svg>,
+      Bag: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>,
+      Calendar: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>,
+      Box: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5Z" /><path d="m3 8 9 5 9-5M12 13v8" /></svg>,
+      Zap: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z" /></svg>,
+      Book: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21.5Z" /></svg>,
+      Chart: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 3v18h18" /><rect x="7" y="10" width="3" height="8" /><rect x="12" y="6" width="3" height="12" /><rect x="17" y="13" width="3" height="5" /></svg>,
+      Cog: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" /></svg>,
+      Search: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>,
+      Bell: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>,
+      Chevron: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="m6 9 6 6 6-6" /></svg>,
+      Send: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z" /></svg>,
+      Plus: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 5v14M5 12h14" /></svg>,
+      X: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 6 6 18M6 6l12 12" /></svg>,
+      Check: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 6 9 17l-5-5" /></svg>,
+      Robot: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="4" y="8" width="16" height="12" rx="2" /><path d="M12 2v4M9 14h.01M15 14h.01" /></svg>,
+      User: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg>,
+      Package: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M16 16v-4M8 16v-4M4 8l8-4 8 4-8 4-8-4ZM4 8v8l8 4 8-4V8" /></svg>,
+      ArrowRight: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 12h14M12 5l7 7-7 7" /></svg>,
+      ArrowUp: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 19V5M5 12l7-7 7 7" /></svg>,
+      ArrowDown: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 5v14M19 12l-7 7-7-7" /></svg>,
+      Sparkles: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" /></svg>,
+      Upload: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" /></svg>,
+      Alert: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" /><path d="M12 9v4M12 17h.01" /></svg>,
+      Clock: s => <svg width={s || 20} height={s || 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>,
+    };
+    const ChannelGlyph = ({ ch, size }) => {
+      const s = size || 14;
+      const m = {
+        instagram: <svg width={s} height={s} viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="5" stroke="#E1306C" strokeWidth="1.5" /><circle cx="12" cy="12" r="4" stroke="#E1306C" strokeWidth="1.5" /><circle cx="17.5" cy="6.5" r="1.2" fill="#E1306C" /></svg>,
+        whatsapp: <svg width={s} height={s} viewBox="0 0 24 24" fill="#25D366"><path d="M12 2a10 10 0 0 0-8.5 15.2L2 22l4.9-1.5A10 10 0 1 0 12 2Z" /></svg>,
+        facebook: <svg width={s} height={s} viewBox="0 0 24 24" fill="#1877F2"><path d="M14 8h3V4h-3a4 4 0 0 0-4 4v2H7v4h3v6h4v-6h3l1-4h-4V8a1 1 0 0 1 1-1Z" /></svg>,
+        tiktok: <svg width={s} height={s} viewBox="0 0 24 24" fill="#000"><path d="M14 4c.5 2.4 2.3 4.3 4.7 4.7v2.6c-1.7 0-3.3-.5-4.7-1.4v5.7a5.5 5.5 0 1 1-5.5-5.5c.3 0 .6 0 .8.1v2.6c-.3-.1-.5-.1-.8-.1a3 3 0 1 0 3 3V4Z" /></svg>,
+        website: <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="#5B6470" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10Z" /></svg>,
+      };
+      return m[ch] || null;
+    };
+
+    /* ===== STORE ===== */
+    const AppCtx = createContext(null);
+    const useApp = () => useContext(AppCtx);
+    let _id = 0;
+    const uid = p => p + '-' + (++_id);
+
+    const initialState = {
+      vertical: 'commerce',
+      onboarded: false,
+      page: 'overview',
+      selectedConvId: 'CV-01',
+      selectedCustomerId: null,
+      toasts: [],
+      settings: { businessName: 'SELLER Demo Store', confidence: 70, channels: { instagram: true, whatsapp: true, facebook: true, tiktok: false, website: true } },
+      customers: [
+        { id: 'C-01', name: 'Mariam Hassan', phone: '0100 1234 567', channels: ['instagram', 'whatsapp'], status: 'VIP', tags: ['VIP', 'Returning'], createdAt: '2024-01-12', lastInteraction: '2024-08-17', totalValue: 12450, reliability: { label: 'Good', completed: 5, cancelled: 0, returns: 0 } },
+        { id: 'C-02', name: 'Youssef Adel', phone: '0111 4321 098', channels: ['instagram'], status: 'Returning', tags: ['Returning'], createdAt: '2024-02-03', lastInteraction: '2024-08-17', totalValue: 4180, reliability: { label: 'Good', completed: 3, cancelled: 0, returns: 0 } },
+        { id: 'C-03', name: 'Salma Tarek', phone: '0122 5566 778', channels: ['whatsapp', 'facebook'], status: 'New', tags: ['New'], createdAt: '2024-08-05', lastInteraction: '2024-08-17', totalValue: 0, reliability: { label: 'Fair', completed: 0, cancelled: 1, returns: 0 } },
+        { id: 'C-04', name: 'Omar Khaled', phone: '0101 7788 990', channels: ['tiktok'], status: 'Returning', tags: ['Returning'], createdAt: '2024-03-22', lastInteraction: '2024-08-16', totalValue: 2680, reliability: { label: 'Good', completed: 4, cancelled: 0, returns: 0 } },
+        { id: 'C-05', name: 'Nourhan Ibrahim', phone: '0112 3344 556', channels: ['instagram', 'website'], status: 'VIP', tags: ['VIP'], createdAt: '2023-11-09', lastInteraction: '2024-08-15', totalValue: 18900, reliability: { label: 'Good', completed: 9, cancelled: 0, returns: 0 } },
+        { id: 'C-06', name: 'Ahmed Samy', phone: '0123 9080 706', channels: ['whatsapp'], status: 'New', tags: ['New'], createdAt: '2024-08-10', lastInteraction: '2024-08-14', totalValue: 0, reliability: { label: 'Watch', completed: 1, cancelled: 2, returns: 1 } },
+        { id: 'C-07', name: 'Farida Wael', phone: '0114 5500 121', channels: ['instagram', 'facebook'], status: 'Returning', tags: ['Returning'], createdAt: '2024-04-18', lastInteraction: '2024-08-13', totalValue: 3760, reliability: { label: 'Good', completed: 3, cancelled: 0, returns: 0 } },
+        { id: 'C-08', name: 'Hana Maged', phone: '0106 1122 334', channels: ['whatsapp', 'tiktok'], status: 'Returning', tags: ['Returning'], createdAt: '2024-02-28', lastInteraction: '2024-08-11', totalValue: 5320, reliability: { label: 'Good', completed: 4, cancelled: 0, returns: 0 } },
+      ],
+      conversations: [
+        {
+          id: 'CV-01', customerId: 'C-02', channel: 'instagram', status: 'ai', unread: 2, intent: 'High purchase intent', stage: 'Order collection', tools: ['Product catalog', 'Inventory'], lastTime: '2m', messages: [
+            { id: 'm1', sender: 'customer', text: 'هو الشنطة دي بكام؟', time: '10:14', rtl: true },
+            { id: 'm2', sender: 'system', text: 'AI searched knowledge base', time: '10:14' },
+            { id: 'm3', sender: 'ai', text: 'Hi Youssef! Black Leather Tote is 1,850 EGP and in stock in all sizes.', time: '10:15' },
+            { id: 'm4', sender: 'system', text: 'AI checked product availability', time: '10:15' },
+            { id: 'm5', sender: 'customer', text: 'ممكن أعرف لو المقاس L موجود؟', time: '10:16', rtl: true },
+            { id: 'm6', sender: 'ai', text: 'Yes, Large is available. Want me to create an order for you?', time: '10:17' },
+          ]
+        },
+        {
+          id: 'CV-02', customerId: 'C-03', channel: 'whatsapp', status: 'ai', unread: 0, intent: 'Booking intent', stage: 'Availability check', tools: ['Service list', 'Availability calendar'], lastTime: '6m', messages: [
+            { id: 'm1', sender: 'customer', text: 'عايز أحجز كشف يوم الخميس', time: '09:50', rtl: true },
+            { id: 'm2', sender: 'system', text: 'AI searched knowledge base', time: '09:50' },
+            { id: 'm3', sender: 'ai', text: 'Hi Salma! Consultation is 300 EGP for 30 min. I can check Thursday slots for you.', time: '09:51' },
+            { id: 'm4', sender: 'system', text: 'AI checked availability', time: '09:51' },
+            { id: 'm5', sender: 'ai', text: 'Thursday has these open slots: 09:30, 11:00, 13:30, 16:00. Which works for you?', time: '09:52' },
+          ]
+        },
+        {
+          id: 'CV-03', customerId: 'C-01', channel: 'instagram', status: 'human', unread: 0, intent: 'High purchase intent', stage: 'Order collection', tools: ['Product catalog'], lastTime: '18m', messages: [
+            { id: 'm1', sender: 'customer', text: 'Hi, is the Black Leather Tote available in Large?', time: '09:40' },
+            { id: 'm2', sender: 'ai', text: 'Yes! 1,850 EGP, in stock. Want to order?', time: '09:41' },
+            { id: 'm3', sender: 'system', text: 'You are now handling this conversation.', time: '09:42' },
+            { id: 'm4', sender: 'human', text: 'Hi Mariam — I can ship it today via Aramex. Cash on delivery works?', time: '09:43', agent: 'MS' },
+          ]
+        },
+        {
+          id: 'CV-04', customerId: 'C-04', channel: 'tiktok', status: 'ai', unread: 3, intent: 'Browsing', stage: 'Qualification', tools: ['Product catalog'], lastTime: '32m', messages: [
+            { id: 'm1', sender: 'customer', text: 'how much is the backpack', time: '09:08' },
+            { id: 'm2', sender: 'ai', text: 'Suede Backpack is 1,650 EGP and in stock.', time: '09:09' },
+          ]
+        },
+        {
+          id: 'CV-05', customerId: 'C-05', channel: 'website', status: 'ai', unread: 0, intent: 'High purchase intent', stage: 'Converted', tools: ['Product catalog', 'Inventory'], lastTime: '1h', messages: [
+            { id: 'm1', sender: 'system', text: 'Order #1048 created', time: '08:30' },
+            { id: 'm2', sender: 'ai', text: 'Your order #1048 is confirmed! Tracking will be sent shortly.', time: '08:31' },
+          ]
+        },
+        {
+          id: 'CV-06', customerId: 'C-06', channel: 'whatsapp', status: 'ai', unread: 1, intent: 'Low', stage: 'Escalated', tools: ['Product catalog'], lastTime: '2h', messages: [
+            { id: 'm1', sender: 'system', text: 'Escalated to a human agent', time: '08:02' },
+            { id: 'm2', sender: 'customer', text: 'i want to cancel my order', time: '07:58' },
+          ]
+        },
+        {
+          id: 'CV-07', customerId: 'C-07', channel: 'facebook', status: 'ai', unread: 0, intent: 'Browsing', stage: 'Qualification', tools: ['Product catalog'], lastTime: '3h', messages: [
+            { id: 'm1', sender: 'customer', text: 'Do you have patent loafers in size 40?', time: '06:50' },
+            { id: 'm2', sender: 'ai', text: 'Size 40 is currently out of stock. 38, 39 and 41 are available.', time: '06:51' },
+          ]
+        },
+        {
+          id: 'CV-08', customerId: 'C-08', channel: 'whatsapp', status: 'ai', unread: 4, intent: 'High purchase intent', stage: 'Availability check', tools: ['Product catalog', 'Inventory'], lastTime: '4h', messages: [
+            { id: 'm1', sender: 'customer', text: 'Need a wool beanie in grey', time: '05:40' },
+            { id: 'm2', sender: 'ai', text: 'Grey is in stock — 280 EGP. Want to order?', time: '05:41' },
+          ]
+        },
+      ],
+      products: [
+        { id: 'P-101', name: 'Black Leather Tote', sku: 'BLT-001', price: 1850, stock: 12, category: 'Bags', variants: [{ label: 'Small', available: true }, { label: 'Medium', available: true }, { label: 'Large', available: true }] },
+        { id: 'P-102', name: 'Canvas Weekender', sku: 'CWE-014', price: 2400, stock: 3, category: 'Bags', variants: [{ label: 'Medium', available: true }, { label: 'Large', available: true }] },
+        { id: 'P-103', name: 'Mini Crossbody', sku: 'MCB-220', price: 950, stock: 0, category: 'Bags', variants: [{ label: 'One Size', available: false }] },
+        { id: 'P-104', name: 'Suede Backpack', sku: 'SBP-310', price: 1650, stock: 8, category: 'Bags', variants: [{ label: 'Small', available: true }, { label: 'Large', available: true }] },
+        { id: 'P-105', name: 'Patent Loafers', sku: 'PLF-440', price: 720, stock: 4, category: 'Shoes', variants: [{ label: '38', available: true }, { label: '39', available: true }, { label: '40', available: false }, { label: '41', available: true }] },
+        { id: 'P-106', name: 'Knit Scarf', sku: 'KSC-551', price: 320, stock: 24, category: 'Accessories', variants: [{ label: 'One Size', available: true }] },
+      ],
+      services: [
+        { id: 'S-201', name: 'Dental Cleaning', priceFrom: false, price: 600, duration: 45, category: 'Preventive', description: 'Scaling, polishing and fluoride treatment.' },
+        { id: 'S-202', name: 'Teeth Whitening', priceFrom: true, price: 1500, duration: 60, category: 'Cosmetic', description: 'In-clinic bleaching with desensitizing protocol.' },
+        { id: 'S-203', name: 'Consultation', priceFrom: false, price: 300, duration: 30, category: 'General', description: 'Comprehensive oral assessment and treatment plan.' },
+        { id: 'S-204', name: 'Root Canal', priceFrom: true, price: 2500, duration: 90, category: 'Restorative', description: 'Endodontic treatment under local anesthesia.' },
+      ],
+      orders: [
+        { id: '1048', customerId: 'C-05', productId: 'P-101', variant: 'Large', qty: 1, total: 1930, status: 'Confirmed', governorate: 'Cairo', channel: 'website', createdAt: '2024-08-17 08:30' },
+        { id: '1047', customerId: 'C-01', productId: 'P-104', variant: 'Large', qty: 1, total: 1730, status: 'Processing', governorate: 'Giza', channel: 'instagram', createdAt: '2024-08-16 14:22' },
+        { id: '1046', customerId: 'C-02', productId: 'P-102', variant: 'Medium', qty: 1, total: 2480, status: 'Shipped', governorate: 'Cairo', channel: 'whatsapp', createdAt: '2024-08-15 10:11' },
+        { id: '1045', customerId: 'C-04', productId: 'P-106', variant: 'One Size', qty: 2, total: 640, status: 'Delivered', governorate: 'Alexandria', channel: 'whatsapp', createdAt: '2024-08-13 09:00' },
+        { id: '1044', customerId: 'C-07', productId: 'P-105', variant: '39', qty: 1, total: 770, status: 'Delivered', governorate: 'Giza', channel: 'facebook', createdAt: '2024-08-12 16:40' },
+      ],
+      appointments: [
+        { id: 'A-1042', customerId: 'C-07', serviceId: 'S-203', date: '2024-08-17', time: '10:00', status: 'Confirmed', channel: 'facebook', createdAt: '2024-08-16 11:01' },
+        { id: 'A-1041', customerId: 'C-04', serviceId: 'S-201', date: '2024-08-17', time: '11:30', status: 'Confirmed', channel: 'tiktok', createdAt: '2024-08-16 12:01' },
+        { id: 'A-1040', customerId: 'C-01', serviceId: 'S-202', date: '2024-08-17', time: '13:00', status: 'Completed', channel: 'instagram', createdAt: '2024-08-15 09:00' },
+        { id: 'A-1039', customerId: 'C-08', serviceId: 'S-201', date: '2024-08-15', time: '15:30', status: 'No-show', channel: 'whatsapp', createdAt: '2024-08-14 09:00' },
+      ],
+      automations: [
+        { id: 'AU-1', name: 'Comment → DM', vertical: 'commerce', enabled: true, desc: 'Convert public comments into private DMs.', steps: ['Instagram Comment', 'Detect purchase question', 'Reply publicly', 'Send DM'] },
+        { id: 'AU-2', name: 'Abandoned Lead Follow-up', vertical: 'commerce', enabled: true, desc: "Re-engage leads who didn't order.", steps: ['Customer asks about product', 'No order after 2 hours', 'Send follow-up'] },
+        { id: 'AU-3', name: 'Back in Stock', vertical: 'commerce', enabled: false, desc: 'Notify interested customers when stock returns.', steps: ['Product available', 'Find interested customers', 'Send message'] },
+        { id: 'AU-4', name: 'Inquiry → Booking', vertical: 'appointments', enabled: true, desc: 'Turn service questions into bookings.', steps: ['New inquiry', 'Answer service question', 'Check availability', 'Offer times', 'Book'] },
+        { id: 'AU-5', name: 'No-show Follow-up', vertical: 'appointments', enabled: true, desc: 'Recover missed appointments.', steps: ['Missed appointment', 'Send follow-up', 'Offer rescheduling'] },
+      ],
+      followUps: [
+        { id: 'FU-1', customerId: 'C-02', vertical: 'commerce', context: 'Asked about Black Leather Tote, no order', scheduled: 'Follow up in 2h', state: 'pending' },
+        { id: 'FU-2', customerId: 'C-08', vertical: 'commerce', context: 'Asked about Wool Beanie, no order', scheduled: 'Follow up in 4h', state: 'pending' },
+        { id: 'FU-3', customerId: 'C-03', vertical: 'appointments', context: 'Asked about whitening, no booking', scheduled: 'Follow up tomorrow', state: 'pending' },
+      ],
+    };
+
+    function reducer(s, a) {
+      switch (a.type) {
+        case 'SET_VERTICAL': return { ...s, vertical: a.v, page: 'overview' };
+        case 'SET_ONBOARDED': return { ...s, onboarded: true };
+        case 'SET_PAGE': return { ...s, page: a.p };
+        case 'OPEN_CUSTOMER': return { ...s, selectedCustomerId: a.id, page: 'customer-detail' };
+        case 'SELECT_CONV': return { ...s, selectedConvId: a.id };
+        case 'SEND_MSG': {
+          const conv = s.conversations.find(c => c.id === a.id);
+          if (!conv) return s;
+          const msg = { id: uid('m'), sender: conv.status === 'human' ? 'human' : 'customer', text: a.text, time: 'now', agent: conv.status === 'human' ? 'MS' : null };
+          return { ...s, conversations: s.conversations.map(c => c.id === a.id ? { ...c, messages: [...c.messages, msg], lastTime: 'now' } : c) };
+        }
+        case 'AI_REPLY': return { ...s, conversations: s.conversations.map(c => c.id === a.id ? { ...c, messages: [...c.messages, { id: uid('m'), sender: 'ai', text: a.text, time: 'now' }] } : c) };
+        case 'TAKE_OVER': return { ...s, conversations: s.conversations.map(c => c.id === a.id ? { ...c, status: 'human', messages: [...c.messages, { id: uid('m'), sender: 'system', text: 'You are now handling this conversation.', time: 'now' }] } : c) };
+        case 'RETURN_AI': return { ...s, conversations: s.conversations.map(c => c.id === a.id ? { ...c, status: 'ai', messages: [...c.messages, { id: uid('m'), sender: 'system', text: 'AI is now handling this conversation.', time: 'now' }] } : c) };
+        case 'CREATE_ORDER': {
+          const id = String(1049);
+          const order = { ...a.order, id, status: 'Confirmed', createdAt: '2024-08-17 now' };
+          return { ...s, orders: [order, ...s.orders], conversations: s.conversations.map(c => c.customerId === a.order.customerId ? { ...c, messages: [...c.messages, { id: uid('m'), sender: 'system', text: 'Order #' + id + ' created', time: 'now' }] } : c) };
+        }
+        case 'SEND_LOGISTICS': return { ...s, orders: s.orders.map(o => o.id === a.id ? { ...o, status: 'Processing' } : o) };
+        case 'CREATE_APPT': {
+          const id = 'A-1043';
+          const appt = { ...a.appt, id, status: 'Confirmed', createdAt: '2024-08-17 now' };
+          return { ...s, appointments: [appt, ...s.appointments], conversations: s.conversations.map(c => c.customerId === a.appt.customerId ? { ...c, messages: [...c.messages, { id: uid('m'), sender: 'system', text: 'Appointment ' + id + ' confirmed', time: 'now' }] } : c) };
+        }
+        case 'TOGGLE_AUTOMATION': return { ...s, automations: s.automations.map(x => x.id === a.id ? { ...x, enabled: !x.enabled } : x) };
+        case 'TOGGLE_VARIANT': return { ...s, products: s.products.map(p => p.id === a.pid ? { ...p, variants: p.variants.map(v => v.label === a.label ? { ...v, available: !v.available } : v) } : p) };
+        case 'TOGGLE_CHANNEL': return { ...s, settings: { ...s.settings, channels: { ...s.settings.channels, [a.ch]: !s.settings.channels[a.ch] } } };
+        case 'UPDATE_BIZ': return { ...s, settings: { ...s.settings, businessName: a.name } };
+        case 'TOAST': return { ...s, toasts: [...s.toasts, { id: uid('t'), ...a.toast }] };
+        case 'DISMISS_TOAST': return { ...s, toasts: s.toasts.filter(t => t.id !== a.id) };
+        case 'SEND_FOLLOWUP': return { ...s, followUps: s.followUps.map(f => f.id === a.id ? { ...f, state: 'sent', scheduled: 'Sent just now' } : f) };
+        case 'PAUSE_FOLLOWUP': return { ...s, followUps: s.followUps.map(f => f.id === a.id ? { ...f, state: 'paused' } : f) };
+        case 'CANCEL_FOLLOWUP': return { ...s, followUps: s.followUps.filter(f => f.id !== a.id) };
+        default: return s;
+      }
+    }
+
+    function AppProvider({ children }) {
+      const [state, dispatch] = useReducer(reducer, initialState);
+      const toast = (t) => {
+        const id = uid('t');
+        dispatch({ type: 'TOAST', toast: t });
+        setTimeout(() => dispatch({ type: 'DISMISS_TOAST', id }), 4000);
+      };
+      return <AppCtx.Provider value={{ ...state, dispatch, toast }}>{children}</AppCtx.Provider>;
+    }
+
+    /* ===== SHARED ===== */
+    const Avatar = ({ name, size }) => {
+      size = size || 32;
+      const initials = name.split(' ').map(n => n[0]).slice(0, 2).join('');
+      const colors = ['#2F5CFF', '#0F9D77', '#B25E09', '#7C3AED', '#C22E2E', '#12875A'];
+      const h = (name.charCodeAt(0) || 0) % colors.length;
+      return <div style={{ width: size, height: size, borderRadius: '50%', background: colors[h], color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: size * 0.36 }}>{initials}</div>;
+    };
+    const StatusBadge = ({ status }) => {
+      const map = { 'Confirmed': 'pill-info', 'Processing': 'pill-info', 'Shipped': 'pill-info', 'Delivered': 'pill-success', 'Cancelled': 'pill-danger', 'No-show': 'pill-danger', 'Completed': 'pill-success', 'In Stock': 'pill-success', 'Low Stock': 'pill-warning', 'Out of Stock': 'pill-danger', 'New': 'pill-info', 'Returning': 'pill-ink', 'VIP': 'pill-warning', 'Active': 'pill-success', 'Paused': 'pill-ink', 'Invited': 'pill-info', 'Good': 'pill-success', 'Fair': 'pill-warning', 'Watch': 'pill-danger' };
+      return <span className={'pill ' + (map[status] || 'pill-ink')}>{status}</span>;
+    };
+    const Toggle = ({ checked, onChange }) => (
+      <button onClick={() => onChange(!checked)} style={{ width: 36, height: 20, borderRadius: 999, background: checked ? 'var(--accent)' : 'var(--ink-200)', border: 'none', position: 'relative', cursor: 'pointer', padding: 0 }}>
+        <span style={{ position: 'absolute', top: 2, left: checked ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 2px rgba(0,0,0,.2)' }} />
+      </button>
+    );
+    const StatCard = ({ eyebrow, value, trend, secondary }) => (
+      <div className="card" style={{ height: secondary ? 72 : 96, padding: 16, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <div className="eyebrow">{eyebrow}</div>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+          <div className="tnum" style={{ fontSize: 26, fontWeight: 700 }}>{value}</div>
+          {trend && <span className={'pill ' + (trend.up ? 'pill-success' : 'pill-danger')} style={{ height: 20 }}>{trend.up ? I.ArrowUp(11) : I.ArrowDown(11)}{trend.value}</span>}
+        </div>
+      </div>
+    );
+    const LineChart = ({ data, data2, height }) => {
+      height = height || 220;
+      const w = 600;
+      const max = Math.max.apply(null, data.concat(data2 || []).concat([1]));
+      const pts = arr => arr.map((v, i) => (i / (arr.length - 1)) * w + ',' + (height - (v / max) * (height - 20) - 10)).join(' ');
+      return (
+        <svg viewBox={'0 0 ' + w + ' ' + height} style={{ width: '100%', height }}>
+          <defs><linearGradient id="g1" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="var(--accent)" stopOpacity="0.18" /><stop offset="100%" stopColor="var(--accent)" stopOpacity="0" /></linearGradient></defs>
+          <polygon points={'0,' + (height - 10) + ' ' + pts(data) + ' ' + w + ',' + (height - 10)} fill="url(#g1)" />
+          <polyline points={pts(data)} fill="none" stroke="var(--accent)" strokeWidth="2" />
+          {data2 && <polyline points={pts(data2)} fill="none" stroke="var(--ink-400)" strokeWidth="1.5" strokeDasharray="4 4" />}
+        </svg>
+      );
+    };
+
+    /* ===== ONBOARDING ===== */
+    const Onboarding = () => {
+      const { dispatch } = useApp();
+      const [vertical, setVertical] = useState(null);
+      return (
+        <div style={{ minHeight: '100vh', background: 'var(--surface-0)', padding: '40px 24px' }}>
+          <div style={{ maxWidth: 920, margin: '0 auto' }}>
+            <h1 style={{ fontSize: 28, fontWeight: 650, textAlign: 'center', marginBottom: 8 }}>Choose your SELLER solution</h1>
+            <p className="muted" style={{ textAlign: 'center', marginBottom: 48 }}>One platform. Two ways to turn conversations into revenue.</p>
+            <div style={{ display: 'flex', gap: 24, justifyContent: 'center', flexWrap: 'wrap' }}>
+              {['commerce', 'appointments'].map(v => {
+                const isAppt = v === 'appointments';
+                return (
+                  <div key={v} className="card" style={{ width: 420, maxWidth: '100%', padding: 24, display: 'flex', flexDirection: 'column', gap: 12, border: vertical === v ? '2px solid var(--accent)' : '1px solid var(--border)' }}>
+                    <div style={{ height: 96, background: isAppt ? 'var(--brand-appt-tint)' : 'var(--brand-tint)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', color: isAppt ? 'var(--brand-appt)' : 'var(--brand)' }}>{isAppt ? I.Calendar(48) : I.Bag(48)}</div>
+                    <div style={{ fontSize: 18, fontWeight: 650 }}>{isAppt ? 'Appointments' : 'Commerce'}</div>
+                    <div style={{ fontSize: 15, fontWeight: 600 }}>{isAppt ? 'Turn conversations into confirmed bookings.' : 'Turn conversations into orders.'}</div>
+                    <div className="muted" style={{ fontSize: 12 }}>{isAppt ? 'For clinics, salons, and service businesses.' : 'For D2C brands, online stores, and retailers.'}</div>
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      {['Comment', 'DM', isAppt ? 'Booking' : 'Order'].map((s, i) => (
+                        <React.Fragment key={s}>
+                          <span className="pill pill-ink" style={{ width: 90, justifyContent: 'center', height: 28 }}>{s}</span>
+                          {i < 2 && I.ArrowRight(12)}
+                        </React.Fragment>
+                      ))}
+                    </div>
+                    <button className="btn btn-primary btn-block" style={{ marginTop: 8, background: isAppt ? 'var(--brand-appt)' : 'var(--brand)', borderColor: isAppt ? 'var(--brand-appt)' : 'var(--brand)' }} onClick={() => { setVertical(v); dispatch({ type: 'SET_VERTICAL', v }); dispatch({ type: 'SET_ONBOARDED' }); }}>{isAppt ? 'Use Appointments' : 'Use Commerce'}</button>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ textAlign: 'center', marginTop: 24 }}>
+              <button style={{ background: 'transparent', border: 'none', color: 'var(--ink-600)', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }} onClick={() => { dispatch({ type: 'SET_VERTICAL', v: 'commerce' }); dispatch({ type: 'SET_ONBOARDED' }); }}>Skip, I've done this before</button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    /* ===== SHELL ===== */
+    const Sidebar = () => {
+      const { vertical, page, conversations, dispatch } = useApp();
+      const [switcherOpen, setSwitcherOpen] = useState(false);
+      const isAppt = vertical === 'appointments';
+      const unread = conversations.reduce((a, c) => a + c.unread, 0);
+      const navByVertical = {
+        commerce: [{ id: 'orders', label: 'Orders', icon: 'Bag' }, { id: 'products', label: 'Products', icon: 'Box' }],
+        appointments: [{ id: 'appointments', label: 'Appointments', icon: 'Calendar' }, { id: 'services', label: 'Services', icon: 'Box' }],
+      };
+      const items = [
+        { id: 'overview', label: 'Overview', icon: 'Layout' },
+        { id: 'inbox', label: 'Inbox', icon: 'Inbox', badge: true },
+        { id: 'customers', label: 'Customers', icon: 'Users' },
+      ].concat(navByVertical[vertical]).concat([
+        { id: 'automations', label: 'Automations', icon: 'Zap' },
+        { id: 'knowledge', label: 'Knowledge', icon: 'Book' },
+        { id: 'analytics', label: 'Analytics', icon: 'Chart' },
+      ]);
+      const NavBtn = ({ item }) => {
+        const active = page === item.id;
+        const Ico = I[item.icon];
+        return (
+          <button onClick={() => dispatch({ type: 'SET_PAGE', p: item.id })} className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 12, height: 40, padding: '0 16px', borderRadius: 6, background: active ? 'var(--accent-tint)' : 'transparent', color: active ? 'var(--accent)' : 'var(--ink-700)', borderLeft: active ? '3px solid var(--accent)' : '3px solid transparent', fontWeight: active ? 600 : 500, justifyContent: 'flex-start', width: '100%' }}>
+            {Ico(18)}
+            <span style={{ fontSize: 13 }}>{item.label}</span>
+            {item.badge && unread > 0 && <span style={{ marginLeft: 'auto', background: 'var(--danger)', color: '#fff', borderRadius: 999, fontSize: 10, fontWeight: 700, padding: '0 6px', height: 16, display: 'inline-flex', alignItems: 'center' }}>{unread}</span>}
+          </button>
+        );
+      };
+      return (
+        <div style={{ width: 232, background: 'var(--surface-1)', borderRight: '1px solid var(--border)', height: '100%', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+          <div style={{ padding: '20px 16px 12px' }}>
+            <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 12 }}>SELLER</div>
+            <div style={{ position: 'relative' }}>
+              <button onClick={() => setSwitcherOpen(!switcherOpen)} style={{ width: '100%', height: 36, background: 'var(--surface-0)', border: '1px solid var(--border)', borderRadius: 8, padding: '0 10px', display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between', cursor: 'pointer' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600 }}>{isAppt ? I.Calendar(14) : I.Bag(14)} {vertical === 'commerce' ? 'Commerce' : 'Appointments'}</span>
+                {I.Chevron(14)}
+              </button>
+              {switcherOpen && (
+                <div className="card fade-in" style={{ position: 'absolute', top: 40, left: 0, right: 0, zIndex: 100, padding: 4, boxShadow: 'var(--shadow-pop)' }}>
+                  {['commerce', 'appointments'].map(v => (
+                    <button key={v} className="btn-ghost" onClick={() => { dispatch({ type: 'SET_VERTICAL', v }); setSwitcherOpen(false); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, height: 36, padding: '0 10px', borderRadius: 6, justifyContent: 'space-between', fontWeight: 600, fontSize: 13 }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{v === 'commerce' ? I.Bag(14) : I.Calendar(14)} {v === 'commerce' ? 'Commerce' : 'Appointments'}</span>
+                      {vertical === v && <span style={{ color: 'var(--accent)' }}>{I.Check(14)}</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <div style={{ flex: 1, padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {items.map(item => <NavBtn key={item.id} item={item} />)}
+          </div>
+          <div style={{ borderTop: '1px solid var(--border)', padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <button onClick={() => dispatch({ type: 'SET_PAGE', p: 'settings' })} className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 12, height: 40, padding: '0 16px', borderRadius: 6, justifyContent: 'flex-start', width: '100%', color: 'var(--ink-600)', fontWeight: 500 }}>{I.Cog(18)}<span style={{ fontSize: 13 }}>Settings</span></button>
+            <button onClick={() => dispatch({ type: 'SET_PAGE', p: 'followups' })} className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 12, height: 40, padding: '0 16px', borderRadius: 6, justifyContent: 'flex-start', width: '100%', color: 'var(--ink-600)', fontWeight: 500 }}>{I.Bell(18)}<span style={{ fontSize: 13 }}>Follow-ups</span></button>
+          </div>
+        </div>
+      );
+    };
+    const TopBar = () => {
+      const { page, settings } = useApp();
+      const titleMap = { overview: 'Overview', inbox: 'Inbox', customers: 'Customers', orders: 'Orders', appointments: 'Appointments', products: 'Products', services: 'Services', automations: 'Automations', knowledge: 'Knowledge', analytics: 'Analytics', settings: 'Settings', followups: 'Follow-ups', 'customer-detail': 'Customer' };
+      return (
+        <div style={{ height: 64, padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--surface-1)', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+          <div className="h-title">{titleMap[page] || 'Overview'}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ position: 'relative', width: 320 }}>
+              <span style={{ position: 'absolute', left: 10, top: 9, color: 'var(--ink-400)', display: 'inline-flex' }}>{I.Search(14)}</span>
+              <input className="input" style={{ height: 36, paddingLeft: 30, background: 'var(--surface-0)' }} placeholder="Search…" />
+              <span className="mono faint" style={{ position: 'absolute', right: 8, top: 9, padding: '1px 6px', background: 'var(--surface-1)', borderRadius: 4, fontSize: 10, border: '1px solid var(--border)' }}>⌘K</span>
+            </div>
+            <button className="btn btn-ghost btn-icon" style={{ position: 'relative' }}>
+              {I.Bell(18)}
+              <span style={{ position: 'absolute', top: 6, right: 6, width: 8, height: 8, borderRadius: '50%', background: 'var(--danger)' }} />
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Avatar name={settings.businessName} size={32} />
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 600 }}>{settings.businessName}</div>
+                <div className="faint" style={{ fontSize: 10 }}>Owner</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    };
+    const Shell = ({ children }) => (
+      <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+        <Sidebar />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+          <TopBar />
+          <div style={{ flex: 1, overflow: 'auto', background: 'var(--surface-0)' }}>{children}</div>
+        </div>
+      </div>
+    );
+
+    /* ===== DRAWERS ===== */
+    const OrderDrawer = ({ onClose, customerId }) => {
+      const { customers, products, dispatch, toast } = useApp();
+      const cust = customers.find(c => c.id === customerId);
+      const [done, setDone] = useState(null);
+      const [f, setF] = useState({ customerId: customerId || customers[0].id, productId: products[0].id, variant: products[0].variants[0] ? products[0].variants[0].label : '', qty: 1, name: cust ? cust.name : '', phone: cust ? cust.phone : '', governorate: 'Cairo', address: '' });
+      const product = products.find(p => p.id === f.productId);
+      const delivery = 80;
+      const total = product.price * f.qty + delivery;
+      const valid = f.name && f.phone && f.address;
+      return (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000 }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(16,24,40,.35)' }} onClick={onClose} />
+          <div className="fade-in" style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 440, maxWidth: '100%', background: 'var(--surface-1)', borderLeft: '1px solid var(--border)', boxShadow: 'var(--shadow-pop)', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: 15, fontWeight: 650 }}>{done ? '' : 'New Order'}</div>
+              <button className="btn btn-ghost btn-icon" onClick={onClose}>{I.X(18)}</button>
+            </div>
+            <div style={{ flex: 1, overflow: 'auto' }}>
+              {done ? (
+                <div style={{ padding: 24, textAlign: 'center' }}>
+                  <div style={{ width: 56, height: 56, margin: '0 auto 12px', borderRadius: '50%', background: 'var(--success-bg)', color: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{I.Check(28)}</div>
+                  <div style={{ fontSize: 15, fontWeight: 650 }}>Order #{done.id} created successfully</div>
+                  <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Status: <StatusBadge status="Confirmed" /></div>
+                  <div className="card" style={{ padding: 12, margin: '16px 0', textAlign: 'left', background: 'var(--surface-0)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 12 }}><span className="faint">Customer</span><span style={{ fontWeight: 600 }}>{f.name}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 12 }}><span className="faint">Product</span><span style={{ fontWeight: 600 }}>{product.name} · {f.variant} × {f.qty}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 12 }}><span className="faint">Total</span><span style={{ fontWeight: 700 }}>{total.toLocaleString()} EGP</span></div>
+                  </div>
+                  <button className="btn btn-primary btn-block" onClick={() => { dispatch({ type: 'SEND_LOGISTICS', id: done.id }); toast({ kind: 'success', text: 'Sent to logistics — simulated' }); onClose(); }}>{I.Package(14)} Send to Logistics</button>
+                  <button className="btn btn-ghost btn-block" style={{ marginTop: 8 }} onClick={onClose}>Close</button>
+                </div>
+              ) : (
+                <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div>
+                    <div className="eyebrow" style={{ marginBottom: 4 }}>Customer</div>
+                    <select className="select" value={f.customerId} onChange={e => { const c = customers.find(x => x.id === e.target.value); setF({ ...f, customerId: c.id, name: c.name, phone: c.phone }); }}>
+                      {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <div className="eyebrow" style={{ marginBottom: 4 }}>Product</div>
+                    <select className="select" value={f.productId} onChange={e => { const p = products.find(x => x.id === e.target.value); setF({ ...f, productId: p.id, variant: p.variants[0] ? p.variants[0].label : '' }); }}>
+                      {products.map(p => <option key={p.id} value={p.id}>{p.name} — {p.price} EGP</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <div className="eyebrow" style={{ marginBottom: 4 }}>Variant</div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {product.variants.map(v => (
+                        <button key={v.label} className={'pill ' + (f.variant === v.label ? 'pill-accent' : 'pill-ink')} style={{ cursor: 'pointer' }} onClick={() => setF({ ...f, variant: v.label })}>{v.label}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="eyebrow" style={{ marginBottom: 4 }}>Quantity</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <button className="btn btn-ghost btn-icon" onClick={() => setF({ ...f, qty: Math.max(1, f.qty - 1) })}>−</button>
+                      <input className="input mono" style={{ width: 70, textAlign: 'center' }} value={f.qty} onChange={e => setF({ ...f, qty: Math.max(1, +e.target.value) })} />
+                      <button className="btn btn-ghost btn-icon" onClick={() => setF({ ...f, qty: f.qty + 1 })}>+</button>
+                    </div>
+                  </div>
+                  <div className="card" style={{ padding: 12, background: 'var(--surface-0)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 12 }}><span className="faint">Unit price</span><span>{product.price.toLocaleString()} EGP</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 12 }}><span className="faint">Delivery</span><span>{delivery} EGP</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, paddingTop: 6, borderTop: '1px solid var(--border)' }}>
+                      <span style={{ fontWeight: 600 }}>Total</span><span className="tnum" style={{ fontWeight: 700, fontSize: 18 }}>{total.toLocaleString()} EGP</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="eyebrow" style={{ marginBottom: 4 }}>Payment</div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button className="btn btn-primary btn-sm" style={{ flex: 1 }}>Cash on Delivery</button>
+                      <button className="btn btn-sm" disabled style={{ flex: 1, opacity: .5 }}>Card · Coming soon</button>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <div style={{ flex: 1 }}>
+                      <div className="eyebrow" style={{ marginBottom: 4 }}>Name</div>
+                      <input className="input" value={f.name} onChange={e => setF({ ...f, name: e.target.value })} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div className="eyebrow" style={{ marginBottom: 4 }}>Phone</div>
+                      <input className="input mono" value={f.phone} onChange={e => setF({ ...f, phone: e.target.value })} />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="eyebrow" style={{ marginBottom: 4 }}>Governorate</div>
+                    <select className="select" value={f.governorate} onChange={e => setF({ ...f, governorate: e.target.value })}>
+                      {['Cairo', 'Giza', 'Alexandria', 'Qalyubia', 'Sharqia', 'Dakahlia', 'Beheira', 'Monufia', 'Gharbia', 'Faiyum', 'Beni Suef', 'Minya', 'Asyut', 'Sohag', 'Qena', 'Aswan', 'Luxor'].map(g => <option key={g}>{g}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <div className="eyebrow" style={{ marginBottom: 4 }}>Address</div>
+                    <textarea className="textarea" value={f.address} onChange={e => setF({ ...f, address: e.target.value })} />
+                  </div>
+                </div>
+              )}
+            </div>
+            {!done && (
+              <div style={{ padding: '12px 20px', background: 'var(--surface-1)', borderTop: '1px solid var(--border)' }}>
+                <button className="btn btn-primary btn-block" disabled={!valid} onClick={() => {
+                  const id = String(1049);
+                  dispatch({ type: 'CREATE_ORDER', order: { customerId: f.customerId, productId: f.productId, variant: f.variant, qty: f.qty, total, governorate: f.governorate, channel: 'instagram' } });
+                  setDone({ id });
+                  toast({ kind: 'success', text: 'Order #' + id + ' created successfully' });
+                }}>Confirm Order</button>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    };
+    const BookingDrawer = ({ onClose, customerId }) => {
+      const { customers, services, dispatch, toast } = useApp();
+      const cust = customers.find(c => c.id === customerId);
+      const [done, setDone] = useState(null);
+      const today = new Date();
+      const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(today.getDate() + i); return { iso: d.toISOString().slice(0, 10), label: d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }) }; });
+      const slots = ['09:30', '11:00', '13:30', '16:00'];
+      const [f, setF] = useState({ customerId: customerId || customers[0].id, serviceId: services[0].id, date: days[0].iso, time: '09:30', name: cust ? cust.name : '', phone: cust ? cust.phone : '' });
+      const valid = f.name && f.phone;
+      return (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000 }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(16,24,40,.35)' }} onClick={onClose} />
+          <div className="fade-in" style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 440, maxWidth: '100%', background: 'var(--surface-1)', borderLeft: '1px solid var(--border)', boxShadow: 'var(--shadow-pop)', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: 15, fontWeight: 650 }}>{done ? '' : 'New Appointment'}</div>
+              <button className="btn btn-ghost btn-icon" onClick={onClose}>{I.X(18)}</button>
+            </div>
+            <div style={{ flex: 1, overflow: 'auto' }}>
+              {done ? (
+                <div style={{ padding: 24, textAlign: 'center' }}>
+                  <div style={{ width: 56, height: 56, margin: '0 auto 12px', borderRadius: '50%', background: 'var(--success-bg)', color: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{I.Check(28)}</div>
+                  <div style={{ fontSize: 15, fontWeight: 650 }}>Appointment {done.id} confirmed</div>
+                  <div className="muted" style={{ fontSize: 12, marginTop: 4 }}><StatusBadge status="Confirmed" /></div>
+                  <button className="btn btn-primary btn-block" style={{ marginTop: 16 }} onClick={onClose}>Done</button>
+                </div>
+              ) : (
+                <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div>
+                    <div className="eyebrow" style={{ marginBottom: 4 }}>Patient</div>
+                    <select className="select" value={f.customerId} onChange={e => { const c = customers.find(x => x.id === e.target.value); setF({ ...f, customerId: c.id, name: c.name, phone: c.phone }); }}>
+                      {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <div className="eyebrow" style={{ marginBottom: 4 }}>Service</div>
+                    <select className="select" value={f.serviceId} onChange={e => setF({ ...f, serviceId: e.target.value })}>
+                      {services.map(s => <option key={s.id} value={s.id}>{s.name} — {s.price} EGP</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <div className="eyebrow" style={{ marginBottom: 4 }}>Date</div>
+                    <div style={{ display: 'flex', gap: 6, overflowX: 'auto' }}>
+                      {days.map(d => (
+                        <button key={d.iso} className="btn btn-sm" style={{ flexShrink: 0, ...(f.date === d.iso ? { background: 'var(--accent)', color: '#fff', borderColor: 'var(--accent)' } : {}) }} onClick={() => setF({ ...f, date: d.iso })}>{d.label}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="eyebrow" style={{ marginBottom: 4 }}>Available times</div>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {slots.map(s => (
+                        <button key={s} className={'pill ' + (f.time === s ? 'pill-accent' : 'pill-ink')} style={{ cursor: 'pointer', height: 28, padding: '0 12px' }} onClick={() => setF({ ...f, time: s })}>{s}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <div style={{ flex: 1 }}>
+                      <div className="eyebrow" style={{ marginBottom: 4 }}>Name</div>
+                      <input className="input" value={f.name} onChange={e => setF({ ...f, name: e.target.value })} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div className="eyebrow" style={{ marginBottom: 4 }}>Phone</div>
+                      <input className="input mono" value={f.phone} onChange={e => setF({ ...f, phone: e.target.value })} />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            {!done && (
+              <div style={{ padding: '12px 20px', background: 'var(--surface-1)', borderTop: '1px solid var(--border)' }}>
+                <button className="btn btn-primary btn-block" disabled={!valid} onClick={() => {
+                  const id = 'A-1043';
+                  dispatch({ type: 'CREATE_APPT', appt: { customerId: f.customerId, serviceId: f.serviceId, date: f.date, time: f.time, channel: 'instagram' } });
+                  setDone({ id });
+                  toast({ kind: 'success', text: 'Appointment ' + id + ' confirmed' });
+                }}>Confirm Appointment</button>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    };
+
+    /* ===== INBOX ===== */
+    const ConversationList = () => {
+      const { conversations, customers, selectedConvId, dispatch } = useApp();
+      const [filter, setFilter] = useState('all');
+      const [q, setQ] = useState('');
+      const filters = [{ id: 'all', label: 'All' }, { id: 'unread', label: 'Unread' }, { id: 'ai', label: 'AI Handling' }, { id: 'human', label: 'Needs Human' }, { id: 'high-intent', label: 'High Intent' }, { id: 'converted', label: 'Converted' }];
+      const filtered = conversations.filter(c => {
+        if (filter === 'unread' && !c.unread) return false;
+        if (filter === 'ai' && c.status !== 'ai') return false;
+        if (filter === 'human' && c.status !== 'human') return false;
+        if (filter === 'high-intent' && !c.intent.includes('High') && !c.intent.includes('Booking')) return false;
+        if (filter === 'converted' && c.stage !== 'Converted') return false;
+        const cust = customers.find(x => x.id === c.customerId);
+        if (q && !(cust.name + ' ' + c.messages.map(m => m.text).join(' ')).toLowerCase().includes(q.toLowerCase())) return false;
+        return true;
+      });
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--surface-1)', borderRight: '1px solid var(--border)', width: 320, flexShrink: 0 }}>
+          <div style={{ padding: 12, borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ position: 'relative' }}>
+              <span style={{ position: 'absolute', left: 10, top: 10, color: 'var(--ink-400)', display: 'inline-flex' }}>{I.Search(14)}</span>
+              <input className="input" style={{ height: 34, paddingLeft: 30 }} placeholder="Search conversations" value={q} onChange={e => setQ(e.target.value)} />
+            </div>
+            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
+              {filters.map(p => (
+                <button key={p.id} onClick={() => setFilter(p.id)} className={'btn btn-sm ' + (filter === p.id ? 'btn-primary' : '')} style={{ height: 28, whiteSpace: 'nowrap', flexShrink: 0, ...(filter === p.id ? {} : { background: 'var(--surface-1)', color: 'var(--ink-700)' }) }}>{p.label}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{ flex: 1, overflow: 'auto' }}>
+            {filtered.map(c => {
+              const cust = customers.find(x => x.id === c.customerId);
+              const last = c.messages[c.messages.length - 1];
+              const selected = c.id === selectedConvId;
+              return (
+                <div key={c.id} onClick={() => dispatch({ type: 'SELECT_CONV', id: c.id })} style={{ display: 'flex', gap: 12, padding: '12px 14px', cursor: 'pointer', position: 'relative', background: selected ? 'var(--accent-tint)' : 'transparent', borderLeft: selected ? '3px solid var(--accent)' : '3px solid transparent' }}>
+                  <div style={{ position: 'relative' }}>
+                    <Avatar name={cust.name} size={40} />
+                    <div style={{ position: 'absolute', right: -2, bottom: -2, background: 'var(--surface-1)', borderRadius: '50%', padding: 1 }}><ChannelGlyph ch={c.channel} size={14} /></div>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: 600, fontSize: 13.5 }}>{cust.name}</span>
+                      <span className="faint" style={{ fontSize: 11 }}>{c.lastTime}</span>
+                    </div>
+                    <div className="muted" style={{ fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{last.sender === 'system' ? <em style={{ color: 'var(--ink-400)' }}>{last.text}</em> : last.text}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                      {c.status === 'ai' ? (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--accent)', fontWeight: 600 }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)' }} />AI</span>
+                      ) : (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--ink-600)', fontWeight: 600 }}>{I.User(11)} Human</span>
+                      )}
+                      {c.unread > 0 && <span style={{ marginLeft: 'auto', background: 'var(--danger)', color: '#fff', borderRadius: 999, fontSize: 10, fontWeight: 700, padding: '0 6px', height: 16, display: 'inline-flex', alignItems: 'center' }}>{c.unread}</span>}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    };
+    const ConversationThread = () => {
+      const { conversations, customers, selectedConvId, dispatch, toast } = useApp();
+      const conv = conversations.find(c => c.id === selectedConvId);
+      const [text, setText] = useState('');
+      const endRef = useRef(null);
+      useEffect(() => { if (endRef.current) endRef.current.scrollIntoView({ behavior: 'smooth' }); }, [conv ? conv.messages.length : 0]);
+      if (!conv) return <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-400)' }}>Select a conversation</div>;
+      const cust = customers.find(c => c.id === conv.customerId);
+      const send = () => {
+        if (text.trim()) {
+          dispatch({ type: 'SEND_MSG', id: conv.id, text: text.trim() });
+          setText('');
+          setTimeout(() => {
+            const replies = ['Got it — let me check that for you.', 'Thanks! I can help with that.', "Sure, I'll create the order now.", "Yes, that's available. Want me to proceed?"];
+            dispatch({ type: 'AI_REPLY', id: conv.id, text: replies[Math.floor(Math.random() * replies.length)] });
+          }, 900);
+        }
+      };
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', flex: 1, minWidth: 0, background: 'var(--surface-0)' }}>
+          <div style={{ height: 56, padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--surface-1)', borderBottom: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Avatar name={cust.name} size={32} />
+              <div>
+                <div style={{ fontWeight: 650, fontSize: 14 }}>{cust.name}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ink-600)' }}><ChannelGlyph ch={conv.channel} size={12} /> {conv.channel}</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span className={'pill ' + (conv.status === 'ai' ? 'pill-accent' : 'pill-ink')}>{conv.status === 'ai' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{I.Robot(11)} AI Handling</span> : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{I.User(11)} Human</span>}</span>
+              {conv.status === 'ai' ? (
+                <button className="btn btn-sm" style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }} onClick={() => { dispatch({ type: 'TAKE_OVER', id: conv.id }); toast({ kind: 'success', text: 'You are now handling this conversation.' }); }}>Take over</button>
+              ) : (
+                <button className="btn btn-sm" onClick={() => { dispatch({ type: 'RETURN_AI', id: conv.id }); toast({ kind: 'success', text: 'AI resumed this conversation.' }); }}>Return to AI</button>
+              )}
+            </div>
+          </div>
+          <div style={{ flex: 1, overflow: 'auto', padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {conv.messages.map(m => {
+              if (m.sender === 'system') {
+                return (
+                  <div key={m.id} className="fade-in" style={{ display: 'flex', justifyContent: 'center', margin: '4px 0' }}>
+                    <span className="pill pill-ink" style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', color: 'var(--ink-600)', fontSize: 11, padding: '0 10px', height: 22, display: 'inline-flex', alignItems: 'center', gap: 4 }}>{I.Sparkles(10)} {m.text}</span>
+                  </div>
+                );
+              }
+              const isCustomer = m.sender === 'customer';
+              const isAI = m.sender === 'ai';
+              return (
+                <div key={m.id} className="fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: isCustomer ? 'flex-start' : 'flex-end', maxWidth: '100%' }}>
+                  {(isAI || m.sender === 'human') && <span className="eyebrow" style={{ marginBottom: 2, color: isAI ? 'var(--accent)' : 'var(--ink-700)' }}>{isAI ? 'AI' : (m.agent || 'Agent')}</span>}
+                  <div style={{ maxWidth: 420, padding: '8px 12px', borderRadius: 10, fontSize: 13.5, lineHeight: 1.45, background: isCustomer ? 'var(--surface-1)' : isAI ? 'var(--accent-tint)' : 'var(--ink-900)', color: isCustomer ? 'var(--ink-900)' : isAI ? 'var(--ink-900)' : '#fff', border: isCustomer ? '1px solid var(--border)' : 'none', direction: m.rtl ? 'rtl' : 'ltr', textAlign: m.rtl ? 'right' : 'left' }}>{m.text}</div>
+                  <span className="faint" style={{ fontSize: 10, marginTop: 2 }}>{m.time}</span>
+                </div>
+              );
+            })}
+            <div ref={endRef} />
+          </div>
+          <div style={{ padding: 12, background: 'var(--surface-1)', borderTop: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <input className="input" style={{ height: 44 }} placeholder={conv.status === 'ai' ? 'AI is handling this conversation' : 'Type a message…'} disabled={conv.status === 'ai'} value={text} onChange={e => setText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && conv.status === 'human') send(); }} />
+              <button className="btn btn-primary" style={{ height: 44, width: 44, padding: 0 }} disabled={conv.status === 'ai' || !text.trim()} onClick={send}>{I.Send(16)}</button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+    const ContextPanel = () => {
+      const { conversations, customers, orders, appointments, products, services, selectedConvId, dispatch, toast, vertical } = useApp();
+      const conv = conversations.find(c => c.id === selectedConvId);
+      const [orderOpen, setOrderOpen] = useState(false);
+      const [bookingOpen, setBookingOpen] = useState(false);
+      if (!conv) return null;
+      const cust = customers.find(c => c.id === conv.customerId);
+      const isAppt = vertical === 'appointments';
+      const custOrders = orders.filter(o => o.customerId === cust.id);
+      const custAppts = appointments.filter(a => a.customerId === cust.id);
+      const highIntent = conv.intent.includes('High') || conv.intent.includes('Booking');
+      return (
+        <div style={{ height: '100%', background: 'var(--surface-1)', overflow: 'auto', width: 320, flexShrink: 0, borderLeft: '1px solid var(--border)' }}>
+          <div style={{ padding: 20, borderBottom: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <Avatar name={cust.name} size={48} />
+              <div>
+                <div style={{ fontWeight: 650, fontSize: 14 }}>{cust.name}</div>
+                <div className="mono faint" style={{ fontSize: 12 }}>{cust.phone}</div>
+                <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                  {cust.channels.map(ch => <span key={ch} style={{ display: 'inline-flex' }}><ChannelGlyph ch={ch} size={14} /></span>)}
+                </div>
+              </div>
+            </div>
+            <div style={{ marginTop: 12, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {cust.tags.map(t => <span key={t} className="pill pill-ink">{t}</span>)}
+              <StatusBadge status={cust.status} />
+            </div>
+            <div className="faint" style={{ fontSize: 11, marginTop: 8 }}>Customer since {cust.createdAt}</div>
+          </div>
+          <div style={{ padding: 20, borderBottom: '1px solid var(--border)' }}>
+            <div className="eyebrow" style={{ marginBottom: 10 }}>{isAppt ? 'Appointment History' : 'Order History'}</div>
+            {isAppt ? (
+              <div>
+                {custAppts.length === 0 && <div className="muted" style={{ fontSize: 12 }}>No appointments yet</div>}
+                {custAppts.slice(0, 4).map(a => {
+                  const s = services.find(x => x.id === a.serviceId);
+                  return (
+                    <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--surface-0)' }}>
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 600 }}>{a.date} · {a.time}</div>
+                        <div className="faint" style={{ fontSize: 11 }}>{s ? s.name : ''}</div>
+                      </div>
+                      <StatusBadge status={a.status} />
+                    </div>
+                  );
+                })}
+                <div className="muted" style={{ fontSize: 11, marginTop: 8 }}>{custAppts.filter(a => a.status === 'Confirmed').length} upcoming · {custAppts.filter(a => a.status === 'No-show').length} no-shows</div>
+              </div>
+            ) : (
+              <div>
+                {custOrders.length === 0 && <div className="muted" style={{ fontSize: 12 }}>No orders yet</div>}
+                {custOrders.slice(0, 4).map(o => {
+                  const p = products.find(x => x.id === o.productId);
+                  return (
+                    <div key={o.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--surface-0)' }}>
+                      <div>
+                        <div className="mono" style={{ fontSize: 12, fontWeight: 600 }}>#{o.id}</div>
+                        <div className="faint" style={{ fontSize: 11 }}>{o.createdAt.split(' ')[0]} · {p ? p.name : ''}</div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div className="tnum" style={{ fontSize: 12 }}>{o.total} EGP</div>
+                        <StatusBadge status={o.status} />
+                      </div>
+                    </div>
+                  );
+                })}
+                <div className="muted" style={{ fontSize: 11, marginTop: 8 }}>Total spent: {cust.totalValue.toLocaleString()} EGP · {custOrders.filter(o => o.status === 'Cancelled').length} cancelled</div>
+              </div>
+            )}
+          </div>
+          <div style={{ padding: 20, borderBottom: '1px solid var(--border)' }}>
+            <div className="eyebrow" style={{ marginBottom: 10 }}>AI Context</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 12 }}><span className="faint">Intent</span><span style={{ fontWeight: 600 }}>{conv.intent}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 12 }}><span className="faint">Stage</span><span style={{ fontWeight: 600 }}>{conv.stage}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 12 }}><span className="faint">AI status</span><span style={{ fontWeight: 600 }}>{conv.status === 'ai' ? 'Handling automatically' : 'Escalated to human'}</span></div>
+            <div style={{ marginTop: 10 }}>
+              <div className="faint" style={{ fontSize: 11, marginBottom: 4 }}>Tools used</div>
+              {conv.tools.map(t => (
+                <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ink-700)' }}>
+                  <span style={{ color: 'var(--success)', display: 'inline-flex' }}>{I.Check(12)}</span> {t}
+                </div>
+              ))}
+            </div>
+            {highIntent && (
+              <button className="btn btn-primary btn-block" style={{ marginTop: 14 }} onClick={() => isAppt ? setBookingOpen(true) : setOrderOpen(true)}>
+                {isAppt ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{I.Calendar(14)} Create Appointment</span> : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{I.Bag(14)} Create Order</span>}
+              </button>
+            )}
+          </div>
+          <div style={{ padding: 20 }}>
+            <div className="eyebrow" style={{ marginBottom: 8 }}>{isAppt ? 'Attendance' : 'Reliability'}</div>
+            <div className="card" style={{ padding: 12, background: 'var(--surface-0)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <span style={{ fontSize: 12, color: 'var(--ink-600)' }}>Status</span>
+                <StatusBadge status={cust.reliability.label} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 12 }}><span style={{ color: 'var(--ink-600)' }}>{isAppt ? 'Completed appointments' : 'Completed orders'}</span><span className="tnum" style={{ fontWeight: 600 }}>{cust.reliability.completed}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 12 }}><span style={{ color: 'var(--ink-600)' }}>Cancellations</span><span className="tnum" style={{ fontWeight: 600 }}>{cust.reliability.cancelled}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 12 }}><span style={{ color: 'var(--ink-600)' }}>{isAppt ? 'No-shows' : 'Returns'}</span><span className="tnum" style={{ fontWeight: 600 }}>{cust.reliability.returns}</span></div>
+              <div className="faint" style={{ fontSize: 10, marginTop: 8 }}>Directional indicator only · experimental</div>
+            </div>
+          </div>
+          {orderOpen && <OrderDrawer onClose={() => setOrderOpen(false)} customerId={cust.id} />}
+          {bookingOpen && <BookingDrawer onClose={() => setBookingOpen(false)} customerId={cust.id} />}
+        </div>
+      );
+    };
+    const Inbox = () => (
+      <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+        <ConversationList />
+        <ConversationThread />
+        <ContextPanel />
+      </div>
+    );
+
+    /* ===== OVERVIEW ===== */
+    const Overview = () => {
+      const { vertical, settings, orders, appointments, dispatch } = useApp();
+      const isAppt = vertical === 'appointments';
+      const [range, setRange] = useState('7d');
+      const data = range === '7d' ? [12, 18, 9, 22, 15, 28, 32] : [40, 55, 38, 62, 50, 72, 68, 75, 60, 82, 90, 95, 88, 100, 92, 110, 105, 120, 115, 125, 130, 140, 135, 150, 145, 160, 155, 170, 175, 180];
+      const aiData = data.map(v => Math.round(v * 0.6));
+      const hour = new Date().getHours();
+      const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+      const metrics = isAppt
+        ? [{ eyebrow: 'Conversations', value: '436', trend: { value: '8%', up: true } }, { eyebrow: 'New Leads', value: '82', trend: { value: '12%', up: true } }, { eyebrow: 'Appointments Booked', value: String(appointments.length), trend: { value: '5%', up: true } }, { eyebrow: 'Booking Rate', value: '22.5%', trend: { value: '2%', up: false } }]
+        : [{ eyebrow: 'Conversations', value: '1,248', trend: { value: '14%', up: true } }, { eyebrow: 'New Leads', value: '184', trend: { value: '6%', up: true } }, { eyebrow: 'Orders', value: String(orders.length), trend: { value: '9%', up: true } }, { eyebrow: 'Conversion Rate', value: '18.4%', trend: { value: '1%', up: true } }];
+      const secondary = isAppt
+        ? [{ eyebrow: 'No-Shows', value: '3', trend: { value: '1%', up: false } }, { eyebrow: 'AI Resolution Rate', value: '74%', trend: { value: '4%', up: true } }]
+        : [{ eyebrow: 'Revenue (EGP)', value: orders.reduce((a, o) => a + o.total, 0).toLocaleString(), trend: { value: '11%', up: true } }, { eyebrow: 'AI Resolution Rate', value: '78%', trend: { value: '3%', up: true } }];
+      return (
+        <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+            <div>
+              <h1 style={{ fontSize: 22, fontWeight: 650, letterSpacing: '-0.01em' }}>{greeting}, {settings.businessName}</h1>
+              <div className="muted" style={{ fontSize: 13 }}>Here's what's happening with your {isAppt ? 'appointments' : 'orders'} today.</div>
+            </div>
+            <button className="btn btn-primary" onClick={() => dispatch({ type: 'SET_PAGE', p: 'inbox' })}>{I.Inbox(14)} Open Inbox</button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
+            {metrics.map(m => <StatCard key={m.eyebrow} eyebrow={m.eyebrow} value={m.value} trend={m.trend} />)}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
+            {secondary.map(m => <StatCard key={m.eyebrow} eyebrow={m.eyebrow} value={m.value} trend={m.trend} secondary />)}
+          </div>
+          <div className="card" style={{ padding: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <div style={{ fontSize: 15, fontWeight: 650 }}>Conversation Performance</div>
+              <div style={{ display: 'inline-flex', background: 'var(--surface-0)', borderRadius: 6, padding: 2 }}>
+                {['7d', '30d'].map(r => (
+                  <button key={r} onClick={() => setRange(r)} style={{ border: 'none', background: range === r ? 'var(--surface-1)' : 'transparent', height: 26, padding: '0 10px', borderRadius: 5, fontWeight: 600, fontSize: 12, boxShadow: range === r ? 'var(--shadow-card)' : 'none', cursor: 'pointer' }}>{r}</button>
+                ))}
+              </div>
+            </div>
+            <LineChart data={data} data2={aiData} height={260} />
+            <div style={{ display: 'flex', gap: 16, marginTop: 8, fontSize: 12 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 10, height: 2, background: 'var(--accent)' }} /> Conversations</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 10, height: 2, background: 'var(--ink-400)' }} /> AI-resolved</span>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 16 }}>
+            <div style={{ fontSize: 15, fontWeight: 650, marginBottom: 12 }}>AI Activity · today</div>
+            <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+              {(isAppt
+                ? [{ icon: 'Check', label: 'Answered 146 questions', kind: 'success' }, { icon: 'Check', label: 'Qualified 58 leads', kind: 'success' }, { icon: 'Check', label: 'Booked 24 appointments', kind: 'success' }, { icon: 'Alert', label: 'Escalated 6 conversations', kind: 'warning' }]
+                : [{ icon: 'Check', label: 'Answered 238 questions', kind: 'success' }, { icon: 'Check', label: 'Qualified 74 leads', kind: 'success' }, { icon: 'Check', label: 'Created 31 orders', kind: 'success' }, { icon: 'Alert', label: 'Escalated 9 conversations', kind: 'warning' }]
+              ).map((a, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+                  <span className={'pill ' + (a.kind === 'success' ? 'pill-success' : 'pill-warning')} style={{ width: 22, height: 22, justifyContent: 'center' }}>{I[a.icon](12)}</span>
+                  {a.label}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    /* ===== CUSTOMERS ===== */
+    const Customers = () => {
+      const { customers, orders, appointments, products, services, selectedCustomerId, dispatch, vertical } = useApp();
+      const [q, setQ] = useState('');
+      const isAppt = vertical === 'appointments';
+      const cust = customers.find(c => c.id === selectedCustomerId);
+      if (cust) {
+        const custOrders = orders.filter(o => o.customerId === cust.id);
+        return (
+          <div style={{ padding: 24 }}>
+            <button className="btn btn-ghost btn-sm" onClick={() => dispatch({ type: 'SET_PAGE', p: 'customers' })} style={{ marginBottom: 12 }}>{I.Chevron(14)} Back to customers</button>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+              <div className="card" style={{ width: 280, padding: 20, flexShrink: 0 }}>
+                <Avatar name={cust.name} size={64} />
+                <div style={{ fontWeight: 650, fontSize: 15, marginTop: 8 }}>{cust.name}</div>
+                <div className="mono faint" style={{ fontSize: 12 }}>{cust.phone}</div>
+                <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+                  {cust.tags.map(t => <span key={t} className="pill pill-ink">{t}</span>)}
+                  <StatusBadge status={cust.status} />
+                </div>
+                <div className="card" style={{ marginTop: 16, padding: 12, background: 'var(--surface-0)' }}>
+                  <div className="eyebrow" style={{ marginBottom: 6 }}>{isAppt ? 'Attendance' : 'Reliability'}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span className="faint" style={{ fontSize: 11 }}>Status</span><StatusBadge status={cust.reliability.label} /></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 12 }}><span style={{ color: 'var(--ink-600)' }}>{isAppt ? 'Completed' : 'Completed orders'}</span><span className="tnum" style={{ fontWeight: 600 }}>{cust.reliability.completed}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 12 }}><span style={{ color: 'var(--ink-600)' }}>Cancellations</span><span className="tnum" style={{ fontWeight: 600 }}>{cust.reliability.cancelled}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 12 }}><span style={{ color: 'var(--ink-600)' }}>{isAppt ? 'No-shows' : 'Returns'}</span><span className="tnum" style={{ fontWeight: 600 }}>{cust.reliability.returns}</span></div>
+                </div>
+              </div>
+              <div className="card" style={{ flex: 1, padding: 20, minWidth: 300 }}>
+                <div style={{ fontSize: 15, fontWeight: 650, marginBottom: 12 }}>{isAppt ? 'Appointments' : 'Orders'}</div>
+                {custOrders.length === 0 ? <div className="muted">No {isAppt ? 'appointments' : 'orders'} yet</div> : (
+                  <table style={{ width: '100%', fontSize: 13 }}>
+                    <thead><tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border)' }}><th style={{ padding: '8px 0' }}>ID</th><th>Item</th><th>Date</th><th>Status</th></tr></thead>
+                    <tbody>
+                      {custOrders.map(o => {
+                        const p = products.find(x => x.id === o.productId);
+                        return (
+                          <tr key={o.id} style={{ borderBottom: '1px solid var(--surface-0)' }}>
+                            <td style={{ padding: '8px 0' }} className="mono">#{o.id}</td>
+                            <td>{p ? p.name : ''} · {o.variant}</td>
+                            <td className="mono">{o.createdAt}</td>
+                            <td><StatusBadge status={o.status} /></td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      }
+      const filtered = customers.filter(c => !q || c.name.toLowerCase().includes(q.toLowerCase()));
+      return (
+        <div style={{ padding: 24 }}>
+          <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+            <div style={{ position: 'relative', flex: '0 0 280px' }}>
+              <span style={{ position: 'absolute', left: 10, top: 9, color: 'var(--ink-400)', display: 'inline-flex' }}>{I.Search(14)}</span>
+              <input className="input" style={{ paddingLeft: 30 }} placeholder="Search customers" value={q} onChange={e => setQ(e.target.value)} />
+            </div>
+          </div>
+          <div className="card" style={{ overflow: 'auto' }}>
+            <table style={{ width: '100%', fontSize: 13 }}>
+              <thead><tr style={{ borderBottom: '1px solid var(--border)', textAlign: 'left' }}>
+                <th style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--ink-600)', fontSize: 12 }}>Customer</th>
+                <th style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--ink-600)', fontSize: 12 }}>Channels</th>
+                <th style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--ink-600)', fontSize: 12 }}>Status</th>
+                <th style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--ink-600)', fontSize: 12 }}>{isAppt ? 'Appts' : 'Orders'}</th>
+                <th style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--ink-600)', fontSize: 12 }}>Total value</th>
+              </tr></thead>
+              <tbody>
+                {filtered.map(c => (
+                  <tr key={c.id} onClick={() => dispatch({ type: 'OPEN_CUSTOMER', id: c.id })} style={{ borderBottom: '1px solid var(--border)', cursor: 'pointer' }}>
+                    <td style={{ padding: '10px 12px' }}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Avatar name={c.name} size={28} /><span style={{ fontWeight: 600 }}>{c.name}</span></div></td>
+                    <td style={{ padding: '10px 12px' }}><div style={{ display: 'flex', gap: 4 }}>{c.channels.map(ch => <span key={ch}><ChannelGlyph ch={ch} size={14} /></span>)}</div></td>
+                    <td style={{ padding: '10px 12px' }}><StatusBadge status={c.status} /></td>
+                    <td style={{ padding: '10px 12px' }} className="tnum">{isAppt ? appointments.filter(a => a.customerId === c.id).length : orders.filter(o => o.customerId === c.id).length}</td>
+                    <td style={{ padding: '10px 12px', fontWeight: 600 }} className="tnum">{c.totalValue.toLocaleString()} EGP</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    };
+
+    /* ===== PRODUCTS / SERVICES ===== */
+    const Products = () => {
+      const { products, dispatch, toast } = useApp();
+      const [q, setQ] = useState('');
+      const filtered = products.filter(p => !q || p.name.toLowerCase().includes(q.toLowerCase()));
+      const stockLabel = n => n === 0 ? 'Out of Stock' : n < 5 ? 'Low Stock' : 'In Stock';
+      return (
+        <div style={{ padding: 24 }}>
+          <div style={{ display: 'flex', gap: 10, marginBottom: 16, alignItems: 'center' }}>
+            <div style={{ position: 'relative', flex: '0 0 280px' }}>
+              <span style={{ position: 'absolute', left: 10, top: 9, color: 'var(--ink-400)', display: 'inline-flex' }}>{I.Search(14)}</span>
+              <input className="input" style={{ paddingLeft: 30 }} placeholder="Search products" value={q} onChange={e => setQ(e.target.value)} />
+            </div>
+            <button className="btn btn-primary" style={{ marginLeft: 'auto' }} onClick={() => toast({ kind: 'success', text: 'Product added' })}>{I.Plus(14)} Add Product</button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
+            {filtered.map(p => (
+              <div key={p.id} className="card" style={{ overflow: 'hidden' }}>
+                <div style={{ height: 120, background: 'linear-gradient(135deg,var(--surface-0),#ECEFF3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-400)' }}>{I.Box(32)}</div>
+                <div style={{ padding: 12 }}>
+                  <div style={{ fontWeight: 600, fontSize: 13 }}>{p.name}</div>
+                  <div className="mono faint" style={{ fontSize: 11 }}>{p.sku}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
+                    <span className="tnum" style={{ fontWeight: 700 }}>{p.price.toLocaleString()} EGP</span>
+                    <StatusBadge status={stockLabel(p.stock)} />
+                  </div>
+                  <div style={{ marginTop: 8, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {p.variants.map(v => (
+                      <button key={v.label} onClick={() => { dispatch({ type: 'TOGGLE_VARIANT', pid: p.id, label: v.label }); toast({ kind: 'success', text: 'Variant updated' }); }} className={'pill ' + (v.available ? 'pill-accent' : 'pill-ink')} style={{ cursor: 'pointer', textDecoration: v.available ? 'none' : 'line-through', opacity: v.available ? 1 : 0.6 }}>{v.available ? '✓' : '×'} {v.label}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    };
+    const Services = () => {
+      const { services, toast } = useApp();
+      const [q, setQ] = useState('');
+      const filtered = services.filter(s => !q || s.name.toLowerCase().includes(q.toLowerCase()));
+      return (
+        <div style={{ padding: 24 }}>
+          <div style={{ display: 'flex', gap: 10, marginBottom: 16, alignItems: 'center' }}>
+            <div style={{ position: 'relative', flex: '0 0 280px' }}>
+              <span style={{ position: 'absolute', left: 10, top: 9, color: 'var(--ink-400)', display: 'inline-flex' }}>{I.Search(14)}</span>
+              <input className="input" style={{ paddingLeft: 30 }} placeholder="Search services" value={q} onChange={e => setQ(e.target.value)} />
+            </div>
+            <button className="btn btn-primary" style={{ marginLeft: 'auto' }} onClick={() => toast({ kind: 'success', text: 'Service added' })}>{I.Plus(14)} Add Service</button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
+            {filtered.map(s => (
+              <div key={s.id} className="card" style={{ padding: 14 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--accent-tint)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{I.Calendar(18)}</div>
+                  <span className="pill pill-ink">{I.Clock(11)} {s.duration} min</span>
+                </div>
+                <div style={{ marginTop: 10, fontWeight: 600, fontSize: 13 }}>{s.name}</div>
+                <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{s.description}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+                  <span className="tnum" style={{ fontWeight: 700 }}>{s.priceFrom ? 'From ' + s.price.toLocaleString() : s.price.toLocaleString()} EGP</span>
+                  <span className="faint" style={{ fontSize: 11 }}>{s.category}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    };
+
+    /* ===== ORDERS / APPOINTMENTS ===== */
+    const Orders = () => {
+      const { orders, customers, products } = useApp();
+      const [open, setOpen] = useState(false);
+      return (
+        <div style={{ padding: 24 }}>
+          <div style={{ display: 'flex', marginBottom: 16 }}>
+            <button className="btn btn-primary" style={{ marginLeft: 'auto' }} onClick={() => setOpen(true)}>{I.Plus(14)} New Order</button>
+          </div>
+          <div className="card" style={{ overflow: 'auto' }}>
+            <table style={{ width: '100%', fontSize: 13 }}>
+              <thead><tr style={{ borderBottom: '1px solid var(--border)', textAlign: 'left' }}>
+                {['Order', 'Customer', 'Product', 'Qty', 'Total', 'Channel', 'Status'].map(h => <th key={h} style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--ink-600)', fontSize: 12 }}>{h}</th>)}
+              </tr></thead>
+              <tbody>
+                {orders.map(o => {
+                  const c = customers.find(x => x.id === o.customerId);
+                  const p = products.find(x => x.id === o.productId);
+                  return (
+                    <tr key={o.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                      <td style={{ padding: '10px 12px' }} className="mono">#{o.id}</td>
+                      <td style={{ padding: '10px 12px' }}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Avatar name={c.name} size={26} />{c.name}</div></td>
+                      <td style={{ padding: '10px 12px' }}>{p.name} · {o.variant}</td>
+                      <td style={{ padding: '10px 12px' }} className="tnum">{o.qty}</td>
+                      <td style={{ padding: '10px 12px', fontWeight: 600 }} className="tnum">{o.total.toLocaleString()} EGP</td>
+                      <td style={{ padding: '10px 12px' }}><ChannelGlyph ch={o.channel} size={14} /></td>
+                      <td style={{ padding: '10px 12px' }}><StatusBadge status={o.status} /></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {open && <OrderDrawer onClose={() => setOpen(false)} />}
+        </div>
+      );
+    };
+    const Appointments = () => {
+      const { appointments, customers, services } = useApp();
+      const [open, setOpen] = useState(false);
+      return (
+        <div style={{ padding: 24 }}>
+          <div style={{ display: 'flex', marginBottom: 16 }}>
+            <button className="btn btn-primary" style={{ marginLeft: 'auto' }} onClick={() => setOpen(true)}>{I.Plus(14)} New Appointment</button>
+          </div>
+          <div className="card" style={{ overflow: 'auto' }}>
+            <table style={{ width: '100%', fontSize: 13 }}>
+              <thead><tr style={{ borderBottom: '1px solid var(--border)', textAlign: 'left' }}>
+                {['ID', 'Patient', 'Service', 'Date', 'Channel', 'Status'].map(h => <th key={h} style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--ink-600)', fontSize: 12 }}>{h}</th>)}
+              </tr></thead>
+              <tbody>
+                {appointments.map(a => {
+                  const c = customers.find(x => x.id === a.customerId);
+                  const s = services.find(x => x.id === a.serviceId);
+                  return (
+                    <tr key={a.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                      <td style={{ padding: '10px 12px' }} className="mono">{a.id}</td>
+                      <td style={{ padding: '10px 12px' }}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Avatar name={c.name} size={26} />{c.name}</div></td>
+                      <td style={{ padding: '10px 12px' }}>{s.name}</td>
+                      <td style={{ padding: '10px 12px' }} className="mono">{a.date} · {a.time}</td>
+                      <td style={{ padding: '10px 12px' }}><ChannelGlyph ch={a.channel} size={14} /></td>
+                      <td style={{ padding: '10px 12px' }}><StatusBadge status={a.status} /></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {open && <BookingDrawer onClose={() => setOpen(false)} />}
+        </div>
+      );
+    };
+
+    /* ===== AUTOMATIONS ===== */
+    const Automations = () => {
+      const { automations, vertical, dispatch } = useApp();
+      const [expanded, setExpanded] = useState(null);
+      const active = automations.filter(a => a.vertical === vertical);
+      const comingSoon = ['Broadcast Campaigns', 'Cross-merchant Trust Network', 'Courier API Integration', 'Advanced COD Intelligence', 'No-show Prediction'];
+      return (
+        <div style={{ padding: 24 }}>
+          <h1 style={{ fontSize: 20, fontWeight: 650, marginBottom: 16 }}>Automations</h1>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+            {active.map(a => (
+              <div key={a.id} className="card" style={{ padding: 16, opacity: a.enabled ? 1 : 0.6 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                  <div style={{ fontWeight: 650, fontSize: 14 }}>{a.name}</div>
+                  <Toggle checked={a.enabled} onChange={() => dispatch({ type: 'TOGGLE_AUTOMATION', id: a.id })} />
+                </div>
+                <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>{a.desc}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <StatusBadge status={a.enabled ? 'Active' : 'Paused'} />
+                  <button style={{ background: 'transparent', border: 'none', color: 'var(--accent)', fontWeight: 600, fontSize: 12, cursor: 'pointer' }} onClick={() => setExpanded(expanded === a.id ? null : a.id)}>{expanded === a.id ? 'Hide flow' : 'View flow'}</button>
+                </div>
+                {expanded === a.id && (
+                  <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                    {a.steps.map((s, i) => (
+                      <React.Fragment key={i}>
+                        <div style={{ width: 120, height: 40, borderRadius: 8, background: 'var(--accent-tint)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, textAlign: 'center', padding: '0 8px' }}>{s}</div>
+                        {i < a.steps.length - 1 && <span style={{ color: 'var(--ink-400)' }}>{I.Chevron(14)}</span>}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 32 }}>
+            <div className="eyebrow" style={{ marginBottom: 12 }}>Coming soon</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+              {comingSoon.map(c => (
+                <div key={c} className="card" style={{ padding: 16, opacity: 0.55, position: 'relative' }}>
+                  <span className="pill pill-ink" style={{ position: 'absolute', top: 12, right: 12 }}>Coming Soon</span>
+                  <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>{c}</div>
+                  <div className="faint" style={{ fontSize: 12 }}>In development — not available in this prototype.</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    /* ===== KNOWLEDGE ===== */
+    const Knowledge = () => {
+      const faqs = [
+        { id: 'F-1', q: 'How long does delivery take?', a: 'Cairo 1-2 business days, governorates 3-4 business days.', c: 'Delivery' },
+        { id: 'F-2', q: 'What is your return policy?', a: 'Returns within 14 days, unused and in original packaging.', c: 'Returns' },
+        { id: 'F-3', q: 'Which payment methods do you accept?', a: 'Cash on Delivery nationwide. Card payments coming soon.', c: 'Payment' },
+      ];
+      const sources = [
+        { id: 'KS-1', name: 'Product-Catalog-2024.pdf', type: 'pdf', used: true },
+        { id: 'KS-2', name: 'Shipping-and-Returns.docx', type: 'docx', used: true },
+        { id: 'KS-3', name: 'Storefront-FAQs.txt', type: 'text', used: true },
+        { id: 'KS-4', name: 'Brand-Policy.pdf', type: 'pdf', used: false },
+      ];
+      return (
+        <div style={{ padding: 24 }}>
+          <h1 style={{ fontSize: 20, fontWeight: 650, marginBottom: 16 }}>Knowledge Base</h1>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 16 }}>
+            <div className="card" style={{ padding: 16 }}>
+              <div style={{ fontSize: 15, fontWeight: 650, marginBottom: 12 }}>FAQs</div>
+              {faqs.map(f => (
+                <div key={f.id} className="card" style={{ padding: 12, marginBottom: 8 }}>
+                  <div style={{ fontWeight: 600, fontSize: 13 }}>{f.q}</div>
+                  <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{f.a}</div>
+                  <span className="pill pill-ink" style={{ marginTop: 6 }}>{f.c}</span>
+                </div>
+              ))}
+            </div>
+            <div className="card" style={{ padding: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <div style={{ fontSize: 15, fontWeight: 650 }}>Sources</div>
+                <button className="btn btn-ghost btn-sm">{I.Upload(12)} Upload</button>
+              </div>
+              {sources.map(s => (
+                <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--surface-0)' }}>
+                  <span style={{ color: 'var(--ink-400)', display: 'inline-flex' }}>{I.Book(16)}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
+                    <div className="faint" style={{ fontSize: 11, textTransform: 'uppercase' }}>{s.type}</div>
+                  </div>
+                  {s.used && <span title="AI is using this" style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)' }} />}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    /* ===== ANALYTICS ===== */
+    const Analytics = () => {
+      const { vertical } = useApp();
+      const isAppt = vertical === 'appointments';
+      const [range, setRange] = useState('7d');
+      const data = range === '7d' ? [40, 55, 38, 62, 50, 72, 68] : range === '30d' ? Array.from({ length: 30 }, (_, i) => 40 + i * 2) : Array.from({ length: 90 }, (_, i) => 30 + i);
+      const shared = [
+        { eyebrow: 'Total Conversations', value: isAppt ? '436' : '1,248', trend: { value: '8%', up: true } },
+        { eyebrow: 'Leads', value: isAppt ? '82' : '184', trend: { value: '12%', up: true } },
+        { eyebrow: 'Conversion Rate', value: isAppt ? '22.5%' : '18.4%', trend: { value: '2%', up: true } },
+        { eyebrow: 'AI Resolution Rate', value: isAppt ? '74%' : '78%', trend: { value: '4%', up: true } },
+      ];
+      return (
+        <div style={{ padding: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h1 style={{ fontSize: 20, fontWeight: 650 }}>Analytics</h1>
+            <div style={{ display: 'inline-flex', background: 'var(--surface-0)', borderRadius: 6, padding: 2 }}>
+              {['7d', '30d', '90d'].map(r => (
+                <button key={r} onClick={() => setRange(r)} style={{ border: 'none', background: range === r ? 'var(--surface-1)' : 'transparent', height: 26, padding: '0 10px', borderRadius: 5, fontWeight: 600, fontSize: 12, boxShadow: range === r ? 'var(--shadow-card)' : 'none', cursor: 'pointer' }}>{r}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16, marginBottom: 16 }}>
+            {shared.map(s => <StatCard key={s.eyebrow} eyebrow={s.eyebrow} value={s.value} trend={s.trend} />)}
+          </div>
+          <div className="card" style={{ padding: 16, marginBottom: 16 }}>
+            <div style={{ fontSize: 15, fontWeight: 650, marginBottom: 12 }}>{isAppt ? 'Bookings over time' : 'Revenue over time'}</div>
+            <LineChart data={data} height={240} />
+          </div>
+        </div>
+      );
+    };
+
+    /* ===== SETTINGS ===== */
+    const Settings = () => {
+      const { settings, dispatch, toast } = useApp();
+      const [sec, setSec] = useState('Business Profile');
+      const [bizName, setBizName] = useState(settings.businessName);
+      const [dirty, setDirty] = useState(false);
+      const sections = ['Business Profile', 'Channels', 'AI Settings', 'Working Hours', 'Notifications', 'Team Members'];
+      return (
+        <div style={{ padding: 24, display: 'flex', gap: 16 }}>
+          <div className="card" style={{ width: 220, padding: 8, height: 'fit-content', flexShrink: 0 }}>
+            {sections.map(s => (
+              <button key={s} onClick={() => setSec(s)} style={{ width: '100%', textAlign: 'left', padding: '8px 10px', borderRadius: 6, background: sec === s ? 'var(--accent-tint)' : 'transparent', color: sec === s ? 'var(--accent)' : 'var(--ink-700)', fontWeight: sec === s ? 600 : 500, fontSize: 13, border: 'none', cursor: 'pointer' }}>{s}</button>
+            ))}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {sec === 'Business Profile' && (
+              <div className="card" style={{ padding: 20 }}>
+                <h2 style={{ fontSize: 15, fontWeight: 650, marginBottom: 16 }}>Business Profile</h2>
+                <div style={{ marginBottom: 12 }}>
+                  <div className="eyebrow" style={{ marginBottom: 6 }}>Business name</div>
+                  <input className="input" value={bizName} onChange={e => { setBizName(e.target.value); setDirty(true); }} />
+                </div>
+                {dirty && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                    <button className="btn" onClick={() => { setBizName(settings.businessName); setDirty(false); }}>Cancel</button>
+                    <button className="btn btn-primary" onClick={() => { dispatch({ type: 'UPDATE_BIZ', name: bizName }); setDirty(false); toast({ kind: 'success', text: 'Profile saved' }); }}>Save changes</button>
+                  </div>
+                )}
+              </div>
+            )}
+            {sec === 'Channels' && (
+              <div className="card" style={{ padding: 20 }}>
+                <h2 style={{ fontSize: 15, fontWeight: 650, marginBottom: 16 }}>Channels</h2>
+                {['instagram', 'whatsapp', 'facebook', 'tiktok', 'website'].map(c => (
+                  <div key={c} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <ChannelGlyph ch={c} size={20} />
+                      <span style={{ textTransform: 'capitalize', fontWeight: 600 }}>{c}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <StatusBadge status={settings.channels[c] ? 'Active' : 'Paused'} />
+                      <button className={'btn btn-sm ' + (settings.channels[c] ? '' : 'btn-primary')} onClick={() => { dispatch({ type: 'TOGGLE_CHANNEL', ch: c }); toast({ kind: settings.channels[c] ? 'warning' : 'success', text: c + ' ' + (settings.channels[c] ? 'disconnected' : 'connected') }); }}>{settings.channels[c] ? 'Disconnect' : 'Connect'}</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {sec === 'AI Settings' && (
+              <div className="card" style={{ padding: 20 }}>
+                <h2 style={{ fontSize: 15, fontWeight: 650, marginBottom: 16 }}>AI Settings</h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)', marginBottom: 12 }}>
+                  <span style={{ fontWeight: 600 }}>AI enabled</span>
+                  <Toggle checked={true} onChange={() => toast({ kind: 'success', text: 'AI toggled' })} />
+                </div>
+                <div>
+                  <div className="eyebrow" style={{ marginBottom: 6 }}>Confidence threshold — {settings.confidence}%</div>
+                  <input type="range" min={0} max={100} defaultValue={settings.confidence} style={{ width: '100%' }} />
+                </div>
+              </div>
+            )}
+            {sec === 'Working Hours' && (
+              <div className="card" style={{ padding: 20 }}>
+                <h2 style={{ fontSize: 15, fontWeight: 650, marginBottom: 16 }}>Working Hours</h2>
+                {['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map(day => (
+                  <div key={day} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+                    <div style={{ width: 60, fontWeight: 600 }}>{day}</div>
+                    <Toggle checked={day !== 'Fri'} onChange={() => toast({ kind: 'success', text: 'Hours updated' })} />
+                    <input type="time" className="input mono" style={{ width: 110 }} defaultValue="10:00" />
+                    <span>—</span>
+                    <input type="time" className="input mono" style={{ width: 110 }} defaultValue="19:00" />
+                  </div>
+                ))}
+              </div>
+            )}
+            {sec === 'Notifications' && (
+              <div className="card" style={{ padding: 20 }}>
+                <h2 style={{ fontSize: 15, fontWeight: 650, marginBottom: 16 }}>Notifications</h2>
+                {['New lead', 'Order created', 'Appointment booked', 'Escalation', 'Daily summary'].map(n => (
+                  <div key={n} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--surface-0)' }}>
+                    <span>{n}</span>
+                    <div style={{ display: 'flex', gap: 16 }}>
+                      <Toggle checked={true} onChange={() => { }} />
+                      <Toggle checked={true} onChange={() => { }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {sec === 'Team Members' && (
+              <div className="card" style={{ padding: 20 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <h2 style={{ fontSize: 15, fontWeight: 650 }}>Team Members</h2>
+                  <button className="btn btn-primary btn-sm" onClick={() => toast({ kind: 'success', text: 'Invitation sent — simulated' })}>{I.Plus(12)} Invite member</button>
+                </div>
+                {[
+                  { name: 'Mariam Saad', email: 'mariam@seller.club', role: 'Owner' },
+                  { name: 'Karim Adel', email: 'karim@seller.club', role: 'Agent' },
+                  { name: 'Sara Mounir', email: 'sara@seller.club', role: 'Agent' },
+                  { name: 'Yara Fathy', email: 'yara@seller.club', role: 'Viewer' },
+                ].map(m => (
+                  <div key={m.email} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--surface-0)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Avatar name={m.name} size={28} /><div><div style={{ fontWeight: 600, fontSize: 13 }}>{m.name}</div><div className="mono faint" style={{ fontSize: 11 }}>{m.email}</div></div></div>
+                    <select className="select" style={{ height: 28, width: 100 }} defaultValue={m.role}><option>Owner</option><option>Agent</option><option>Viewer</option></select>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    };
+
+    /* ===== FOLLOWUPS ===== */
+    const FollowUps = () => {
+      const { followUps, customers, vertical, dispatch, toast } = useApp();
+      const list = followUps.filter(f => f.vertical === vertical);
+      return (
+        <div style={{ padding: 24, maxWidth: 720, margin: '0 auto' }}>
+          <h1 style={{ fontSize: 20, fontWeight: 650, marginBottom: 16 }}>Pending Follow-ups</h1>
+          {list.length === 0 ? (
+            <div className="card" style={{ padding: 24, textAlign: 'center', color: 'var(--ink-600)' }}>No pending follow-ups for this vertical.</div>
+          ) : list.map(f => {
+            const c = customers.find(x => x.id === f.customerId);
+            return (
+              <div key={f.id} className="card" style={{ padding: 16, marginBottom: 12, opacity: f.state === 'paused' ? 0.6 : 1 }}>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <Avatar name={c.name} size={40} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13 }}>{c.name}</div>
+                    <div className="muted" style={{ fontSize: 12 }}>{f.context}</div>
+                    <span className="pill pill-ink" style={{ marginTop: 4, height: 22, display: 'inline-flex', alignItems: 'center', gap: 4 }}>{I.Clock(10)} {f.scheduled}</span>
+                  </div>
+                  {f.state === 'sent' ? (
+                    <span className="pill pill-success">{I.Check(11)} Sent</span>
+                  ) : f.state === 'paused' ? (
+                    <button className="btn btn-sm" onClick={() => dispatch({ type: 'PAUSE_FOLLOWUP', id: f.id })}>Resume</button>
+                  ) : (
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button className="btn btn-sm btn-primary" onClick={() => { dispatch({ type: 'SEND_FOLLOWUP', id: f.id }); toast({ kind: 'success', text: 'Follow-up sent' }); }}>{I.Send(12)} Send now</button>
+                      <button className="btn btn-sm" onClick={() => dispatch({ type: 'PAUSE_FOLLOWUP', id: f.id })}>Pause</button>
+                      <button className="btn btn-sm" onClick={() => { dispatch({ type: 'CANCEL_FOLLOWUP', id: f.id }); toast({ kind: 'warning', text: 'Follow-up cancelled' }); }}>{I.X(12)} Cancel</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    };
+
+    /* ===== TOASTER ===== */
+    const Toaster = () => {
+      const { toasts, dispatch } = useApp();
+      return (
+        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', gap: 8, zIndex: 2000 }}>
+          {toasts.map(t => (
+            <div key={t.id} className="card fade-in" style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10, minWidth: 280, boxShadow: 'var(--shadow-pop)' }}>
+              <span className={'pill ' + (t.kind === 'success' ? 'pill-success' : 'pill-warning')} style={{ width: 22, height: 22, justifyContent: 'center' }}>{t.kind === 'success' ? I.Check(12) : I.Alert(12)}</span>
+              <span style={{ flex: 1 }}>{t.text}</span>
+              <button className="btn btn-ghost btn-icon" onClick={() => dispatch({ type: 'DISMISS_TOAST', id: t.id })} style={{ width: 24, height: 24 }}>{I.X(14)}</button>
+            </div>
+          ))}
+        </div>
+      );
+    };
+
+    /* ===== APP ROOT ===== */
+    const pages = {
+      overview: Overview, inbox: Inbox, customers: Customers, orders: Orders, appointments: Appointments,
+      products: Products, services: Services, automations: Automations, knowledge: Knowledge,
+      analytics: Analytics, settings: Settings, followups: FollowUps, 'customer-detail': Customers,
+    };
+
+    function App() {
+      const { onboarded, page, vertical } = useApp();
+      if (!onboarded) return <Onboarding />;
+      const Page = pages[page] || Overview;
+      const accent = vertical === 'appointments' ? 'var(--brand-appt)' : 'var(--brand)';
+      const tint = vertical === 'appointments' ? 'var(--brand-appt-tint)' : 'var(--brand-tint)';
+      return (
+        <div style={{ ['--accent']: accent, ['--accent-tint']: tint, height: '100%' }}>
+          <Shell><Page /></Shell>
+          <Toaster />
+        </div>
+      );
+    }
+
+    function Root() {
+      return <AppProvider><App /></AppProvider>;
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
+  </script>
+</body>
+
+</html>

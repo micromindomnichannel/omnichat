@@ -149,6 +149,28 @@ const initialState = {
     currency: 'EGP',
     channels: { instagram: true, whatsapp: true, facebook: true, tiktok: false, website: true },
   },
+  workingHours: [
+    { day: 'Saturday', open: true, start: '10:00', end: '20:00' },
+    { day: 'Sunday', open: true, start: '10:00', end: '20:00' },
+    { day: 'Monday', open: true, start: '10:00', end: '20:00' },
+    { day: 'Tuesday', open: true, start: '10:00', end: '20:00' },
+    { day: 'Wednesday', open: true, start: '10:00', end: '20:00' },
+    { day: 'Thursday', open: true, start: '10:00', end: '21:00' },
+    { day: 'Friday', open: false, start: '14:00', end: '22:00' },
+  ],
+  teamMembers: [
+    { id: 'TM-1', name: 'Mariam Saad', email: 'mariam@seller.club', role: 'Owner', status: 'Active' },
+    { id: 'TM-2', name: 'Karim Adel', email: 'karim@seller.club', role: 'Agent', status: 'Active' },
+    { id: 'TM-3', name: 'Sara Mounir', email: 'sara@seller.club', role: 'Agent', status: 'Active' },
+    { id: 'TM-4', name: 'Yara Fathy', email: 'yara@seller.club', role: 'Viewer', status: 'Pending' },
+  ],
+  notifications: [
+    { event: 'New Lead Captured', email: true, inApp: true },
+    { event: 'Order Placed (COD/Card)', email: true, inApp: true },
+    { event: 'Appointment Confirmed', email: true, inApp: true },
+    { event: 'Human Intervention Requested', email: true, inApp: true },
+    { event: 'Daily Revenue & KPI Report', email: false, inApp: true },
+  ],
   customers: [
     { id:'C-01', name:'Mariam Hassan', phone:'0100 1234 567', channels:['instagram','whatsapp'], status:'VIP', tags:['VIP','Returning'], createdAt:'2024-01-12', lastInteraction:'2024-08-17', totalValue:12450, reliability:{label:'Good',completed:5,cancelled:0,returns:0} },
     { id:'C-02', name:'Youssef Adel', phone:'0111 4321 098', channels:['instagram'], status:'Returning', tags:['Returning'], createdAt:'2024-02-03', lastInteraction:'2024-08-17', totalValue:4180, reliability:{label:'Good',completed:3,cancelled:0,returns:0} },
@@ -294,10 +316,12 @@ function reducer(s, a) {
     case 'UPDATE_BIZ': return { ...s, settings: { ...s.settings, ...a.payload } };
     case 'ADD_FAQ': return { ...s, faqs: [...s.faqs, { id: uid('F'), q: a.q, a: a.a }] };
     case 'TOAST': return { ...s, toasts: [...s.toasts, { id: uid('t'), ...a.toast }] };
-    case 'DISMISS_TOAST': return { ...s, toasts: s.toasts.filter(t => t.id !== a.id) };
     case 'SEND_FOLLOWUP': return { ...s, followUps: s.followUps.map(f => f.id === a.id ? { ...f, state: 'sent', scheduled: 'Sent just now' } : f) };
     case 'PAUSE_FOLLOWUP': return { ...s, followUps: s.followUps.map(f => f.id === a.id ? { ...f, state: f.state === 'paused' ? 'pending' : 'paused' } : f) };
     case 'CANCEL_FOLLOWUP': return { ...s, followUps: s.followUps.filter(f => f.id !== a.id) };
+    case 'UPDATE_WORKING_HOURS': return { ...s, workingHours: s.workingHours.map(wh => wh.day === a.day ? { ...wh, [a.field]: a.val } : wh) };
+    case 'INVITE_TEAM_MEMBER': return { ...s, teamMembers: [...s.teamMembers, { id: uid('TM'), name: a.name, email: a.email, role: a.role, status: 'Active' }] };
+    case 'TOGGLE_NOTIFICATION': return { ...s, notifications: s.notifications.map(n => n.event === a.event ? { ...n, [a.channel]: !n[a.channel] } : n) };
     default: return s;
   }
 }
@@ -1610,60 +1634,240 @@ const FollowUpsView = () => {
 
 /* 12. SETTINGS VIEW */
 const SettingsView = () => {
-  const { settings, vertical, dispatch, toast } = useApp();
+  const { settings, vertical, workingHours, teamMembers, notifications, dispatch, toast } = useApp();
+  const [tab, setTab] = useState('profile');
   const [biz, setBiz] = useState(settings.businessName);
+  const [industry, setIndustry] = useState(settings.industry || 'Fashion & Accessories');
   const [conf, setConf] = useState(settings.confidence);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [invName, setInvName] = useState('');
+  const [invEmail, setInvEmail] = useState('');
+  const [invRole, setInvRole] = useState('Agent');
+
+  const tabs = [
+    { id: 'profile', label: 'Business Profile', icon: I.User(15) },
+    { id: 'channels', label: 'Omnichannel Accounts', icon: I.Globe(15) },
+    { id: 'ai', label: 'AI Guardrails & Behavior', icon: I.Sparkles(15) },
+    { id: 'hours', label: 'Working Hours & Schedule', icon: I.Clock(15) },
+    { id: 'team', label: 'Team & Permissions', icon: I.User(15) },
+    { id: 'notifications', label: 'Notification Triggers', icon: I.Bell(15) },
+  ];
 
   return (
-    <div style={{ padding: '24px 32px', maxWidth: 900, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div style={{ padding: '24px 32px', maxWidth: 960, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
-        <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0 }}>Business & AI Configuration</h1>
-        <p className="muted" style={{ margin: '4px 0 0', fontSize: 13 }}>Channel connections, vertical mode, and AI behavior thresholds.</p>
+        <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>Settings & Configuration</h1>
+        <p className="muted" style={{ margin: '4px 0 0', fontSize: 13 }}>Omnichannel connections, vertical switching, AI parameters, team access, and schedules.</p>
       </div>
 
-      <div className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div className="eyebrow">Business Profile</div>
-        <div>
-          <div className="eyebrow" style={{ marginBottom: 4 }}>Store / Clinic Name</div>
-          <input className="input" value={biz} onChange={e => setBiz(e.target.value)} />
-        </div>
-        <div>
-          <div className="eyebrow" style={{ marginBottom: 4 }}>Platform Vertical Mode</div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button className={'btn ' + (vertical === 'commerce' ? 'btn-primary' : '')} style={{ flex: 1 }} onClick={() => dispatch({ type: 'SET_VERTICAL', v: 'commerce' })}>{I.Bag(16)} E-Commerce & Retail</button>
-            <button className={'btn ' + (vertical === 'appointments' ? 'btn-primary' : '')} style={{ flex: 1 }} onClick={() => dispatch({ type: 'SET_VERTICAL', v: 'appointments' })}>{I.Calendar(16)} Appointments & Clinics</button>
-          </div>
-        </div>
-        <button className="btn btn-primary" style={{ alignSelf: 'flex-start' }} onClick={() => { dispatch({ type: 'UPDATE_BIZ', payload: { businessName: biz, confidence: conf } }); toast({ kind: 'success', text: 'Settings updated successfully!' }); }}>Save Changes</button>
-      </div>
-
-      <div className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div className="eyebrow">Connected Omnichannel Accounts</div>
-        {['instagram','whatsapp','facebook','tiktok','website'].map(ch => (
-          <div key={ch} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border-subtle)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <ChannelGlyph ch={ch} size={20} />
-              <div>
-                <div style={{ fontWeight: 650, textTransform: 'capitalize' }}>{ch}</div>
-                <div className="faint" style={{ fontSize: 11 }}>{settings.channels[ch] ? 'Syncing messages & automated responses' : 'Disconnected'}</div>
-              </div>
-            </div>
-            <Toggle checked={!!settings.channels[ch]} onChange={() => dispatch({ type: 'TOGGLE_CHANNEL', ch })} />
-          </div>
+      {/* Tabs bar */}
+      <div style={{ display: 'flex', gap: 6, borderBottom: '1px solid var(--border)', paddingBottom: 8, overflowX: 'auto' }}>
+        {tabs.map(t => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={'btn ' + (tab === t.id ? 'btn-primary' : 'btn-ghost')}
+            style={{ height: 36, padding: '0 14px', fontSize: 12.5, display: 'inline-flex', alignItems: 'center', gap: 8, flexShrink: 0 }}
+          >
+            {t.icon}
+            {t.label}
+          </button>
         ))}
       </div>
 
-      <div className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div className="eyebrow">AI Copilot Guardrails</div>
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-            <span style={{ fontWeight: 600, fontSize: 13 }}>Confidence Threshold for Auto-Checkout</span>
-            <span className="mono" style={{ fontWeight: 700, color: 'var(--accent)' }}>{conf}%</span>
+      {/* Tab 1: Business Profile */}
+      {tab === 'profile' && (
+        <div className="card" style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="eyebrow">Store & Brand Identity</div>
+          <div>
+            <div className="eyebrow" style={{ marginBottom: 6 }}>Store / Clinic Name</div>
+            <input className="input" value={biz} onChange={e => setBiz(e.target.value)} />
           </div>
-          <input type="range" min="50" max="95" value={conf} onChange={e => setConf(parseInt(e.target.value))} style={{ width: '100%' }} />
-          <div className="faint" style={{ fontSize: 11, marginTop: 4 }}>Conversations with lower confidence will automatically prompt a human takeover request.</div>
+          <div>
+            <div className="eyebrow" style={{ marginBottom: 6 }}>Industry / Category</div>
+            <select className="input" value={industry} onChange={e => setIndustry(e.target.value)}>
+              <option>Fashion & Accessories</option>
+              <option>Electronics & Gadgets</option>
+              <option>Beauty & Cosmetics</option>
+              <option>Dental & Healthcare</option>
+              <option>Consulting & Coaching</option>
+            </select>
+          </div>
+          <div>
+            <div className="eyebrow" style={{ marginBottom: 6 }}>Active Vertical Mode</div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className={'btn ' + (vertical === 'commerce' ? 'btn-primary' : '')} style={{ flex: 1, height: 42 }} onClick={() => { dispatch({ type: 'SET_VERTICAL', v: 'commerce' }); toast({ kind: 'success', text: 'Switched to E-Commerce & Retail Mode' }); }}>{I.Bag(16)} E-Commerce & Retail Mode</button>
+              <button className={'btn ' + (vertical === 'appointments' ? 'btn-primary' : '')} style={{ flex: 1, height: 42 }} onClick={() => { dispatch({ type: 'SET_VERTICAL', v: 'appointments' }); toast({ kind: 'success', text: 'Switched to Appointments & Clinics Mode' }); }}>{I.Calendar(16)} Appointments & Clinics Mode</button>
+            </div>
+          </div>
+          <button className="btn btn-primary" style={{ alignSelf: 'flex-start', marginTop: 6 }} onClick={() => { dispatch({ type: 'UPDATE_BIZ', payload: { businessName: biz, industry, confidence: conf } }); toast({ kind: 'success', text: 'Business profile updated!' }); }}>Save Profile Changes</button>
         </div>
-      </div>
+      )}
+
+      {/* Tab 2: Channels */}
+      {tab === 'channels' && (
+        <div className="card" style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className="eyebrow">Connected Omnichannel Integrations</div>
+          {['instagram','whatsapp','facebook','tiktok','website'].map(ch => (
+            <div key={ch} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--border-subtle)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <ChannelGlyph ch={ch} size={24} />
+                <div>
+                  <div style={{ fontWeight: 700, textTransform: 'capitalize', fontSize: 13.5 }}>{ch}</div>
+                  <div className="faint" style={{ fontSize: 11 }}>{settings.channels[ch] ? '🟢 Active & receiving automated inquiries' : '⚪ Disconnected (Tap to connect)'}</div>
+                </div>
+              </div>
+              <Toggle checked={!!settings.channels[ch]} onChange={() => { dispatch({ type: 'TOGGLE_CHANNEL', ch }); toast({ kind: 'info', text: (settings.channels[ch] ? 'Disconnected ' : 'Connected ') + ch }); }} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Tab 3: AI Guardrails */}
+      {tab === 'ai' && (
+        <div className="card" style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="eyebrow">AI Copilot Parameters & Safeguards</div>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span style={{ fontWeight: 650, fontSize: 13 }}>Confidence Threshold for Auto-Checkout & Auto-Booking</span>
+              <span className="mono" style={{ fontWeight: 800, color: 'var(--accent)', fontSize: 15 }}>{conf}%</span>
+            </div>
+            <input type="range" min="50" max="95" value={conf} onChange={e => setConf(parseInt(e.target.value))} style={{ width: '100%' }} />
+            <div className="faint" style={{ fontSize: 11.5, marginTop: 6 }}>Inquiries where the AI confidence falls below {conf}% will automatically trigger a human takeover alert.</div>
+          </div>
+
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+            <div className="eyebrow" style={{ marginBottom: 6 }}>Supported Dialects & Language Engine</div>
+            <div className="pill pill-ink" style={{ fontSize: 12, padding: '6px 12px' }}>Egyptian Arabic (Franco & Arabic Script) + Modern Standard Arabic + English</div>
+          </div>
+
+          <button className="btn btn-primary" style={{ alignSelf: 'flex-start' }} onClick={() => { dispatch({ type: 'UPDATE_BIZ', payload: { confidence: conf } }); toast({ kind: 'success', text: 'AI parameters saved!' }); }}>Update AI Guardrails</button>
+        </div>
+      )}
+
+      {/* Tab 4: Working Hours */}
+      {tab === 'hours' && (
+        <div className="card" style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className="eyebrow">Operating Hours & Customer Support Schedule</div>
+          <p className="faint" style={{ fontSize: 11.5, margin: '-6px 0 10px' }}>AI will continue to reply 24/7, but will inform customers when human agents are out of office.</p>
+          {(workingHours || []).map(wh => (
+            <div key={wh.day} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 8, background: 'var(--surface-0)', border: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Toggle checked={wh.open} onChange={() => dispatch({ type: 'UPDATE_WORKING_HOURS', day: wh.day, field: 'open', val: !wh.open })} />
+                <span style={{ fontWeight: 650, fontSize: 13, width: 100 }}>{wh.day}</span>
+              </div>
+              {wh.open ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input type="time" value={wh.start} onChange={e => dispatch({ type: 'UPDATE_WORKING_HOURS', day: wh.day, field: 'start', val: e.target.value })} style={{ height: 30, padding: '0 8px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--surface-1)', fontSize: 12 }} />
+                  <span className="faint" style={{ fontSize: 12 }}>to</span>
+                  <input type="time" value={wh.end} onChange={e => dispatch({ type: 'UPDATE_WORKING_HOURS', day: wh.day, field: 'end', val: e.target.value })} style={{ height: 30, padding: '0 8px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--surface-1)', fontSize: 12 }} />
+                </div>
+              ) : (
+                <span className="pill pill-ink" style={{ fontSize: 11 }}>Closed</span>
+              )}
+            </div>
+          ))}
+          <button className="btn btn-primary" style={{ alignSelf: 'flex-start', marginTop: 8 }} onClick={() => toast({ kind: 'success', text: 'Working hours saved!' })}>Save Working Schedule</button>
+        </div>
+      )}
+
+      {/* Tab 5: Team Members */}
+      {tab === 'team' && (
+        <div className="card" style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div className="eyebrow">Team Members & Access Control</div>
+              <div className="faint" style={{ fontSize: 11.5, marginTop: 2 }}>Manage staff access to inbox, CRM, and order fulfillment.</div>
+            </div>
+            <button className="btn btn-primary btn-sm" onClick={() => setInviteOpen(true)}>{I.Plus(14)} Invite Member</button>
+          </div>
+
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border)', textAlign: 'left', fontSize: 11, color: 'var(--ink-400)' }}>
+                <th style={{ padding: '8px 12px' }}>NAME</th>
+                <th style={{ padding: '8px 12px' }}>EMAIL</th>
+                <th style={{ padding: '8px 12px' }}>ROLE</th>
+                <th style={{ padding: '8px 12px' }}>STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(teamMembers || []).map(m => (
+                <tr key={m.id} style={{ borderBottom: '1px solid var(--border-subtle)', fontSize: 12.5 }}>
+                  <td style={{ padding: '12px', fontWeight: 650 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Avatar name={m.name} size={26} />
+                      {m.name}
+                    </div>
+                  </td>
+                  <td style={{ padding: '12px', color: 'var(--ink-600)' }} className="mono">{m.email}</td>
+                  <td style={{ padding: '12px' }}>
+                    <span className="pill pill-ink" style={{ fontSize: 10.5 }}>{m.role}</span>
+                  </td>
+                  <td style={{ padding: '12px' }}>
+                    <span style={{ fontSize: 11.5, fontWeight: 700, color: m.status === 'Active' ? 'var(--success)' : 'var(--warning)' }}>● {m.status}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {inviteOpen && (
+            <div style={{ padding: 16, borderRadius: 8, background: 'var(--surface-0)', border: '1px solid var(--accent)', marginTop: 8, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ fontWeight: 700, fontSize: 13 }}>Invite New Team Member</div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <input className="input" placeholder="Full Name" value={invName} onChange={e => setInvName(e.target.value)} style={{ flex: 1 }} />
+                <input className="input" placeholder="Email Address" value={invEmail} onChange={e => setInvEmail(e.target.value)} style={{ flex: 1 }} />
+                <select className="input" value={invRole} onChange={e => setInvRole(e.target.value)} style={{ width: 120 }}>
+                  <option>Owner</option>
+                  <option>Agent</option>
+                  <option>Viewer</option>
+                </select>
+              </div>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button className="btn btn-ghost btn-sm" onClick={() => setInviteOpen(false)}>Cancel</button>
+                <button className="btn btn-primary btn-sm" disabled={!invName || !invEmail} onClick={() => {
+                  dispatch({ type: 'INVITE_TEAM_MEMBER', name: invName, email: invEmail, role: invRole });
+                  setInviteOpen(false);
+                  setInvName('');
+                  setInvEmail('');
+                  toast({ kind: 'success', text: 'Invitation sent to ' + invEmail });
+                }}>Send Invitation</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab 6: Notifications */}
+      {tab === 'notifications' && (
+        <div className="card" style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className="eyebrow">Real-Time Notification Preferences</div>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border)', textAlign: 'left', fontSize: 11, color: 'var(--ink-400)' }}>
+                <th style={{ padding: '8px 12px' }}>EVENT TRIGGER</th>
+                <th style={{ padding: '8px 12px', textAlign: 'center' }}>EMAIL NOTIFICATION</th>
+                <th style={{ padding: '8px 12px', textAlign: 'center' }}>IN-APP POPUP</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(notifications || []).map(n => (
+                <tr key={n.event} style={{ borderBottom: '1px solid var(--border-subtle)', fontSize: 13 }}>
+                  <td style={{ padding: '12px', fontWeight: 600 }}>{n.event}</td>
+                  <td style={{ padding: '12px', textAlign: 'center' }}>
+                    <input type="checkbox" checked={n.email} onChange={() => dispatch({ type: 'TOGGLE_NOTIFICATION', event: n.event, channel: 'email' })} style={{ cursor: 'pointer' }} />
+                  </td>
+                  <td style={{ padding: '12px', textAlign: 'center' }}>
+                    <input type="checkbox" checked={n.inApp} onChange={() => dispatch({ type: 'TOGGLE_NOTIFICATION', event: n.event, channel: 'inApp' })} style={{ cursor: 'pointer' }} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <button className="btn btn-primary" style={{ alignSelf: 'flex-start', marginTop: 8 }} onClick={() => toast({ kind: 'success', text: 'Notification preferences saved!' })}>Save Preferences</button>
+        </div>
+      )}
     </div>
   );
 };

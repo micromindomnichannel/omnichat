@@ -557,17 +557,17 @@ export const messages: Record<string, Message[]> = {
     { id: 'm1', conversationId: 'conv1', sender: 'customer', content: 'هو الشنطة دي بكام؟', timestamp: '10:00 AM', isArabic: true },
     { id: 'm2', conversationId: 'conv1', sender: 'ai', content: 'The Black Leather Bag is priced at 850 EGP. Would you like me to check availability for you?', timestamp: '10:01 AM' },
     { id: 'm3', conversationId: 'conv1', sender: 'system', content: 'AI checked product availability', timestamp: '10:01 AM' },
-    { id: 'm4', conversationId: 'conv1', sender: 'ai', content: 'Yes, it's in stock! All sizes (S, M, L) are available. Shall I create an order for you?', timestamp: '10:02 AM' },
+    { id: 'm4', conversationId: 'conv1', sender: 'ai', content: "Yes, it's in stock! All sizes (S, M, L) are available. Shall I create an order for you?", timestamp: '10:02 AM' },
     { id: 'm5', conversationId: 'conv1', sender: 'customer', content: 'Yes please, I want size M', timestamp: '10:03 AM' },
-    { id: 'm6', conversationId: 'conv1', sender: 'ai', content: 'Great choice! To complete your order, I'll need your name, phone number, and delivery address.', timestamp: '10:03 AM' }
+    { id: 'm6', conversationId: 'conv1', sender: 'ai', content: "Great choice! To complete your order, I'll need your name, phone number, and delivery address.", timestamp: '10:03 AM' }
   ],
   conv2: [
     { id: 'm1', conversationId: 'conv2', sender: 'customer', content: 'عايز أحجز كشف يوم الخميس', timestamp: '9:30 AM', isArabic: true },
-    { id: 'm2', conversationId: 'conv2', sender: 'ai', content: 'I'd be happy to help you book a dental checkup for Thursday. Let me check availability.', timestamp: '9:31 AM' },
+    { id: 'm2', conversationId: 'conv2', sender: 'ai', content: "I'd be happy to help you book a dental checkup for Thursday. Let me check availability.", timestamp: '9:31 AM' },
     { id: 'm3', conversationId: 'conv2', sender: 'system', content: 'AI checked availability calendar', timestamp: '9:31 AM' },
     { id: 'm4', conversationId: 'conv2', sender: 'ai', content: 'We have slots at 09:30, 11:00, 13:30, and 16:00. Which time works best for you?', timestamp: '9:32 AM' },
     { id: 'm5', conversationId: 'conv2', sender: 'customer', content: '11:00 would be perfect', timestamp: '9:33 AM' },
-    { id: 'm6', conversationId: 'conv2', sender: 'human', content: 'I'll help you finalize this booking. Can you confirm your full name and phone number?', timestamp: '9:35 AM', agentName: 'Agent' }
+    { id: 'm6', conversationId: 'conv2', sender: 'human', content: "I'll help you finalize this booking. Can you confirm your full name and phone number?", timestamp: '9:35 AM', agentName: 'Agent' }
   ],
   conv3: [
     { id: 'm1', conversationId: 'conv3', sender: 'customer', content: 'ممكن أعرف لو المقاس L موجود؟', timestamp: '9:15 AM', isArabic: true },
@@ -577,23 +577,23 @@ export const messages: Record<string, Message[]> = {
   ],
   conv4: [
     { id: 'm1', conversationId: 'conv4', sender: 'customer', content: 'Is this available in black?', timestamp: '9:00 AM' },
-    { id: 'm2', conversationId: 'conv4', sender: 'ai', content: 'Yes, the Classic T-Shirt is available in black. It's 320 EGP. Should I check stock?', timestamp: '9:01 AM' },
+    { id: 'm2', conversationId: 'conv4', sender: 'ai', content: "Yes, the Classic T-Shirt is available in black. It's 320 EGP. Should I check stock?", timestamp: '9:01 AM' },
     { id: 'm3', conversationId: 'conv4', sender: 'system', content: 'AI checked product availability', timestamp: '9:01 AM' },
     { id: 'm4', conversationId: 'conv4', sender: 'ai', content: 'We have 15 units in black. Would you like to proceed with an order?', timestamp: '9:02 AM' }
   ],
   conv5: [
-    { id: 'm1', conversationId: 'conv5', sender: 'customer', content: 'I'd like to order the running shoes', timestamp: '8:30 AM' },
+    { id: 'm1', conversationId: 'conv5', sender: 'customer', content: "I'd like to order the running shoes", timestamp: '8:30 AM' },
     { id: 'm2', conversationId: 'conv5', sender: 'ai', content: 'The Nike Running Shoes are 1,200 EGP. What size do you need?', timestamp: '8:31 AM' },
     { id: 'm3', conversationId: 'conv5', sender: 'customer', content: 'Size 42', timestamp: '8:32 AM' },
     { id: 'm4', conversationId: 'conv5', sender: 'system', content: 'AI checked product availability', timestamp: '8:32 AM' },
-    { id: 'm5', conversationId: 'conv5', sender: 'ai', content: 'Perfect! Size 42 is available. I'll create the order for you.', timestamp: '8:33 AM' },
+    { id: 'm5', conversationId: 'conv5', sender: 'ai', content: "Perfect! Size 42 is available. I'll create the order for you.", timestamp: '8:33 AM' },
     { id: 'm6', conversationId: 'conv5', sender: 'system', content: 'Order #1048 created successfully', timestamp: '8:34 AM' },
-    { id: 'm7', conversationId: 'conv5', sender: 'ai', content: 'Your order #1048 has been created! Total: 1,200 EGP. Cash on delivery. You'll receive a confirmation shortly.', timestamp: '8:34 AM' },
+    { id: 'm7', conversationId: 'conv5', sender: 'ai', content: "Your order #1048 has been created! Total: 1,200 EGP. Cash on delivery. You'll receive a confirmation shortly.", timestamp: '8:34 AM' },
     { id: 'm8', conversationId: 'conv5', sender: 'customer', content: 'Thank you! Order received.', timestamp: '8:35 AM' }
   ],
   conv6: [
     { id: 'm1', conversationId: 'conv6', sender: 'customer', content: 'I want to speak to a manager', timestamp: '8:15 AM' },
-    { id: 'm2', conversationId: 'conv6', sender: 'ai', content: 'I understand you'd like to speak with a manager. I'm connecting you to a human agent now.', timestamp: '8:16 AM' },
+    { id: 'm2', conversationId: 'conv6', sender: 'ai', content: "I understand you'd like to speak with a manager. I'm connecting you to a human agent now.", timestamp: '8:16 AM' },
     { id: 'm3', conversationId: 'conv6', sender: 'system', content: 'AI escalated conversation to human agent', timestamp: '8:16 AM' }
   ],
   conv7: [
@@ -618,13 +618,13 @@ export const messages: Record<string, Message[]> = {
   ],
   conv11: [
     { id: 'm1', conversationId: 'conv11', sender: 'customer', content: 'Thanks for the quick response!', timestamp: '6:30 AM' },
-    { id: 'm2', conversationId: 'conv11', sender: 'ai', content: 'You're welcome! Is there anything else I can help you with today?', timestamp: '6:31 AM' }
+    { id: 'm2', conversationId: 'conv11', sender: 'ai', content: "You're welcome! Is there anything else I can help you with today?", timestamp: '6:31 AM' }
   ],
   conv12: [
     { id: 'm1', conversationId: 'conv12', sender: 'customer', content: 'I want to buy the leather wallet', timestamp: '5:00 AM' },
     { id: 'm2', conversationId: 'conv12', sender: 'ai', content: 'The Leather Wallet is 450 EGP. Checking availability...', timestamp: '5:01 AM' },
     { id: 'm3', conversationId: 'conv12', sender: 'system', content: 'AI checked product availability', timestamp: '5:01 AM' },
-    { id: 'm4', conversationId: 'conv12', sender: 'ai', content: 'It's in stock! Shall I create the order?', timestamp: '5:02 AM' },
+    { id: 'm4', conversationId: 'conv12', sender: 'ai', content: "It's in stock! Shall I create the order?", timestamp: '5:02 AM' },
     { id: 'm5', conversationId: 'conv12', sender: 'customer', content: 'Yes', timestamp: '5:03 AM' },
     { id: 'm6', conversationId: 'conv12', sender: 'system', content: 'Order #1049 created successfully', timestamp: '5:04 AM' },
     { id: 'm7', conversationId: 'conv12', sender: 'ai', content: 'Perfect, order confirmed! Order #1049. Total: 450 EGP.', timestamp: '5:04 AM' },
@@ -1006,7 +1006,7 @@ export const followUps: FollowUp[] = [
     scheduledTime: 'Follow up in 2h',
     status: 'pending',
     vertical: 'commerce',
-    message: 'Hi! Just checking if you're still interested in the Black Leather Bag. It's still available!'
+    message: "Hi! Just checking if you're still interested in the Black Leather Bag. It's still available!"
   },
   {
     id: 'fu2',
