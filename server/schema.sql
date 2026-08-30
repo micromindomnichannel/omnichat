@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS orders (
   payment_method VARCHAR(50) DEFAULT 'COD',
   shipping_city VARCHAR(100),
   tracking_number VARCHAR(100),
+  confirmed_by_ai BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -77,7 +78,8 @@ CREATE TABLE IF NOT EXISTS products (
   category VARCHAR(100),
   sku VARCHAR(100),
   image TEXT,
-  available BOOLEAN DEFAULT true
+  available BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS services (
@@ -99,4 +101,31 @@ CREATE TABLE IF NOT EXISTS business_settings (
   ai_language VARCHAR(50) DEFAULT 'Both',
   confidence_threshold INT DEFAULT 75,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 9. Content Scheduling Across Platforms
+CREATE TABLE IF NOT EXISTS content_schedules (
+  id VARCHAR(50) PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  content_text TEXT NOT NULL,
+  media_url TEXT,
+  platforms TEXT[] NOT NULL, -- e.g. ARRAY['instagram', 'facebook', 'whatsapp', 'tiktok']
+  scheduled_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  status VARCHAR(50) DEFAULT 'scheduled', -- 'scheduled', 'published', 'failed'
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 10. Admin Executive Summary Reports (On-demand or Scheduled)
+CREATE TABLE IF NOT EXISTS summary_reports (
+  id VARCHAR(50) PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  period VARCHAR(50) DEFAULT 'weekly', -- 'daily', 'weekly', 'monthly', 'custom'
+  report_type VARCHAR(50) DEFAULT 'on_demand', -- 'on_demand', 'scheduled'
+  total_revenue NUMERIC(12,2) DEFAULT 0,
+  total_orders INT DEFAULT 0,
+  ai_resolution_rate NUMERIC(5,2) DEFAULT 0,
+  top_channel VARCHAR(50) DEFAULT 'instagram',
+  metrics_summary JSONB,
+  ai_insights TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

@@ -23,6 +23,7 @@ import { Knowledge } from './pages/Knowledge';
 import { Analytics } from './pages/Analytics';
 import { Settings } from './pages/Settings';
 import { Demo } from './pages/Demo';
+import { Scheduler } from './pages/Scheduler';
 import { Toast } from './components/shared/Toast';
 
 function App() {
@@ -81,6 +82,7 @@ function App() {
             <Route path="/products" element={<Products />} />
             <Route path="/services" element={<Services />} />
             <Route path="/automations" element={<Automations />} />
+            <Route path="/scheduler" element={<Scheduler />} />
             <Route path="/knowledge" element={<Knowledge />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/settings" element={<Settings />} />

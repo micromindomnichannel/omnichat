@@ -16,6 +16,7 @@ const navItems = [
   { id: 'appointments', label: 'Appointments', icon: Calendar, path: '/appointments', appointmentsOnly: true },
   { id: 'products', label: 'Products', icon: Package, path: '/products', commerceOnly: true },
   { id: 'services', label: 'Services', icon: Scissors, path: '/services', appointmentsOnly: true },
+  { id: 'scheduler', label: 'Scheduler', icon: Calendar, path: '/scheduler' },
   { id: 'automations', label: 'Automations', icon: Bot, path: '/automations' },
   { id: 'knowledge', label: 'Knowledge', icon: BookOpen, path: '/knowledge' },
   { id: 'analytics', label: 'Analytics', icon: BarChart3, path: '/analytics' },
