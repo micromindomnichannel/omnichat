@@ -4,14 +4,14 @@ import { useVertical } from '../state/verticalContext';
 import { useStore } from '../state/store';
 import { StatCard } from '../components/shared/StatCard';
 import { StatusBadge } from '../components/shared/StatusBadge';
-import { Tabs } from '../components/shared/Tabs';
+import { OrbitLogo } from '../components/shared/OrbitLogo';
 import { EmptyState } from '../components/shared/EmptyState';
 import {
-  LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import {
   MessageSquare, TrendingUp, CheckCircle, AlertTriangle, Bot, ArrowRight,
-  ShoppingBag, Calendar, Play
+  ShoppingBag, Calendar, Play, Zap, Layers, Sparkles
 } from 'lucide-react';
 
 export function Overview() {
@@ -21,27 +21,27 @@ export function Overview() {
   const [chartPeriod, setChartPeriod] = useState<'7d' | '30d'>('7d');
 
   const commerceStats = [
-    { label: 'Conversations', value: 1248, trend: 12.5 },
-    { label: 'New Leads', value: 184, trend: 8.2 },
-    { label: 'Orders', value: 67, trend: -3.1 },
+    { label: 'Total Inquiries', value: 1248, trend: 12.5 },
+    { label: 'Qualified Leads', value: 184, trend: 8.2 },
+    { label: 'Completed Orders', value: 67, trend: -3.1 },
     { label: 'Conversion Rate', value: '18.4%', trend: 5.7 },
   ];
 
   const commerceSecondary = [
     { label: 'Revenue (EGP)', value: '45,200', trend: 15.3 },
-    { label: 'AI Resolution Rate', value: '76.2%', trend: 4.1 },
+    { label: 'ORBIT AI Resolution', value: '76.2%', trend: 4.1 },
   ];
 
   const appointmentStats = [
-    { label: 'Conversations', value: 436, trend: 18.2 },
-    { label: 'New Leads', value: 82, trend: 12.5 },
+    { label: 'Total Inquiries', value: 436, trend: 18.2 },
+    { label: 'Qualified Patients', value: 82, trend: 12.5 },
     { label: 'Appointments Booked', value: 31, trend: 8.7 },
     { label: 'Booking Rate', value: '22.5%', trend: 6.3 },
   ];
 
   const appointmentSecondary = [
-    { label: 'No-Shows', value: 2, trend: -15.0 },
-    { label: 'AI Resolution Rate', value: '82.1%', trend: 5.2 },
+    { label: 'No-Shows Rate', value: '2.1%', trend: -15.0 },
+    { label: 'ORBIT AI Resolution', value: '82.1%', trend: 5.2 },
   ];
 
   const stats = isCommerce ? commerceStats : appointmentStats;
@@ -71,16 +71,16 @@ export function Overview() {
 
   const aiActivity = isCommerce
     ? [
-        { label: 'Answered 238 questions', icon: CheckCircle, color: 'var(--success)' },
-        { label: 'Qualified 74 leads', icon: TrendingUp, color: 'var(--success)' },
-        { label: 'Created 31 orders', icon: ShoppingBag, color: 'var(--success)' },
-        { label: 'Escalated 9 conversations', icon: AlertTriangle, color: 'var(--warning)' },
+        { label: 'Answered 238 customer queries', icon: CheckCircle, color: '#52D8A4' },
+        { label: 'Qualified 74 purchase leads', icon: TrendingUp, color: '#52D8A4' },
+        { label: 'Created 31 COD orders', icon: ShoppingBag, color: 'var(--signal-orange)' },
+        { label: 'Escalated 9 queries to human agent', icon: AlertTriangle, color: '#D94C32' },
       ]
     : [
-        { label: 'Answered 146 questions', icon: CheckCircle, color: 'var(--success)' },
-        { label: 'Qualified 58 leads', icon: TrendingUp, color: 'var(--success)' },
-        { label: 'Booked 24 appointments', icon: Calendar, color: 'var(--success)' },
-        { label: 'Escalated 6 conversations', icon: AlertTriangle, color: 'var(--warning)' },
+        { label: 'Answered 146 patient queries', icon: CheckCircle, color: '#52D8A4' },
+        { label: 'Qualified 58 clinic leads', icon: TrendingUp, color: '#52D8A4' },
+        { label: 'Booked 24 consultation slots', icon: Calendar, color: 'var(--signal-orange)' },
+        { label: 'Escalated 6 queries to clinic receptionist', icon: AlertTriangle, color: '#D94C32' },
       ];
 
   const greeting = () => {
@@ -92,31 +92,88 @@ export function Overview() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {/* Greeting Row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <h2 style={{ fontSize: 22, fontWeight: 650, color: 'var(--ink-900)' }}>
-            {greeting()}, {state.businessName}
-          </h2>
-          <p style={{ fontSize: 13, color: 'var(--ink-600)', marginTop: 4 }}>
-            Here's what's happening today.
-          </p>
+      {/* Brand Header Banner */}
+      <div className="card" style={{
+        padding: '24px 28px',
+        background: 'linear-gradient(135deg, var(--midnight-ink) 0%, #292929 100%)',
+        color: 'var(--cloud-white)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: 16
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <OrbitLogo variant="icon" size={44} colorMode="dark" />
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--cloud-white)' }}>
+                {greeting()}, {state.businessName}
+              </h2>
+              <span className="orbit-badge-mint" style={{ fontSize: 11 }}>
+                Signals ➔ Actions Engine Active
+              </span>
+            </div>
+            <p style={{ fontSize: 13, color: 'var(--stone-gray)', marginTop: 4 }}>
+              Active Mode: <strong style={{ color: 'var(--signal-orange)' }}>{isCommerce ? 'E-Commerce & Retail' : 'Appointments & Clinics'}</strong> · All channels live & syncing
+            </p>
+          </div>
         </div>
+
         <div style={{ display: 'flex', gap: 12 }}>
           <button
             onClick={() => navigate('/demo')}
             className="btn btn-outline"
+            style={{ color: 'white', borderColor: 'var(--graphite)', background: 'rgba(255,255,255,0.05)' }}
           >
-            <Play size={16} /> See SELLER in action
+            <Play size={15} /> Try Demo Flow
           </button>
           <button
             onClick={() => navigate('/inbox')}
             className="btn btn-primary"
-            style={{ background: accentColor, height: 40 }}
+            style={{ background: 'var(--signal-orange)', height: 40 }}
           >
-            Open Inbox
+            Open Omnichannel Inbox <ArrowRight size={16} />
           </button>
         </div>
+      </div>
+
+      {/* Core Principle Concept Box */}
+      <div style={{
+        background: 'var(--warm-sand)',
+        borderRadius: 14,
+        padding: '16px 20px',
+        border: '1px solid var(--border)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 16,
+        flexWrap: 'wrap'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 8, background: 'var(--signal-orange)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white'
+          }}>
+            <Zap size={18} />
+          </div>
+          <div>
+            <div className="eyebrow" style={{ color: 'var(--burnt-coral)' }}>ORBIT Core Principle</div>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--midnight-ink)' }}>
+              Many Signals ➔ One Intelligent Flow
+            </div>
+          </div>
+        </div>
+        <div style={{ fontSize: 12.5, color: 'var(--graphite)', maxWidth: 500 }}>
+          Inbound chats across Instagram, WhatsApp & Facebook are converged by ORBIT into automated orders, calendar bookings & support escalations.
+        </div>
+        <button
+          onClick={() => navigate('/')}
+          className="btn btn-ghost btn-sm"
+          style={{ color: 'var(--signal-orange)', fontWeight: 700 }}
+        >
+          View Brand Concept Guide <ArrowRight size={14} />
+        </button>
       </div>
 
       {/* Stats Grid */}
@@ -146,14 +203,17 @@ export function Overview() {
         {/* Conversation Performance */}
         <div className="card" style={{ padding: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <h3 style={{ fontSize: 14, fontWeight: 650, color: 'var(--ink-900)' }}>Conversation Performance</h3>
+            <div>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--midnight-ink)' }}>Signal Resolution Performance</h3>
+              <p className="faint" style={{ fontSize: 11 }}>Total customer inquiries vs. AI automated resolutions</p>
+            </div>
             <div style={{ display: 'flex', gap: 4 }}>
               <button
                 onClick={() => setChartPeriod('7d')}
                 style={{
                   padding: '4px 10px', borderRadius: 4, border: '1px solid var(--border)',
                   fontSize: 11, fontWeight: 600, cursor: 'pointer',
-                  background: chartPeriod === '7d' ? accentColor : 'transparent',
+                  background: chartPeriod === '7d' ? 'var(--signal-orange)' : 'transparent',
                   color: chartPeriod === '7d' ? 'white' : 'var(--ink-600)'
                 }}
               >
@@ -164,7 +224,7 @@ export function Overview() {
                 style={{
                   padding: '4px 10px', borderRadius: 4, border: '1px solid var(--border)',
                   fontSize: 11, fontWeight: 600, cursor: 'pointer',
-                  background: chartPeriod === '30d' ? accentColor : 'transparent',
+                  background: chartPeriod === '30d' ? 'var(--signal-orange)' : 'transparent',
                   color: chartPeriod === '30d' ? 'white' : 'var(--ink-600)'
                 }}
               >
@@ -176,26 +236,26 @@ export function Overview() {
             <AreaChart data={chartData}>
               <defs>
                 <linearGradient id="colorConv" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={accentColor} stopOpacity={0.1}/>
-                  <stop offset="95%" stopColor={accentColor} stopOpacity={0}/>
+                  <stop offset="5%" stopColor="var(--signal-orange)" stopOpacity={0.15}/>
+                  <stop offset="95%" stopColor="var(--signal-orange)" stopOpacity={0}/>
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="day" tick={{ fontSize: 11, fill: 'var(--ink-400)' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: 'var(--ink-400)' }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="day" tick={{ fontSize: 11, fill: 'var(--stone-gray)' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: 'var(--stone-gray)' }} axisLine={false} tickLine={false} />
               <Tooltip
                 contentStyle={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
               />
-              <Area type="monotone" dataKey="conversations" stroke={accentColor} fillOpacity={1} fill="url(#colorConv)" strokeWidth={2} />
-              <Area type="monotone" dataKey="aiResolved" stroke={accentColor} fill="transparent" strokeWidth={2} strokeDasharray="4 4" opacity={0.5} />
+              <Area type="monotone" dataKey="conversations" stroke="var(--signal-orange)" fillOpacity={1} fill="url(#colorConv)" strokeWidth={2.5} />
+              <Area type="monotone" dataKey="aiResolved" stroke="#52D8A4" fill="transparent" strokeWidth={2} strokeDasharray="4 4" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
         {/* Recent Orders / Today's Appointments */}
         <div className="card" style={{ padding: 20 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 650, color: 'var(--ink-900)', marginBottom: 16 }}>
-            {isCommerce ? 'Recent Orders' : "Today's Appointments"}
+          <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 16 }}>
+            {isCommerce ? 'Recent Automated Orders' : "Today's Clinic Appointments"}
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {isCommerce ? (
@@ -207,15 +267,15 @@ export function Overview() {
                     padding: '10px 0', borderBottom: '1px solid var(--border)'
                   }}>
                     <div>
-                      <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-900)' }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--midnight-ink)' }}>
                         #{order.id}
                       </p>
-                      <p style={{ fontSize: 12, color: 'var(--ink-400)' }}>
+                      <p style={{ fontSize: 12, color: 'var(--stone-gray)' }}>
                         {customer?.name} · {order.productName}
                       </p>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <p style={{ fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
                         {order.total.toLocaleString()} EGP
                       </p>
                       <StatusBadge status={order.status} size="sm" />
@@ -232,15 +292,15 @@ export function Overview() {
                     padding: '10px 0', borderBottom: '1px solid var(--border)'
                   }}>
                     <div>
-                      <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-900)' }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--midnight-ink)' }}>
                         {appt.time}
                       </p>
-                      <p style={{ fontSize: 12, color: 'var(--ink-400)' }}>
+                      <p style={{ fontSize: 12, color: 'var(--stone-gray)' }}>
                         {appt.serviceName}
                       </p>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-900)' }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--midnight-ink)' }}>
                         {customer?.name}
                       </p>
                       <StatusBadge status={appt.status} size="sm" />
@@ -253,20 +313,20 @@ export function Overview() {
           <button
             onClick={() => navigate(isCommerce ? '/orders' : '/appointments')}
             style={{
-              marginTop: 12, fontSize: 13, fontWeight: 600, color: accentColor,
+              marginTop: 12, fontSize: 13, fontWeight: 700, color: 'var(--signal-orange)',
               background: 'none', border: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center', gap: 4
             }}
           >
-            {isCommerce ? 'View all orders' : 'View schedule'} <ArrowRight size={14} />
+            {isCommerce ? 'View all orders' : 'View full agenda'} <ArrowRight size={14} />
           </button>
         </div>
       </div>
 
       {/* AI Activity */}
       <div className="card" style={{ padding: 20 }}>
-        <h3 style={{ fontSize: 14, fontWeight: 650, color: 'var(--ink-900)', marginBottom: 16 }}>
-          AI Activity (Today)
+        <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 16 }}>
+          ORBIT Engine Automated Actions (Today)
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
           {aiActivity.map((activity, i) => {
@@ -274,10 +334,10 @@ export function Overview() {
             return (
               <div key={i} style={{
                 display: 'flex', alignItems: 'center', gap: 12,
-                padding: 16, borderRadius: 8, background: 'var(--surface-0)'
+                padding: 16, borderRadius: 8, background: 'var(--surface-0)', border: '1px solid var(--border)'
               }}>
                 <Icon size={20} color={activity.color} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-900)' }}>
+                <span style={{ fontSize: 13, fontWeight: 650, color: 'var(--midnight-ink)' }}>
                   {activity.label}
                 </span>
               </div>

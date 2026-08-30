@@ -1,50 +1,71 @@
-/* Design Tokens */
+/* ORBIT Brand Guidelines - Design Tokens */
 :root {
-  /* Surfaces */
-  --surface-0: #F7F8FA;
+  /* ORBIT Primary Color Palette */
+  --midnight-ink: #171717;
+  --signal-orange: #FF5A36;
+  --signal-orange-hover: #E54926;
+  --signal-orange-subtle: rgba(255, 90, 54, 0.08);
+  --signal-orange-glow: rgba(255, 90, 54, 0.2);
+
+  /* ORBIT Secondary Colors */
+  --warm-sand: #F3E8D6;
+  --warm-sand-light: #FBF7F0;
+  --burnt-coral: #D94C32;
+
+  /* Supporting Neutrals */
+  --graphite: #343434;
+  --stone-gray: #A8A29E;
+  --cloud-white: #FAFAF9;
+  --surface-0: #FAFAF9;
   --surface-1: #FFFFFF;
-  --border: #E4E7EC;
+  --surface-2: #F3E8D6;
+  --border: #E5E5E3;
+  --border-dark: #343434;
 
-  /* Ink */
-  --ink-900: #111417;
-  --ink-600: #5B6470;
-  --ink-400: #9AA2AC;
+  /* Ink / Typography */
+  --ink-900: #171717;
+  --ink-600: #343434;
+  --ink-400: #A8A29E;
 
-  /* Brand */
-  --brand: #2F5CFF;
-  --brand-appt: #0F9D77;
+  /* Core Brand Tokens */
+  --brand: #FF5A36;
+  --brand-hover: #E54926;
+  --brand-appt: #52D8A4;
 
-  /* Status */
-  --success: #12875A;
-  --success-bg: #E7F6EF;
-  --warning: #B25E09;
-  --warning-bg: #FDF1E1;
-  --danger: #C22E2E;
-  --danger-bg: #FBEAEA;
-  --info: #2F5CFF;
-  --info-bg: #EAF0FF;
+  /* Optional Digital Accent */
+  --mint-signal: #52D8A4;
+  --success: #52D8A4;
+  --success-bg: rgba(82, 216, 164, 0.12);
+  --warning: #D94C32;
+  --warning-bg: rgba(217, 76, 50, 0.1);
+  --danger: #D94C32;
+  --danger-bg: rgba(217, 76, 50, 0.1);
+  --info: #FF5A36;
+  --info-bg: rgba(255, 90, 54, 0.08);
 
   /* Channel colors */
   --instagram: #E4405F;
   --whatsapp: #25D366;
   --facebook: #1877F2;
-  --tiktok: #000000;
-  --website: #6B7280;
+  --tiktok: #171717;
+  --website: #343434;
 
   /* Typography */
-  --font-ui: Inter, "SF Pro Text", -apple-system, sans-serif;
+  --font-ui: Inter, "SF Pro Text", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: "SF Mono", "JetBrains Mono", monospace;
 
-  /* Radius */
+  /* Layout & Radius */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
+  --radius-xl: 20px;
 
   /* Shadows */
-  --shadow-card: 0 1px 3px rgba(16, 24, 40, 0.04);
+  --shadow-card: 0 2px 8px rgba(23, 23, 23, 0.04);
+  --shadow-hover: 0 8px 24px rgba(255, 90, 54, 0.12);
+  --shadow-modal: 0 16px 40px rgba(23, 23, 23, 0.16);
 
-  /* Layout */
-  --sidebar-width: 232px;
+  --sidebar-width: 240px;
   --sidebar-collapsed: 72px;
   --topbar-height: 64px;
 }

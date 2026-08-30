@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useVertical } from '../../state/verticalContext';
 import { useStore } from '../../state/store';
+import { OrbitLogo } from '../../components/shared/OrbitLogo';
 import {
   LayoutDashboard, MessageSquare, Users, ShoppingBag, Calendar, Package, Scissors,
-  Bot, BookOpen, BarChart3, Settings, HelpCircle, ChevronDown, Menu, X
+  Bot, BookOpen, BarChart3, Settings, HelpCircle, ChevronDown, Menu, X, Home, ExternalLink
 } from 'lucide-react';
 
 const navItems = [
@@ -21,12 +22,12 @@ const navItems = [
 ];
 
 const bottomItems = [
+  { id: 'landing', label: 'Landing Page', icon: Home, path: '/' },
   { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
-  { id: 'help', label: 'Help', icon: HelpCircle, path: '#' },
 ];
 
 export function Sidebar() {
-  const { vertical, setVertical, accentColor, accentBg } = useVertical();
+  const { vertical, setVertical } = useVertical();
   const { state } = useStore();
   const location = useLocation();
   const navigate = useNavigate();
@@ -53,30 +54,42 @@ export function Sidebar() {
   });
 
   const isActive = (path: string) => location.pathname === path;
-
-  const sidebarWidth = collapsed ? 72 : 232;
+  const sidebarWidth = collapsed ? 72 : 240;
 
   const sidebarContent = (
     <>
-      {/* Wordmark */}
-      <div style={{ padding: '20px 16px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-        {!collapsed && (
-          <span style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--ink-900)' }}>
-            SELLER
-          </span>
-        )}
-        {collapsed && (
-          <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--ink-900)', margin: '0 auto' }}>S</span>
+      {/* ORBIT Brand Logo Header */}
+      <div style={{
+        padding: '20px 16px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: collapsed ? 'center' : 'space-between'
+      }}>
+        {!collapsed ? (
+          <OrbitLogo
+            variant="horizontal"
+            size={28}
+            colorMode="default"
+            showTagline={false}
+            onClick={() => navigate('/')}
+          />
+        ) : (
+          <OrbitLogo
+            variant="icon"
+            size={36}
+            colorMode="default"
+            onClick={() => navigate('/')}
+          />
         )}
       </div>
 
       {/* Vertical Switcher */}
-      <div style={{ padding: '0 16px 16px', position: 'relative' }}>
+      <div style={{ padding: '0 14px 16px', position: 'relative' }}>
         <button
           onClick={() => setShowSwitcher(!showSwitcher)}
           style={{
             width: '100%',
-            height: 36,
+            height: 38,
             borderRadius: 8,
             background: 'var(--surface-0)',
             border: '1px solid var(--border)',
@@ -85,71 +98,72 @@ export function Sidebar() {
             justifyContent: collapsed ? 'center' : 'space-between',
             padding: collapsed ? 0 : '0 12px',
             cursor: 'pointer',
-            gap: 8
+            gap: 8,
+            transition: 'all 0.15s ease'
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{
-              width: 18, height: 18, borderRadius: 4,
-              background: vertical === 'commerce' ? '#2F5CFF' : '#0F9D77',
+              width: 20, height: 20, borderRadius: 5,
+              background: vertical === 'commerce' ? 'var(--signal-orange)' : 'var(--mint-signal)',
               display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}>
               {vertical === 'commerce' ? <Package size={12} color="white" /> : <Calendar size={12} color="white" />}
             </div>
             {!collapsed && (
-              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-900)' }}>
-                {vertical === 'commerce' ? 'Commerce' : 'Appointments'}
+              <span style={{ fontSize: 13, fontWeight: 650, color: 'var(--midnight-ink)' }}>
+                {vertical === 'commerce' ? 'Commerce Mode' : 'Appointments Mode'}
               </span>
             )}
           </div>
-          {!collapsed && <ChevronDown size={14} color="var(--ink-400)" />}
+          {!collapsed && <ChevronDown size={14} color="var(--stone-gray)" />}
         </button>
 
         {showSwitcher && (
           <div style={{
             position: 'absolute',
             top: '100%',
-            left: 16,
-            right: 16,
+            left: 14,
+            right: 14,
             marginTop: 4,
             background: 'var(--surface-1)',
             border: '1px solid var(--border)',
             borderRadius: 8,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
             zIndex: 100,
             padding: 4
           }}>
             <button
               onClick={() => { setVertical('commerce'); setShowSwitcher(false); }}
               style={{
-                width: '100%', padding: '8px 12px', borderRadius: 6, border: 'none',
-                background: vertical === 'commerce' ? accentBg : 'transparent',
+                width: '100%', padding: '9px 12px', borderRadius: 6, border: 'none',
+                background: vertical === 'commerce' ? 'var(--signal-orange-subtle)' : 'transparent',
                 display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
-                color: vertical === 'commerce' ? accentColor : 'var(--ink-600)',
-                fontSize: 13, fontWeight: 600
+                color: vertical === 'commerce' ? 'var(--signal-orange)' : 'var(--ink-600)',
+                fontSize: 13, fontWeight: 650
               }}
             >
-              <Package size={16} /> Commerce
+              <Package size={16} /> E-Commerce Mode
             </button>
             <button
               onClick={() => { setVertical('appointments'); setShowSwitcher(false); }}
               style={{
-                width: '100%', padding: '8px 12px', borderRadius: 6, border: 'none',
-                background: vertical === 'appointments' ? accentBg : 'transparent',
+                width: '100%', padding: '9px 12px', borderRadius: 6, border: 'none',
+                background: vertical === 'appointments' ? 'rgba(82, 216, 164, 0.15)' : 'transparent',
                 display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
-                color: vertical === 'appointments' ? '#0F9D77' : 'var(--ink-600)',
-                fontSize: 13, fontWeight: 600
+                color: vertical === 'appointments' ? '#0F8357' : 'var(--ink-600)',
+                fontSize: 13, fontWeight: 650
               }}
             >
-              <Calendar size={16} /> Appointments
+              <Calendar size={16} /> Appointments Mode
             </button>
           </div>
         )}
       </div>
 
       {/* Nav Items */}
-      <nav style={{ flex: 1, overflow: 'auto', padding: '0 12px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <nav style={{ flex: 1, overflowY: 'auto', padding: '0 10px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           {filteredNav.map(item => {
             const active = isActive(item.path);
             const Icon = item.icon;
@@ -160,18 +174,18 @@ export function Sidebar() {
                 style={{
                   width: '100%',
                   height: 40,
-                  borderRadius: 6,
+                  borderRadius: 8,
                   border: 'none',
-                  background: active ? accentBg : 'transparent',
-                  color: active ? accentColor : 'var(--ink-600)',
+                  background: active ? 'var(--signal-orange-subtle)' : 'transparent',
+                  color: active ? 'var(--signal-orange)' : 'var(--ink-600)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: collapsed ? 'center' : 'flex-start',
                   padding: collapsed ? 0 : '0 12px',
                   gap: 12,
                   cursor: 'pointer',
-                  fontSize: 13,
-                  fontWeight: 500,
+                  fontSize: 13.5,
+                  fontWeight: active ? 700 : 500,
                   fontFamily: 'var(--font-ui)',
                   position: 'relative',
                   transition: 'all 0.15s ease'
@@ -182,17 +196,17 @@ export function Sidebar() {
                 {active && (
                   <div style={{
                     position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)',
-                    width: 3, height: 20, background: accentColor, borderRadius: '0 2px 2px 0'
+                    width: 3.5, height: 22, background: 'var(--signal-orange)', borderRadius: '0 4px 4px 0'
                   }} />
                 )}
-                <Icon size={18} strokeWidth={1.5} />
+                <Icon size={18} strokeWidth={active ? 2 : 1.6} color={active ? 'var(--signal-orange)' : undefined} />
                 {!collapsed && (
                   <>
                     <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>
                     {item.badge === 'unread' && unreadCount > 0 && (
                       <span style={{
-                        background: '#C22E2E', color: 'white', fontSize: 11, fontWeight: 700,
-                        padding: '2px 6px', borderRadius: 10, minWidth: 18, textAlign: 'center'
+                        background: 'var(--signal-orange)', color: 'white', fontSize: 11, fontWeight: 700,
+                        padding: '2px 7px', borderRadius: 10, minWidth: 18, textAlign: 'center'
                       }}>
                         {unreadCount}
                       </span>
@@ -206,26 +220,28 @@ export function Sidebar() {
       </nav>
 
       {/* Bottom Items */}
-      <div style={{ padding: '12px', borderTop: '1px solid var(--border)' }}>
+      <div style={{ padding: '12px 10px', borderTop: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {bottomItems.map(item => {
             const Icon = item.icon;
+            const active = isActive(item.path);
             return (
               <button
                 key={item.id}
-                onClick={() => item.path !== '#' && navigate(item.path)}
+                onClick={() => navigate(item.path)}
                 style={{
-                  width: '100%', height: 40, borderRadius: 6, border: 'none',
-                  background: 'transparent', color: 'var(--ink-600)',
+                  width: '100%', height: 38, borderRadius: 8, border: 'none',
+                  background: active ? 'var(--surface-0)' : 'transparent',
+                  color: active ? 'var(--midnight-ink)' : 'var(--ink-600)',
                   display: 'flex', alignItems: 'center',
                   justifyContent: collapsed ? 'center' : 'flex-start',
                   padding: collapsed ? 0 : '0 12px', gap: 12, cursor: 'pointer',
-                  fontSize: 13, fontWeight: 500, fontFamily: 'var(--font-ui)'
+                  fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-ui)'
                 }}
                 onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-0)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                onMouseLeave={e => e.currentTarget.style.background = active ? 'var(--surface-0)' : 'transparent'}
               >
-                <Icon size={18} strokeWidth={1.5} />
+                <Icon size={18} strokeWidth={1.5} color="var(--ink-600)" />
                 {!collapsed && <span>{item.label}</span>}
               </button>
             );
@@ -241,11 +257,11 @@ export function Sidebar() {
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
           style={{
-            position: 'fixed', top: 16, left: 16, zIndex: 200,
+            position: 'fixed', top: 14, left: 16, zIndex: 200,
             width: 40, height: 40, borderRadius: 8,
             background: 'var(--surface-1)', border: '1px solid var(--border)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer'
+            cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
           }}
         >
           {mobileOpen ? <X size={20} /> : <Menu size={20} />}
@@ -253,12 +269,12 @@ export function Sidebar() {
         {mobileOpen && (
           <div style={{
             position: 'fixed', inset: 0, zIndex: 150,
-            background: 'rgba(0,0,0,0.3)'
+            background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)'
           }} onClick={() => setMobileOpen(false)}>
             <div
               style={{
                 position: 'absolute', left: 0, top: 0, bottom: 0,
-                width: 232, background: 'var(--surface-1)',
+                width: 240, background: 'var(--surface-1)',
                 borderRight: '1px solid var(--border)',
                 display: 'flex', flexDirection: 'column'
               }}

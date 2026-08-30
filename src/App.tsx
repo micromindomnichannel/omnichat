@@ -10,6 +10,7 @@ import { ConnectChannels } from './app/onboarding/ConnectChannels';
 import { KnowledgeSetup } from './app/onboarding/KnowledgeSetup';
 import { AIReview } from './app/onboarding/AIReview';
 import { Finish } from './app/onboarding/Finish';
+import { Landing } from './pages/Landing';
 import { Overview } from './pages/Overview';
 import { Inbox } from './pages/Inbox';
 import { Customers } from './pages/Customers';
@@ -32,14 +33,13 @@ function App() {
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [onboardingData, setOnboardingData] = useState<any>({});
 
-  useEffect(() => {
-    if (!state.onboardingComplete && location.pathname !== '/onboarding') {
-      navigate('/onboarding');
-    }
-  }, [state.onboardingComplete, location.pathname, navigate]);
-
+  const isLanding = location.pathname === '/' || location.pathname === '/landing';
   const isOnboarding = location.pathname === '/onboarding';
   const isVerticalSelect = location.pathname === '/select-vertical';
+
+  if (isLanding) {
+    return <Landing />;
+  }
 
   if (isVerticalSelect) {
     return <VerticalSelect />;
