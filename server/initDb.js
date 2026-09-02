@@ -39,7 +39,7 @@ async function initializeDatabase() {
   // Seed default business setting if not exists
   await pool.query(`
     INSERT INTO business_settings (id, business_name, industry, description, ai_enabled, ai_tone, ai_language, confidence_threshold)
-    VALUES (1, 'ORBIT Store & Clinic', 'Retail & Healthcare', 'ORBIT Powered Omnichannel Business Platform', true, 'Professional', 'Both', 75)
+    VALUES (1, 'ORBIT Store & Clinic', 'Retail & Healthcare', 'ORBIT Powered Omnichannel Business Platform', true, 'Friendly', 'Both', 70)
     ON CONFLICT (id) DO NOTHING;
   `);
 
