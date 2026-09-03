@@ -31,6 +31,7 @@ export interface Message {
   timestamp: string;
   agentName?: string;
   isArabic?: boolean;
+  mediaUrl?: string;
 }
 
 export interface Conversation {
@@ -68,6 +69,7 @@ export interface Service {
   duration: number;
   category: string;
   description: string;
+  image?: string;
   availability: { day: string; start: string; end: string; available: boolean }[];
 }
 

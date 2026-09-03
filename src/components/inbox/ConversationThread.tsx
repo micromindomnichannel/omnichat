@@ -2,22 +2,29 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../../state/store';
 import { useVertical } from '../../state/verticalContext';
 import { ChannelIcon } from '../../components/shared/ChannelIcon';
-import { Send, User, Bot, Loader2 } from 'lucide-react';
+import { Send, User, Bot, Loader2, Image as ImageIcon, Sparkles } from 'lucide-react';
 
 interface Props {
   conversationId: string;
 }
 
 export function ConversationThread({ conversationId }: Props) {
-  const { state, dispatch } = useStore();
+  const { state, dispatch, showToast } = useStore();
   const { accentColor, accentBg } = useVertical();
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [showPhotoPicker, setShowPhotoPicker] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const conversation = state.conversations.find(c => c.id === conversationId);
   const customer = state.customers.find(c => c.id === conversation?.customerId);
   const threadMessages = state.messages[conversationId] || [];
+
+  // Gather catalog photos from products and services
+  const catalogPhotos = [
+    ...state.products.map(p => ({ title: p.name, type: 'Product', url: p.image || 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&auto=format&fit=crop' })),
+    ...state.services.map(s => ({ title: s.name, type: 'Service', url: s.image || 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=500&auto=format&fit=crop' }))
+  ];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -51,12 +58,29 @@ export function ConversationThread({ conversationId }: Props) {
           id: `m-${Date.now() + 1}`,
           conversationId,
           sender: 'ai',
-          content: "Thank you for your message. I'll help you with that right away.",
+          content: "Here is the pre-loaded photo you requested! Let me know if you need any other details.",
+          mediaUrl: catalogPhotos[0]?.url || 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&auto=format&fit=crop',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
         dispatch({ type: 'ADD_MESSAGE', conversationId, message: aiReply });
       }, 1200);
     }
+  };
+
+  const handleSendPhoto = (photoUrl: string, title: string) => {
+    const photoMsg: any = {
+      id: `m-${Date.now()}`,
+      conversationId,
+      sender: conversation?.status === 'ai_handling' ? 'ai' : 'human',
+      content: `📸 Attached photo for ${title}:`,
+      mediaUrl: photoUrl,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      agentName: conversation?.status === 'human' ? 'You' : undefined
+    };
+
+    dispatch({ type: 'ADD_MESSAGE', conversationId, message: photoMsg });
+    setShowPhotoPicker(false);
+    showToast(`Pre-loaded photo for "${title}" sent!`, 'success');
   };
 
   const handleTakeover = () => {
@@ -108,8 +132,8 @@ export function ConversationThread({ conversationId }: Props) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{
             padding: '4px 10px', borderRadius: 4,
-            background: isAIHandling ? accentBg : 'var(--ink-900)',
-            color: isAIHandling ? accentColor : 'white',
+            background: isAIHandling ? 'var(--signal-orange-subtle)' : 'var(--ink-900)',
+            color: isAIHandling ? 'var(--signal-orange)' : 'white',
             fontSize: 11, fontWeight: 600
           }}>
             {isAIHandling ? 'AI Handling' : 'Human'}
@@ -167,10 +191,10 @@ export function ConversationThread({ conversationId }: Props) {
                     {isAI && (
                       <span style={{
                         fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
-                        letterSpacing: '0.06em', color: accentColor,
-                        background: accentBg, padding: '2px 6px', borderRadius: 4
+                        letterSpacing: '0.06em', color: 'var(--signal-orange)',
+                        background: 'var(--signal-orange-subtle)', padding: '2px 6px', borderRadius: 4
                       }}>
-                        AI
+                        AI Assistant
                       </span>
                     )}
                     {isHuman && (
@@ -185,8 +209,8 @@ export function ConversationThread({ conversationId }: Props) {
                 )}
                 <div style={{
                   padding: '10px 14px', borderRadius: 12,
-                  background: isCustomer ? 'var(--surface-1)' : isAI ? accentBg : 'var(--ink-900)',
-                  color: isCustomer ? 'var(--ink-900)' : isAI ? 'var(--ink-900)' : 'white',
+                  background: isCustomer ? 'var(--surface-1)' : isAI ? 'var(--signal-orange-subtle)' : 'var(--ink-900)',
+                  color: isCustomer ? 'var(--ink-900)' : isAI ? 'var(--midnight-ink)' : 'white',
                   border: isCustomer ? '1px solid var(--border)' : 'none',
                   borderBottomLeftRadius: isCustomer ? 4 : 12,
                   borderBottomRightRadius: isCustomer ? 12 : 4,
@@ -195,7 +219,13 @@ export function ConversationThread({ conversationId }: Props) {
                   direction: msg.isArabic ? 'rtl' : 'ltr',
                   textAlign: msg.isArabic ? 'right' : 'left'
                 }}>
-                  {msg.content}
+                  <div>{msg.content}</div>
+
+                  {msg.mediaUrl && (
+                    <div style={{ marginTop: 8, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border)', maxWidth: 260 }}>
+                      <img src={msg.mediaUrl} alt="Attached catalog photo" style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }} />
+                    </div>
+                  )}
                 </div>
                 <p style={{
                   fontSize: 10, color: 'var(--ink-400)', marginTop: 2,
@@ -205,16 +235,6 @@ export function ConversationThread({ conversationId }: Props) {
                   {msg.timestamp}
                 </p>
               </div>
-              {isHuman && (
-                <div style={{
-                  width: 28, height: 28, borderRadius: '50%',
-                  background: 'var(--ink-900)', color: 'white',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 10, fontWeight: 700, marginTop: 4
-                }}>
-                  Y
-                </div>
-              )}
             </div>
           );
         })}
@@ -222,16 +242,54 @@ export function ConversationThread({ conversationId }: Props) {
         {isTyping && (
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
             <div style={{
-              padding: '10px 14px', borderRadius: 12, background: accentBg,
+              padding: '10px 14px', borderRadius: 12, background: 'var(--signal-orange-subtle)',
               borderBottomRightRadius: 4, display: 'flex', alignItems: 'center', gap: 6
             }}>
-              <Loader2 size={14} color={accentColor} className="animate-spin" />
-              <span style={{ fontSize: 12, color: accentColor }}>AI is typing...</span>
+              <Loader2 size={14} color="var(--signal-orange)" className="animate-spin" />
+              <span style={{ fontSize: 12, color: 'var(--signal-orange)' }}>AI is sending pre-loaded photo...</span>
             </div>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Quick Pre-loaded Photo Action Bar */}
+      <div style={{ padding: '8px 20px', background: 'var(--surface-0)', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)' }}>
+          <Sparkles size={14} color="var(--signal-orange)" /> AI Photo Catalog:
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
+          <button
+            onClick={() => setShowPhotoPicker(!showPhotoPicker)}
+            className="btn btn-outline btn-sm"
+            style={{ background: 'white', gap: 6, fontSize: 12, color: 'var(--signal-orange)', borderColor: 'var(--signal-orange)' }}
+          >
+            <ImageIcon size={14} /> Send Pre-loaded Photo ({catalogPhotos.length})
+          </button>
+        </div>
+      </div>
+
+      {/* Photo Picker Popover */}
+      {showPhotoPicker && (
+        <div className="animate-slide-up" style={{ padding: 14, background: 'white', borderTop: '1px solid var(--border)', display: 'flex', gap: 12, overflowX: 'auto' }}>
+          {catalogPhotos.map((item, idx) => (
+            <div
+              key={idx}
+              onClick={() => handleSendPhoto(item.url, item.title)}
+              style={{
+                minWidth: 120, width: 120, cursor: 'pointer', borderRadius: 8, border: '1px solid var(--border)',
+                overflow: 'hidden', background: 'var(--surface-0)', transition: 'transform 0.15s ease'
+              }}
+            >
+              <img src={item.url} alt={item.title} style={{ width: '100%', height: 70, objectFit: 'cover' }} />
+              <div style={{ padding: 6, fontSize: 11, fontWeight: 700, color: 'var(--midnight-ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {item.title}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Composer */}
       <div style={{
@@ -248,8 +306,7 @@ export function ConversationThread({ conversationId }: Props) {
             value={inputValue}
             onChange={e => setInputValue(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSend()}
-            placeholder={isAIHandling ? "AI is handling this conversation" : "Type a message..."}
-            disabled={isAIHandling}
+            placeholder={isAIHandling ? "AI is handling this thread (or click Send Pre-loaded Photo above)" : "Type a message..."}
             style={{
               flex: 1, height: 44, border: 'none', background: 'transparent',
               fontSize: 13.5, outline: 'none', color: 'var(--ink-900)'
@@ -257,13 +314,12 @@ export function ConversationThread({ conversationId }: Props) {
           />
           <button
             onClick={handleSend}
-            disabled={isAIHandling || !inputValue.trim()}
+            disabled={!inputValue.trim()}
             style={{
               width: 32, height: 32, borderRadius: 6,
-              background: isAIHandling ? 'var(--surface-0)' : accentColor,
-              border: 'none', cursor: isAIHandling ? 'not-allowed' : 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              opacity: isAIHandling ? 0.5 : 1
+              background: 'var(--signal-orange)',
+              border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}
           >
             <Send size={16} color="white" />

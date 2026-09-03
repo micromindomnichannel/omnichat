@@ -291,6 +291,21 @@ export function Products() {
                 </div>
               </div>
 
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>Product Photo URL (Pre-loaded for AI)</label>
+                <input
+                  className="input"
+                  placeholder="https://images.unsplash.com/..."
+                  value={editingProduct?.image || 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&auto=format&fit=crop'}
+                  onChange={e => {
+                    if (editingProduct) setEditingProduct({ ...editingProduct, image: e.target.value });
+                  }}
+                />
+                <p style={{ fontSize: 11, color: 'var(--stone-gray)', marginTop: 4 }}>
+                  📸 AI will automatically send this photo when customers request pictures of this product.
+                </p>
+              </div>
+
               <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
                 <button type="button" onClick={() => setShowAddModal(false)} className="btn btn-outline" style={{ flex: 1 }}>Cancel</button>
                 <button type="submit" className="btn btn-primary" style={{ flex: 1, background: 'var(--signal-orange)' }}>
