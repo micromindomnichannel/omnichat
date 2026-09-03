@@ -4,6 +4,7 @@ import { useVertical } from '../state/verticalContext';
 import { StatCard } from '../components/shared/StatCard';
 import { Modal } from '../components/shared/Modal';
 import { Product } from '../state/mockData';
+import { ImageUploader } from '../components/shared/ImageUploader';
 import {
   Package, Plus, Search, Edit2, Trash2, AlertTriangle, CheckCircle, RefreshCw, Layers
 } from 'lucide-react';
@@ -23,6 +24,7 @@ export function Products() {
   const [stock, setStock] = useState('');
   const [category, setCategory] = useState('Bags');
   const [sku, setSku] = useState('');
+  const [image, setImage] = useState('');
 
   const products = state.products;
 
@@ -45,6 +47,7 @@ export function Products() {
     setStock('10');
     setCategory('Bags');
     setSku(`SKU-${Math.floor(1000 + Math.random() * 9000)}`);
+    setImage('https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&auto=format&fit=crop');
     setEditingProduct(null);
     setShowAddModal(true);
   };
@@ -56,6 +59,7 @@ export function Products() {
     setStock(product.stock.toString());
     setCategory(product.category);
     setSku(product.sku);
+    setImage(product.image || '');
     setShowAddModal(true);
   };
 
@@ -70,7 +74,7 @@ export function Products() {
       stock: parseInt(stock) || 0,
       category,
       sku,
-      image: editingProduct?.image || 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&auto=format&fit=crop',
+      image: image || 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&auto=format&fit=crop',
       variants: editingProduct?.variants || [{ name: 'Standard', available: parseInt(stock) > 0 }]
     };
 
@@ -291,20 +295,11 @@ export function Products() {
                 </div>
               </div>
 
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>Product Photo URL (Pre-loaded for AI)</label>
-                <input
-                  className="input"
-                  placeholder="https://images.unsplash.com/..."
-                  value={editingProduct?.image || 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&auto=format&fit=crop'}
-                  onChange={e => {
-                    if (editingProduct) setEditingProduct({ ...editingProduct, image: e.target.value });
-                  }}
-                />
-                <p style={{ fontSize: 11, color: 'var(--stone-gray)', marginTop: 4 }}>
-                  📸 AI will automatically send this photo when customers request pictures of this product.
-                </p>
-              </div>
+              <ImageUploader
+                value={image}
+                onChange={setImage}
+                label="Product Photo (Upload File or Select)"
+              />
 
               <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
                 <button type="button" onClick={() => setShowAddModal(false)} className="btn btn-outline" style={{ flex: 1 }}>Cancel</button>

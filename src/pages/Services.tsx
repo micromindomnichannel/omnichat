@@ -3,6 +3,7 @@ import { useStore } from '../state/store';
 import { useVertical } from '../state/verticalContext';
 import { ServiceTable } from '../components/appointments/ServiceTable';
 import { Modal } from '../components/shared/Modal';
+import { ImageUploader } from '../components/shared/ImageUploader';
 import { Search, Plus, LayoutGrid, List, Clock, Image as ImageIcon } from 'lucide-react';
 
 export function Services() {
@@ -132,13 +133,11 @@ export function Services() {
             <textarea className="input" placeholder="Service description..." rows={2} value={newService.description} onChange={e => setNewService({ ...newService, description: e.target.value })} />
           </div>
 
-          <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 4, display: 'block' }}>Service Photo URL (Pre-loaded for AI)</label>
-            <input className="input" placeholder="https://images.unsplash.com/..." value={newService.image} onChange={e => setNewService({ ...newService, image: e.target.value })} />
-            <p style={{ fontSize: 11, color: 'var(--stone-gray)', marginTop: 4 }}>
-              📸 AI will automatically send this photo when clients ask for photos of this clinic/appointment service.
-            </p>
-          </div>
+          <ImageUploader
+            value={newService.image}
+            onChange={url => setNewService({ ...newService, image: url })}
+            label="Service Photo (Upload File or Select)"
+          />
 
           <button onClick={handleAdd} className="btn btn-primary" style={{ width: '100%', background: 'var(--signal-orange)', marginTop: 6 }}>
             Add Service & Photo

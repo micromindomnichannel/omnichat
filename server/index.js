@@ -15,7 +15,33 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '25mb' }));
+
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+app.use('/uploads', express.static(uploadsDir));
+
+// Image File Upload Endpoint
+app.post('/api/upload', (req, res) => {
+  const { imageBase64 } = req.body;
+  if (!imageBase64) return res.status(400).json({ error: 'No image file provided' });
+
+  try {
+    const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Buffer.from(base64Data, 'base64');
+    const safeName = `img_${Date.now()}_${Math.floor(Math.random() * 10000)}.jpg`;
+    const filePath = path.join(uploadsDir, safeName);
+
+    fs.writeFileSync(filePath, buffer);
+    const fileUrl = `http://localhost:5000/uploads/${safeName}`;
+
+    res.json({ success: true, url: fileUrl, base64: imageBase64 });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // In-Memory / File Fallback Store if PostgreSQL is re-connecting
 const LOCAL_STORE_FILE = path.join(__dirname, 'local_db_cache.json');
