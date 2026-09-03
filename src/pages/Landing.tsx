@@ -76,11 +76,18 @@ export function Landing() {
             Interactive Demo
           </button>
           <button
-            onClick={() => navigate('/overview')}
+            onClick={() => navigate('/login')}
+            className="btn btn-outline"
+            style={{ height: 40, padding: '0 16px' }}
+          >
+            Sign In
+          </button>
+          <button
+            onClick={() => navigate('/signup')}
             className="btn btn-primary"
             style={{ height: 40, padding: '0 20px', background: 'var(--signal-orange)', boxShadow: '0 4px 14px rgba(255, 90, 54, 0.25)' }}
           >
-            Launch Core Platform <ArrowRight size={16} />
+            Get Started Free <ArrowRight size={16} />
           </button>
         </div>
       </header>
@@ -139,18 +146,18 @@ export function Landing() {
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
             <button
-              onClick={() => navigate('/overview')}
+              onClick={() => navigate('/signup')}
               className="btn btn-primary btn-lg"
               style={{ height: 50, padding: '0 32px', fontSize: 16, background: 'var(--signal-orange)' }}
             >
-              Launch ORBIT Dashboard <ArrowRight size={18} />
+              Create Free Account <ArrowRight size={18} />
             </button>
             <button
-              onClick={() => navigate('/onboarding')}
+              onClick={() => navigate('/login')}
               className="btn btn-dark btn-lg"
               style={{ height: 50, padding: '0 28px', fontSize: 16, background: 'var(--midnight-ink)' }}
             >
-              Start Guided Onboarding
+              Sign In to Dashboard
             </button>
           </div>
 
@@ -506,18 +513,18 @@ export function Landing() {
           </p>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
             <button
-              onClick={() => navigate('/overview')}
+              onClick={() => navigate('/signup')}
               className="btn btn-primary btn-lg"
               style={{ background: 'var(--signal-orange)', padding: '0 32px' }}
             >
-              Open ORBIT Platform <ArrowRight size={18} />
+              Get Started Free <ArrowRight size={18} />
             </button>
             <button
-              onClick={() => navigate('/settings')}
+              onClick={() => navigate('/login')}
               className="btn btn-outline btn-lg"
               style={{ color: 'white', borderColor: 'var(--graphite)' }}
             >
-              Configure Settings & Integrations
+              Sign In to Your Dashboard
             </button>
           </div>
         </div>

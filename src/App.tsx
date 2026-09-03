@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { useStore } from './state/store';
 import { useVertical } from './state/verticalContext';
 import { Sidebar } from './app/shell/Sidebar';
@@ -11,6 +11,8 @@ import { KnowledgeSetup } from './app/onboarding/KnowledgeSetup';
 import { AIReview } from './app/onboarding/AIReview';
 import { Finish } from './app/onboarding/Finish';
 import { Landing } from './pages/Landing';
+import { Login } from './pages/Login';
+import { Signup } from './pages/Signup';
 import { Overview } from './pages/Overview';
 import { Inbox } from './pages/Inbox';
 import { Customers } from './pages/Customers';
@@ -26,6 +28,18 @@ import { Demo } from './pages/Demo';
 import { Scheduler } from './pages/Scheduler';
 import { Toast } from './components/shared/Toast';
 
+// Auth guard helper
+function isAuthenticated(): boolean {
+  return localStorage.getItem('orbit_authenticated') === 'true';
+}
+
+function ProtectedRoute({ children }: { children: React.ReactElement }) {
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+}
+
 function App() {
   const { state, dispatch } = useStore();
   const { vertical } = useVertical();
@@ -35,18 +49,37 @@ function App() {
   const [onboardingData, setOnboardingData] = useState<any>({});
 
   const isLanding = location.pathname === '/' || location.pathname === '/landing';
+  const isLogin = location.pathname === '/login';
+  const isSignup = location.pathname === '/signup';
   const isOnboarding = location.pathname === '/onboarding';
   const isVerticalSelect = location.pathname === '/select-vertical';
+  const isDemo = location.pathname === '/demo';
 
+  // Public routes (no auth needed)
   if (isLanding) {
     return <Landing />;
   }
 
+  if (isLogin) {
+    return <Login />;
+  }
+
+  if (isSignup) {
+    return <Signup />;
+  }
+
+  if (isDemo) {
+    return <Demo />;
+  }
+
   if (isVerticalSelect) {
+    if (!isAuthenticated()) return <Navigate to="/login" replace />;
     return <VerticalSelect />;
   }
 
   if (isOnboarding) {
+    if (!isAuthenticated()) return <Navigate to="/login" replace />;
+
     const steps = [
       <VerticalSelect key="0" onSelect={(v) => { setOnboardingData({ ...onboardingData, vertical: v }); setOnboardingStep(1); }} />,
       <BusinessInfo key="1" data={onboardingData} onNext={(d) => { setOnboardingData(d); setOnboardingStep(2); }} onBack={() => setOnboardingStep(0)} />,
@@ -65,6 +98,11 @@ function App() {
         {steps[onboardingStep]}
       </div>
     );
+  }
+
+  // All dashboard routes require auth
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
   }
 
   return (
@@ -86,7 +124,6 @@ function App() {
             <Route path="/knowledge" element={<Knowledge />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/demo" element={<Demo />} />
             <Route path="*" element={<Overview />} />
           </Routes>
         </main>

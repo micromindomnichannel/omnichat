@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useStore } from '../state/store';
 import { useVertical } from '../state/verticalContext';
 import { Tabs } from '../components/shared/Tabs';
 import { Modal } from '../components/shared/Modal';
 import { EGYPTIAN_GOVERNORATES } from '../state/mockData';
 import {
-  Upload, Check, X, Plus, Trash2, UserPlus, Instagram, MessageCircle, Facebook, Music, Globe, Sparkles, Shield
+  Upload, Check, X, Plus, Trash2, UserPlus, Instagram, MessageCircle, Facebook, Music, Globe, Sparkles, Shield, LogOut
 } from 'lucide-react';
 import { OrbitLogo } from '../components/shared/OrbitLogo';
 
@@ -18,6 +19,7 @@ const channelIcons: Record<string, React.ElementType> = {
 export function Settings() {
   const { state, dispatch, showToast } = useStore();
   const { vertical, accentColor } = useVertical();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('Business Profile');
   const [showInvite, setShowInvite] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
@@ -379,6 +381,25 @@ export function Settings() {
           <button onClick={handleInvite} className="btn btn-primary" style={{ width: '100%', background: 'var(--signal-orange)' }}>Send Invitation</button>
         </div>
       </Modal>
+
+      {/* Logout Section */}
+      <div className="card" style={{ padding: 20, marginTop: 24, borderLeft: '4px solid var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <h4 style={{ fontSize: 15, fontWeight: 700, color: 'var(--midnight-ink)' }}>Sign Out of ORBIT</h4>
+          <p style={{ fontSize: 12.5, color: 'var(--stone-gray)', marginTop: 2 }}>You will be redirected to the login page.</p>
+        </div>
+        <button
+          onClick={() => {
+            localStorage.removeItem('orbit_authenticated');
+            localStorage.removeItem('orbit_user');
+            navigate('/login');
+          }}
+          className="btn btn-outline"
+          style={{ color: 'var(--danger)', borderColor: 'var(--danger)', gap: 8 }}
+        >
+          <LogOut size={16} /> Sign Out
+        </button>
+      </div>
     </div>
   );
 }
