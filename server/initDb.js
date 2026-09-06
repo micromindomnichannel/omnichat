@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { pool, checkDbConnection } from './db.js';
+import { migrate } from './migrate.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,6 +36,11 @@ async function initializeDatabase() {
 
   console.log('\n📋 Created Tables in "omnichannel" Database:');
   res.rows.forEach((r, idx) => console.log(`  ${idx + 1}. ${r.table_name}`));
+
+  // Multi-tenant slice migrations (workspaces, channel_accounts, credentials, ...)
+  console.log('\n📦 Applying slice migrations...');
+  const ran = await migrate();
+  console.log(ran.length ? `✅ Migrations applied: ${ran.join(', ')}` : '✅ Migrations already up to date.');
 
   // Seed default business setting if not exists
   await pool.query(`

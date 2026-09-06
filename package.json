@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "server": "node server/index.js",
+    "start": "node server/index.js",
     "db:init": "node server/initDb.js",
     "db:migrate": "node server/migrate.js",
     "probe:micromind": "node scripts/micromind-probe.mjs",
