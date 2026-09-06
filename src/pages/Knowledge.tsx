@@ -3,7 +3,8 @@ import { useStore } from '../state/store';
 import { useVertical } from '../state/verticalContext';
 import { Tabs } from '../components/shared/Tabs';
 import { Modal } from '../components/shared/Modal';
-import { Search, Plus, Trash2, FileText, Image, Link, Check } from 'lucide-react';
+import { Search, Plus, Trash2, FileText, Image, Link, Check, Sparkles } from 'lucide-react';
+import { api } from '../services/api';
 
 export function Knowledge() {
   const { state, dispatch, showToast } = useStore();
@@ -14,6 +15,18 @@ export function Knowledge() {
   const [showAddSource, setShowAddSource] = useState(false);
   const [newFAQ, setNewFAQ] = useState({ question: '', answer: '', category: '' });
   const [newSource, setNewSource] = useState({ name: '', type: 'PDF' as const });
+  const [askQ, setAskQ] = useState('');
+  const [askA, setAskA] = useState<{ answer: string; source: string } | null>(null);
+  const [asking, setAsking] = useState(false);
+
+  const handleAsk = async () => {
+    if (!askQ.trim() || asking) return;
+    setAsking(true);
+    const res = await api.askKnowledge('default', askQ.trim());
+    setAsking(false);
+    if (res) setAskA({ answer: res.answer, source: res.source });
+    else showToast('Knowledge service unreachable', 'danger');
+  };
 
   const tabs = vertical === 'commerce'
     ? ['FAQs', 'Products', 'Policies']
@@ -67,6 +80,31 @@ export function Knowledge() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, overflow: 'auto' }}>
+          {/* Ask the knowledge base (MicroMind analyst, local-match fallback) */}
+          <div className="card" style={{ padding: 16, borderColor: 'var(--signal-orange)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+              <Sparkles size={14} color="var(--signal-orange)" />
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--midnight-ink)' }}>Preview AI answer</span>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                className="input" value={askQ} onChange={(e) => setAskQ(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAsk()}
+                placeholder="Ask what a customer would ask…" style={{ flex: 1 }}
+              />
+              <button onClick={handleAsk} disabled={asking || !askQ.trim()} className="btn btn-primary" style={{ background: accentColor }}>
+                {asking ? 'Asking…' : 'Ask'}
+              </button>
+            </div>
+            {askA && (
+              <div style={{ marginTop: 10, fontSize: 13, color: 'var(--ink-600)', lineHeight: 1.5 }}>
+                {askA.answer}
+                <span style={{ display: 'inline-block', marginLeft: 8, padding: '2px 8px', borderRadius: 4, background: 'var(--surface-0)', fontSize: 11, fontWeight: 600, color: 'var(--ink-400)' }}>
+                  via {askA.source === 'micromind' ? 'MicroMind AI' : askA.source === 'local-match' ? 'local match' : 'no answer'}
+                </span>
+              </div>
+            )}
+          </div>
           {filteredFAQs.map(faq => (
             <div key={faq.id} className="card" style={{ padding: 16 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>

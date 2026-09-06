@@ -49,6 +49,7 @@ npm run probe:micromind     # MicroMind prediction + management CRUD probe
 | `MICROMIND_BASE_URL` | backend | e.g. `https://core.aimicromind.com/api/v1` |
 | `MICROMIND_API_KEY` | backend | Bearer token for flow/credential management (P0 CRUD) |
 | `MICROMIND_MESSENGER_FLOW_ID` | backend | Reference flow for the probe |
+| `MICROMIND_ANALYST_FLOW_ID` | backend | Dedicated analyst flow for reports + knowledge answers (falls back to messenger flow) |
 | `META_GRAPH_VERSION` | backend | Graph API version for sends (default `v19.0`) |
 | `VITE_API_URL` | frontend | API base, default `http://localhost:5000/api` |
 
@@ -72,6 +73,8 @@ server/
   integrations/telegram.js Telegram Bot API parser + sender (+secret check)
   integrations/gmail.js    placeholder (501 until Google OAuth + Pub/Sub)
   micromind/client.js      chatflow/credential CRUD + prediction
+  micromind/analyst.js       single gateway for ALL non-channel AI (reports, knowledge)
+                             (MicroMind primary, local template/match fallback — never 500s)
   micromind/provisionChannel.js  per-tenant flow provisioner (all channels)
   micromind/templates/     messenger.json, instagram.json (sanitized exports)
 src/
@@ -106,6 +109,7 @@ Inbox
 
 Knowledge / Admin
   GET|POST /api/v1/workspaces/:id/knowledge, DELETE /api/v1/knowledge/:id
+  POST   /api/v1/workspaces/:id/knowledge/ask   (MicroMind analyst → local-match → none)
   GET    /api/v1/admin/overview|channels|flows|errors|usage
 
 Webhooks (Meta owns the callback URL → ORBIT)

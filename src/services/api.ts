@@ -88,6 +88,8 @@ export const api = {
   addKnowledge: (workspaceId: string, item: any) =>
     fetchJson(`/v1/workspaces/${workspaceId}/knowledge`, { method: 'POST', body: JSON.stringify(item) }),
   deleteKnowledge: (id: string) => fetchJson(`/v1/knowledge/${id}`, { method: 'DELETE' }),
+  askKnowledge: (workspaceId: string, question: string) =>
+    fetchJson(`/v1/workspaces/${workspaceId}/knowledge/ask`, { method: 'POST', body: JSON.stringify({ question }) }),
 
   // Admin (internal)
   adminOverview: () => fetchJson('/v1/admin/overview'),

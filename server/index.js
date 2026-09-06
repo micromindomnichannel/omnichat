@@ -15,6 +15,7 @@ import { sendTextMessage } from './meta/graph.js';
 import { sendWhatsAppText } from './meta/whatsapp.js';
 import { sendTelegramText } from './integrations/telegram.js';
 import { replyLimit } from './middleware/rateLimit.js';
+import { askAnalyst } from './micromind/analyst.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -505,25 +506,63 @@ app.post('/api/reports/generate', async (req, res) => {
   const { period = 'weekly', report_type = 'on_demand' } = req.body;
   const reportId = `rep_${Date.now()}`;
   try {
-    const orderStats = await pool.query('SELECT COUNT(*) as count, COALESCE(SUM(total), 0) as total_rev FROM orders');
-    const totalRev = parseFloat(orderStats.rows[0]?.total_rev || 68400);
-    const totalOrd = parseInt(orderStats.rows[0]?.count || 98);
-    const aiRate = 78.5;
+    // Real workspace stats (fall back to seed numbers when tables are empty/down).
+    let totalRev = 68400, totalOrd = 98, aiRate = 78.5, topChannel = 'instagram', lowStock = [];
+    try {
+      const orderStats = await pool.query("SELECT COUNT(*) as count, COALESCE(SUM(total), 0) as total_rev FROM orders WHERE workspace_id = 'default'");
+      totalRev = parseFloat(orderStats.rows[0]?.total_rev || 68400);
+      totalOrd = parseInt(orderStats.rows[0]?.count || 98);
+      const msgStats = await pool.query(
+        `SELECT COUNT(*) FILTER (WHERE sender = 'customer') AS c, COUNT(*) FILTER (WHERE sender = 'ai') AS a
+         FROM messages WHERE workspace_id = 'default'`);
+      const c = parseInt(msgStats.rows[0]?.c || 0), a = parseInt(msgStats.rows[0]?.a || 0);
+      if (c > 0) aiRate = Math.round((a / (c + a || 1)) * 1000) / 10;
+      const chStats = await pool.query(
+        `SELECT channel, COUNT(*) AS n FROM conversations WHERE workspace_id = 'default' GROUP BY 1 ORDER BY 2 DESC LIMIT 1`);
+      if (chStats.rows[0]?.channel) topChannel = chStats.rows[0].channel;
+      lowStock = (await pool.query(
+        `SELECT name, stock FROM products WHERE workspace_id = 'default' AND stock < 5 ORDER BY stock ASC LIMIT 3`)).rows;
+    } catch { /* stats fallback above */ }
 
-    const insights = `ORBIT Business Performance Executive Report (${period.toUpperCase()}):
+    // Primary: MicroMind analyst reasons over the stats. Fallback: local template.
+    let insights, aiSource = 'micromind';
+    const statsBrief = `Period: ${period}. Revenue: ${totalRev} EGP across ${totalOrd} orders. ` +
+      `AI-handled share: ${aiRate}%. Top channel: ${topChannel}. ` +
+      `Low stock: ${lowStock.length ? lowStock.map((p) => `${p.name} (${p.stock})`).join(', ') : 'none flagged'}.`;
+    try {
+      const out = await askAnalyst(
+        `Write a short executive business report (4-6 bullet lines) from these stats: ${statsBrief}`,
+        { vars: { period, business_name: 'ORBIT workspace' }, sessionId: `default:analyst:report:${Date.now()}` }
+      );
+      insights = out.text;
+    } catch (err) {
+      aiSource = 'template';
+      console.warn('[reports] analyst unavailable, template fallback:', err.message);
+      insights = `ORBIT Business Performance Executive Report (${period.toUpperCase()}):
 • Total Generated Revenue: ${totalRev.toLocaleString()} EGP across ${totalOrd} orders.
 • AI Resolution Rate: ${aiRate}% across connected customer communication channels.
-• Top Revenue Channel: Instagram Direct (50% share).
-• Stock Recommendation: Black Leather Bag inventory is low. Re-stock immediately.`;
+• Top Revenue Channel: ${topChannel} Direct.
+• Stock Recommendation: ${lowStock.length ? `${lowStock[0].name} inventory is low. Re-stock immediately.` : 'Inventory levels look healthy.'}`;
+    }
 
-    const result = await pool.query(
-      `INSERT INTO summary_reports (id, title, period, report_type, total_revenue, total_orders, ai_resolution_rate, top_channel, ai_insights)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-       RETURNING *`,
-      [reportId, `ORBIT Executive Business Summary (${new Date().toLocaleDateString()})`, period, report_type, totalRev, totalOrd, aiRate, 'instagram', insights]
-    );
-
-    res.json(result.rows[0]);
+    try {
+      const result = await pool.query(
+        `INSERT INTO summary_reports (id, title, period, report_type, total_revenue, total_orders, ai_resolution_rate, top_channel, ai_insights, metrics_summary)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+         RETURNING *`,
+        [reportId, `ORBIT Executive Business Summary (${new Date().toLocaleDateString()})`, period, report_type,
+         totalRev, totalOrd, aiRate, topChannel, insights, JSON.stringify({ ai_source: aiSource })]
+      );
+      res.json({ ...result.rows[0], ai_source: aiSource });
+    } catch {
+      // DB down but analyst answered: return insights unsaved rather than 500.
+      res.json({
+        id: reportId, title: 'ORBIT Executive Business Summary (unsaved — DB unreachable)',
+        period, report_type, total_revenue: totalRev, total_orders: totalOrd,
+        ai_resolution_rate: aiRate, top_channel: topChannel, ai_insights: insights,
+        ai_source: aiSource, saved: false,
+      });
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
