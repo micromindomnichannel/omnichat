@@ -1,0 +1,996 @@
+{
+  "nodes": [
+    {
+      "id": "toolAgent_1",
+      "position": {
+        "x": 880,
+        "y": 1120.5
+      },
+      "type": "customNode",
+      "data": {
+        "id": "toolAgent_1",
+        "label": "Tool Agent",
+        "version": 2,
+        "name": "toolAgent",
+        "type": "AgentExecutor",
+        "baseClasses": [
+          "AgentExecutor",
+          "BaseChain",
+          "Runnable"
+        ],
+        "category": "Agents",
+        "description": "Agent that uses Function Calling to pick the tools and args to call",
+        "inputParams": [
+          {
+            "label": "System Message",
+            "name": "systemMessage",
+            "type": "string",
+            "default": "You are a helpful AI assistant.",
+            "description": "If Chat Prompt Template is provided, this will be ignored",
+            "rows": 4,
+            "optional": true,
+            "additionalParams": true,
+            "id": "toolAgent_1-input-systemMessage-string"
+          },
+          {
+            "label": "Max Iterations",
+            "name": "maxIterations",
+            "type": "number",
+            "optional": true,
+            "additionalParams": true,
+            "id": "toolAgent_1-input-maxIterations-number"
+          },
+          {
+            "label": "Enable Detailed Streaming",
+            "name": "enableDetailedStreaming",
+            "type": "boolean",
+            "default": false,
+            "description": "Stream detailed intermediate steps during agent execution",
+            "optional": true,
+            "additionalParams": true,
+            "id": "toolAgent_1-input-enableDetailedStreaming-boolean"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Tools",
+            "name": "tools",
+            "type": "Tool",
+            "list": true,
+            "id": "toolAgent_1-input-tools-Tool"
+          },
+          {
+            "label": "Memory",
+            "name": "memory",
+            "type": "BaseChatMemory",
+            "id": "toolAgent_1-input-memory-BaseChatMemory"
+          },
+          {
+            "label": "Tool Calling Chat Model",
+            "name": "model",
+            "type": "BaseChatModel",
+            "description": "Only compatible with models that are capable of function calling: ChatOpenAI, ChatMistral, ChatAnthropic, GoogleGenerativeAI, ChatVertexAI, GroqChat",
+            "id": "toolAgent_1-input-model-BaseChatModel"
+          },
+          {
+            "label": "Chat Prompt Template",
+            "name": "chatPromptTemplate",
+            "type": "ChatPromptTemplate",
+            "description": "Override existing prompt with Chat Prompt Template. Human Message must includes {input} variable",
+            "optional": true,
+            "id": "toolAgent_1-input-chatPromptTemplate-ChatPromptTemplate"
+          },
+          {
+            "label": "Input Moderation",
+            "description": "Detect text that could generate harmful output and prevent it from being sent to the language model",
+            "name": "inputModeration",
+            "type": "Moderation",
+            "optional": true,
+            "list": true,
+            "id": "toolAgent_1-input-inputModeration-Moderation"
+          }
+        ],
+        "inputs": {
+          "tools": [
+            "{{facebookMessengerTool_0.data.instance}}"
+          ],
+          "memory": "{{bufferMemory_0.data.instance}}",
+          "model": "{{chatOpenRouter_0.data.instance}}",
+          "chatPromptTemplate": "{{chatPromptTemplate_0.data.instance}}",
+          "systemMessage": "You are a helpful AI assistant.",
+          "inputModeration": "",
+          "maxIterations": "",
+          "enableDetailedStreaming": ""
+        },
+        "outputAnchors": [
+          {
+            "id": "toolAgent_1-output-toolAgent-AgentExecutor|BaseChain|Runnable",
+            "name": "toolAgent",
+            "label": "AgentExecutor",
+            "description": "Agent that uses Function Calling to pick the tools and args to call",
+            "type": "AgentExecutor | BaseChain | Runnable"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 503,
+      "positionAbsolute": {
+        "x": 880,
+        "y": 1120.5
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "chatOpenRouter_0",
+      "position": {
+        "x": 378.12791771480295,
+        "y": -419.84627264955157
+      },
+      "type": "customNode",
+      "data": {
+        "id": "chatOpenRouter_0",
+        "label": "ChatOpenRouter",
+        "version": 2.1,
+        "name": "chatOpenRouter",
+        "type": "ChatOpenRouter",
+        "baseClasses": [
+          "ChatOpenRouter",
+          "ChatOpenAI",
+          "BaseChatOpenAI",
+          "BaseChatModel",
+          "BaseLanguageModel",
+          "Runnable"
+        ],
+        "category": "Chat Models",
+        "description": "Wrapper around Open Router Inference API. Supports all frontier models (GPT-5.6 Luna, DeepSeek R1/V3, Claude 4.6/3.7, Gemini 3.7/2.0, Llama 3.3, Qwen 2.5) and multimodal vision.",
+        "inputParams": [
+          {
+            "label": "Connect Credential",
+            "name": "credential",
+            "type": "credential",
+            "credentialNames": [
+              "openRouterApi"
+            ],
+            "optional": false,
+            "id": "chatOpenRouter_0-input-credential-credential"
+          },
+          {
+            "label": "Model Name",
+            "name": "modelName",
+            "type": "asyncOptions",
+            "loadMethod": "listModels",
+            "default": "openai/gpt-5.6-luna",
+            "description": "Select a model from the list or use Custom Model Name below",
+            "id": "chatOpenRouter_0-input-modelName-asyncOptions"
+          },
+          {
+            "label": "Custom Model Name",
+            "name": "customModelName",
+            "type": "string",
+            "placeholder": "openai/gpt-5.6-luna",
+            "description": "Custom model name to use on OpenRouter. If provided, it overrides the dropdown selection above.",
+            "additionalParams": true,
+            "optional": true,
+            "id": "chatOpenRouter_0-input-customModelName-string"
+          },
+          {
+            "label": "Temperature",
+            "name": "temperature",
+            "type": "number",
+            "step": 0.1,
+            "default": 0.7,
+            "optional": true,
+            "description": "Sampling temperature (0 to 2). Note: Reasoning models (o1, o3, DeepSeek R1, Luna) automatically omit temperature if not supported.",
+            "id": "chatOpenRouter_0-input-temperature-number"
+          },
+          {
+            "label": "Streaming",
+            "name": "streaming",
+            "type": "boolean",
+            "default": true,
+            "optional": true,
+            "additionalParams": true,
+            "id": "chatOpenRouter_0-input-streaming-boolean"
+          },
+          {
+            "label": "Max Tokens",
+            "name": "maxTokens",
+            "type": "number",
+            "step": 1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "chatOpenRouter_0-input-maxTokens-number"
+          },
+          {
+            "label": "Top Probability",
+            "name": "topP",
+            "type": "number",
+            "step": 0.1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "chatOpenRouter_0-input-topP-number"
+          },
+          {
+            "label": "Frequency Penalty",
+            "name": "frequencyPenalty",
+            "type": "number",
+            "step": 0.1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "chatOpenRouter_0-input-frequencyPenalty-number"
+          },
+          {
+            "label": "Presence Penalty",
+            "name": "presencePenalty",
+            "type": "number",
+            "step": 0.1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "chatOpenRouter_0-input-presencePenalty-number"
+          },
+          {
+            "label": "Timeout",
+            "name": "timeout",
+            "type": "number",
+            "step": 1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "chatOpenRouter_0-input-timeout-number"
+          },
+          {
+            "label": "BasePath",
+            "name": "basepath",
+            "type": "string",
+            "optional": true,
+            "default": "https://openrouter.ai/api/v1",
+            "additionalParams": true,
+            "description": "API endpoint URL for OpenRouter",
+            "id": "chatOpenRouter_0-input-basepath-string"
+          },
+          {
+            "label": "BaseOptions",
+            "name": "baseOptions",
+            "type": "json",
+            "optional": true,
+            "additionalParams": true,
+            "description": "Additional headers (e.g., {\"HTTP-Referer\": \"https://yourapp.com\"})",
+            "id": "chatOpenRouter_0-input-baseOptions-json"
+          },
+          {
+            "label": "Allow Image Uploads",
+            "name": "allowImageUploads",
+            "type": "boolean",
+            "description": "Allow image input. Only applicable when using a vision-supported model on OpenRouter (e.g. Claude 3+, GPT-4o, GPT-5+, Gemini 2.0+, Pixtral, Llama 3.2 Vision). Refer to the <a href=\"https://docs.aimicromind.com/using-aimicromind/uploads#image\" target=\"_blank\">docs</a> for details.",
+            "default": false,
+            "optional": true,
+            "id": "chatOpenRouter_0-input-allowImageUploads-boolean"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Cache",
+            "name": "cache",
+            "type": "BaseCache",
+            "optional": true,
+            "id": "chatOpenRouter_0-input-cache-BaseCache"
+          }
+        ],
+        "inputs": {
+          "cache": "",
+          "modelName": "openai/gpt-5.6-luna",
+          "customModelName": "",
+          "temperature": 0.7,
+          "streaming": true,
+          "maxTokens": "",
+          "topP": "",
+          "frequencyPenalty": "",
+          "presencePenalty": "",
+          "timeout": "",
+          "basepath": "https://openrouter.ai/api/v1",
+          "baseOptions": "",
+          "allowImageUploads": ""
+        },
+        "outputAnchors": [
+          {
+            "id": "chatOpenRouter_0-output-chatOpenRouter-ChatOpenRouter|ChatOpenAI|BaseChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable",
+            "name": "chatOpenRouter",
+            "label": "ChatOpenRouter",
+            "description": "Wrapper around Open Router Inference API. Supports all frontier models (GPT-5.6 Luna, DeepSeek R1/V3, Claude 4.6/3.7, Gemini 3.7/2.0, Llama 3.3, Qwen 2.5) and multimodal vision.",
+            "type": "ChatOpenRouter | ChatOpenAI | BaseChatOpenAI | BaseChatModel | BaseLanguageModel | Runnable"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 782,
+      "selected": false,
+      "dragging": false,
+      "positionAbsolute": {
+        "x": 378.12791771480295,
+        "y": -419.84627264955157
+      }
+    },
+    {
+      "id": "bufferMemory_0",
+      "position": {
+        "x": 440,
+        "y": 862
+      },
+      "type": "customNode",
+      "data": {
+        "id": "bufferMemory_0",
+        "label": "Buffer Memory",
+        "version": 2,
+        "name": "bufferMemory",
+        "type": "BufferMemory",
+        "baseClasses": [
+          "BufferMemory",
+          "BaseChatMemory",
+          "BaseMemory"
+        ],
+        "category": "Memory",
+        "description": "Retrieve chat messages stored in database",
+        "inputParams": [
+          {
+            "label": "Session Id",
+            "name": "sessionId",
+            "type": "string",
+            "description": "If not specified, a random id will be used. Learn <a target=\"_blank\" href=\"https://docs.aimicromind.com/memory#ui-and-embedded-chat\">more</a>",
+            "default": "",
+            "additionalParams": true,
+            "optional": true,
+            "id": "bufferMemory_0-input-sessionId-string"
+          },
+          {
+            "label": "Memory Key",
+            "name": "memoryKey",
+            "type": "string",
+            "default": "chat_history",
+            "additionalParams": true,
+            "id": "bufferMemory_0-input-memoryKey-string"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "sessionId": "",
+          "memoryKey": "chat_history"
+        },
+        "outputAnchors": [
+          {
+            "id": "bufferMemory_0-output-bufferMemory-BufferMemory|BaseChatMemory|BaseMemory",
+            "name": "bufferMemory",
+            "label": "BufferMemory",
+            "description": "Retrieve chat messages stored in database",
+            "type": "BufferMemory | BaseChatMemory | BaseMemory"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 337,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 440,
+        "y": 862
+      },
+      "dragging": false
+    },
+    {
+      "id": "chatPromptTemplate_0",
+      "position": {
+        "x": 360,
+        "y": 1279
+      },
+      "type": "customNode",
+      "data": {
+        "id": "chatPromptTemplate_0",
+        "label": "Chat Prompt Template",
+        "version": 2,
+        "name": "chatPromptTemplate",
+        "type": "ChatPromptTemplate",
+        "baseClasses": [
+          "ChatPromptTemplate",
+          "BaseChatPromptTemplate",
+          "BasePromptTemplate",
+          "Runnable"
+        ],
+        "category": "Prompts",
+        "description": "Schema to represent a chat prompt",
+        "inputParams": [
+          {
+            "label": "System Message",
+            "name": "systemMessagePrompt",
+            "type": "string",
+            "rows": 4,
+            "placeholder": "You are a helpful assistant that translates {input_language} to {output_language}.",
+            "id": "chatPromptTemplate_0-input-systemMessagePrompt-string"
+          },
+          {
+            "label": "Human Message",
+            "name": "humanMessagePrompt",
+            "description": "This prompt will be added at the end of the messages as human message",
+            "type": "string",
+            "rows": 4,
+            "placeholder": "{text}",
+            "id": "chatPromptTemplate_0-input-humanMessagePrompt-string"
+          },
+          {
+            "label": "Format Prompt Values",
+            "name": "promptValues",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "chatPromptTemplate_0-input-promptValues-json"
+          },
+          {
+            "label": "Messages History",
+            "name": "messageHistory",
+            "description": "Add messages after System Message. This is useful when you want to provide few shot examples",
+            "type": "tabs",
+            "tabIdentifier": "selectedMessagesTab",
+            "additionalParams": true,
+            "default": "messageHistoryCode",
+            "tabs": [
+              {
+                "label": "Add Messages (Code)",
+                "name": "messageHistoryCode",
+                "type": "code",
+                "hideCodeExecute": true,
+                "codeExample": "const { AIMessage, HumanMessage, ToolMessage } = require('@langchain/core/messages');\n\nreturn [\n    new HumanMessage(\"What is 333382 \ud83e\udd9c 1932?\"),\n    new AIMessage({\n        content: \"\",\n        tool_calls: [\n        {\n            id: \"12345\",\n            name: \"calulator\",\n            args: {\n                number1: 333382,\n                number2: 1932,\n                operation: \"divide\",\n            },\n        },\n        ],\n    }),\n    new ToolMessage({\n        tool_call_id: \"12345\",\n        content: \"The answer is 172.558.\",\n    }),\n    new AIMessage(\"The answer is 172.558.\"),\n]",
+                "optional": true,
+                "additionalParams": true
+              }
+            ],
+            "id": "chatPromptTemplate_0-input-messageHistory-tabs"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "systemMessagePrompt": "You are a helpful AI assistant. \n\nContext:\n- User PSID: {senderPsid}\n- User Message: {input}\n\nSTRICT RULE: You MUST call the \"send_messenger_message\" tool to reply. \n- recipientPsid: {senderPsid}\n- messageText: Your reply here.\n",
+          "humanMessagePrompt": "",
+          "promptValues": "{\"senderPsid\":\"{{messengerTrigger_0.data.instance}}\",\"input\":\"{{messengerTrigger_0.data.instance}}\"}",
+          "messageHistory": "messageHistoryCode"
+        },
+        "outputAnchors": [
+          {
+            "id": "chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable",
+            "name": "chatPromptTemplate",
+            "label": "ChatPromptTemplate",
+            "description": "Schema to represent a chat prompt",
+            "type": "ChatPromptTemplate | BaseChatPromptTemplate | BasePromptTemplate | Runnable"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 869,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 360,
+        "y": 1279
+      },
+      "dragging": false
+    },
+    {
+      "id": "stickyNote_0",
+      "position": {
+        "x": 0,
+        "y": 1023.5
+      },
+      "type": "stickyNote",
+      "data": {
+        "id": "stickyNote_0",
+        "label": "Sticky Note",
+        "version": 2,
+        "name": "stickyNote",
+        "type": "StickyNote",
+        "baseClasses": [
+          "StickyNote"
+        ],
+        "tags": [
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Add a sticky note",
+        "inputParams": [
+          {
+            "label": "",
+            "name": "note",
+            "type": "string",
+            "rows": 1,
+            "placeholder": "Type something here",
+            "optional": true,
+            "id": "stickyNote_0-input-note-string"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "note": "Facebook trigger\n\nverify token\n\norbit_messenger_2026"
+        },
+        "outputAnchors": [
+          {
+            "id": "stickyNote_0-output-stickyNote-StickyNote",
+            "name": "stickyNote",
+            "label": "StickyNote",
+            "description": "Add a sticky note",
+            "type": "StickyNote"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 123,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 0,
+        "y": 1023.5
+      },
+      "dragging": false
+    },
+    {
+      "id": "facebookMessengerTool_0",
+      "position": {
+        "x": 440,
+        "y": 2228
+      },
+      "type": "customNode",
+      "data": {
+        "id": "facebookMessengerTool_0",
+        "label": "Facebook Messenger",
+        "version": 2,
+        "name": "facebookMessengerTool",
+        "type": "FacebookMessenger",
+        "baseClasses": [
+          "FacebookMessenger",
+          "Tool"
+        ],
+        "category": "Social Media",
+        "description": "Send text, media, and replies on Facebook Messenger",
+        "inputParams": [
+          {
+            "label": "Connect Credential",
+            "name": "credential",
+            "type": "credential",
+            "credentialNames": [
+              "facebookMessengerApi"
+            ],
+            "id": "facebookMessengerTool_0-input-credential-credential"
+          },
+          {
+            "label": "Actions",
+            "name": "actions",
+            "type": "multiOptions",
+            "options": [
+              {
+                "label": "Send Text Message",
+                "name": "sendTextMessage"
+              },
+              {
+                "label": "Send Media Attachment",
+                "name": "sendMediaAttachment"
+              },
+              {
+                "label": "Send Multiple Images",
+                "name": "sendMultipleImages"
+              },
+              {
+                "label": "Reply to Message",
+                "name": "sendReply"
+              }
+            ],
+            "default": [
+              "sendTextMessage"
+            ],
+            "id": "facebookMessengerTool_0-input-actions-multiOptions"
+          },
+          {
+            "label": "Recipient PSID",
+            "name": "recipientPsid",
+            "type": "string",
+            "description": "The user ID (PSID) from the incoming message. Falls back to Session ID if empty.",
+            "placeholder": "Leave blank to use current chat PSID",
+            "optional": true,
+            "additionalParams": true,
+            "id": "facebookMessengerTool_0-input-recipientPsid-string"
+          },
+          {
+            "label": "Message Text",
+            "name": "messageText",
+            "type": "string",
+            "rows": 3,
+            "show": {
+              "actions": [
+                "sendTextMessage",
+                "sendReply"
+              ]
+            },
+            "additionalParams": true,
+            "id": "facebookMessengerTool_0-input-messageText-string"
+          },
+          {
+            "label": "Media Type",
+            "name": "attachmentType",
+            "type": "options",
+            "options": [
+              {
+                "label": "Image",
+                "name": "image"
+              },
+              {
+                "label": "Video",
+                "name": "video"
+              },
+              {
+                "label": "Audio",
+                "name": "audio"
+              },
+              {
+                "label": "File",
+                "name": "file"
+              }
+            ],
+            "show": {
+              "actions": [
+                "sendMediaAttachment"
+              ]
+            },
+            "additionalParams": true,
+            "id": "facebookMessengerTool_0-input-attachmentType-options"
+          },
+          {
+            "label": "Media URL",
+            "name": "url",
+            "type": "string",
+            "description": "Public URL of the media file",
+            "show": {
+              "actions": [
+                "sendMediaAttachment"
+              ]
+            },
+            "additionalParams": true,
+            "id": "facebookMessengerTool_0-input-url-string"
+          },
+          {
+            "label": "Image URLs (Multiple)",
+            "name": "urls",
+            "type": "string",
+            "description": "JSON array of URLs or comma-separated list",
+            "show": {
+              "actions": [
+                "sendMultipleImages"
+              ]
+            },
+            "additionalParams": true,
+            "id": "facebookMessengerTool_0-input-urls-string"
+          },
+          {
+            "label": "Reply to Message ID (mid)",
+            "name": "replyToMessageId",
+            "type": "string",
+            "description": "The \"mid\" of the message you are replying to",
+            "show": {
+              "actions": [
+                "sendReply"
+              ]
+            },
+            "additionalParams": true,
+            "id": "facebookMessengerTool_0-input-replyToMessageId-string"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "actions": "[\"sendTextMessage\",\"sendReply\"]",
+          "recipientPsid": "",
+          "messageText": "",
+          "attachmentType": "",
+          "url": "",
+          "urls": "",
+          "replyToMessageId": ""
+        },
+        "outputAnchors": [
+          {
+            "id": "facebookMessengerTool_0-output-facebookMessengerTool-FacebookMessenger|Tool",
+            "name": "facebookMessengerTool",
+            "label": "FacebookMessenger",
+            "description": "Send text, media, and replies on Facebook Messenger",
+            "type": "FacebookMessenger | Tool"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 567,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 440,
+        "y": 2228
+      },
+      "dragging": false
+    },
+    {
+      "id": "messengerTrigger_0",
+      "position": {
+        "x": -1.1700656760882147,
+        "y": 987.8066020780041
+      },
+      "type": "customNode",
+      "data": {
+        "id": "messengerTrigger_0",
+        "label": "Messenger Trigger",
+        "version": 1.2,
+        "name": "messengerTrigger",
+        "type": "MessengerTrigger",
+        "baseClasses": [
+          "MessengerTrigger",
+          "triggers",
+          "json",
+          "string"
+        ],
+        "category": "Triggers",
+        "description": "Specialized webhook for Facebook Messenger (handles GET handshake & POST messages)",
+        "inputParams": [
+          {
+            "label": "Webhook Path",
+            "name": "webhookName",
+            "type": "string",
+            "default": "messenger",
+            "description": "The unique path for your Facebook webhook URL.",
+            "id": "messengerTrigger_0-input-webhookName-string"
+          },
+          {
+            "label": "Verify Token",
+            "name": "verifyToken",
+            "type": "string",
+            "placeholder": "e.g. my-secret-token",
+            "description": "The token you entered in the Facebook Developer Portal for verification.",
+            "id": "messengerTrigger_0-input-verifyToken-string"
+          },
+          {
+            "label": "Handshake Mode (Verification)",
+            "name": "handshakeMode",
+            "type": "boolean",
+            "default": false,
+            "description": "Enable this only during the initial Facebook \"Verify\" handshake. Disable it once verified to receive messages.",
+            "id": "messengerTrigger_0-input-handshakeMode-boolean"
+          },
+          {
+            "label": "Response Mode",
+            "name": "responseMode",
+            "type": "options",
+            "options": [
+              {
+                "label": "Immediately (Async)",
+                "name": "immediately",
+                "description": "Return 200 right away, execute flow in background"
+              },
+              {
+                "label": "Wait for Response (Sync)",
+                "name": "waitForResponse",
+                "description": "Wait for flow to complete (useful for direct replies)"
+              }
+            ],
+            "default": "immediately",
+            "description": "Immediately is recommended for Messenger unless you are doing synchronous verification tests.",
+            "id": "messengerTrigger_0-input-responseMode-options"
+          },
+          {
+            "label": "How to Use",
+            "name": "howToUse",
+            "type": "string",
+            "default": "",
+            "optional": true,
+            "additionalParams": true,
+            "hint": {
+              "label": "Usage Guide",
+              "value": "\n## \ud83d\udcac Facebook Messenger Setup & Token Guide\n\n### Step 1: Get Page Access Token\n1. Go to [Meta Graph API Explorer](https://developers.facebook.com/tools/explorer/).\n2. Under **Meta App**, select your App.\n3. Under **User or Page**, select **Get Page Access Token** and pick your Facebook Page.\n4. Under **Permissions**, add `pages_messaging` and `pages_show_list`.\n5. Click **Generate Access Token** and copy the token into the **Page Access Token** field below.\n\n### Step 2: Set Meta Webhook Callback URL\n1. Copy the Webhook URL from the top of this node (`https://core.aimicromind.com/webhook/{chatflowId}/messenger`).\n2. In Meta Developer Portal \u2794 **Messenger** \u2794 **Webhooks** \u2794 click **Add Callback URL**.\n3. Paste the Webhook URL and enter your **Verify Token** (e.g. `my_messenger_token`).\n4. Click **Verify and Save** \u2705.\n5. Subscribe to `messages` and `messaging_postbacks`.\n\n### Step 3: Activate & Test Live\n1. Toggle the workflow to **ACTIVE** in the canvas header!\n2. Send a Facebook message to your page \u2014 AI will auto-reply in real-time!\n"
+            },
+            "description": "Open \"Additional Parameters\" to see the setup guide.",
+            "id": "messengerTrigger_0-input-howToUse-string"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "webhookName": "messenger",
+          "verifyToken": "orbit_messenger_2026",
+          "handshakeMode": false,
+          "responseMode": "waitForResponse",
+          "howToUse": ""
+        },
+        "outputAnchors": [
+          {
+            "name": "output",
+            "label": "Output",
+            "type": "options",
+            "description": "The actual text of the message sent by the user.",
+            "options": [
+              {
+                "id": "messengerTrigger_0-output-text-string",
+                "name": "text",
+                "label": "Message Text",
+                "description": "The actual text of the message sent by the user.",
+                "type": "string"
+              },
+              {
+                "id": "messengerTrigger_0-output-psid-string",
+                "name": "psid",
+                "label": "Sender PSID",
+                "description": "The unique ID of the sender (important for memory).",
+                "type": "string"
+              },
+              {
+                "id": "messengerTrigger_0-output-fullData-json",
+                "name": "fullData",
+                "label": "Full Data (Smart Object)",
+                "description": "Returns object with senderPsid and input for easy use in prompts.",
+                "type": "json"
+              }
+            ],
+            "default": "text"
+          }
+        ],
+        "outputs": {
+          "output": "fullData"
+        },
+        "selected": false
+      },
+      "width": 320,
+      "height": 974,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -1.1700656760882147,
+        "y": 987.8066020780041
+      },
+      "dragging": false
+    },
+    {
+      "id": "stickyNote_1",
+      "position": {
+        "x": 0,
+        "y": 2280.5
+      },
+      "type": "stickyNote",
+      "data": {
+        "id": "stickyNote_1",
+        "label": "Sticky Note",
+        "version": 2,
+        "name": "stickyNote",
+        "type": "StickyNote",
+        "baseClasses": [
+          "StickyNote"
+        ],
+        "tags": [
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Add a sticky note",
+        "inputParams": [
+          {
+            "label": "",
+            "name": "note",
+            "type": "string",
+            "rows": 1,
+            "placeholder": "Type something here",
+            "optional": true,
+            "id": "stickyNote_1-input-note-string"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "note": "Facebook\n\nPage Access Token\n\n<PAGE_ACCESS_TOKEN>\n\n\nPage ID\n\n<PAGE_ID>"
+        },
+        "outputAnchors": [
+          {
+            "id": "stickyNote_1-output-stickyNote-StickyNote",
+            "name": "stickyNote",
+            "label": "StickyNote",
+            "description": "Add a sticky note",
+            "type": "StickyNote"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 384,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 0,
+        "y": 2280.5
+      },
+      "dragging": false
+    }
+  ],
+  "edges": [
+    {
+      "type": "buttonedge",
+      "style": {
+        "stroke": "#E0AA3E",
+        "strokeWidth": 2.5,
+        "opacity": 0.65,
+        "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
+      },
+      "animated": false,
+      "source": "chatOpenRouter_0",
+      "sourceHandle": "chatOpenRouter_0-output-chatOpenRouter-ChatOpenRouter|ChatOpenAI|BaseChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable",
+      "target": "toolAgent_1",
+      "targetHandle": "toolAgent_1-input-model-BaseChatModel",
+      "id": "chatOpenRouter_0-chatOpenRouter_0-output-chatOpenRouter-ChatOpenRouter|ChatOpenAI|BaseChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable-toolAgent_1-toolAgent_1-input-model-BaseChatModel"
+    },
+    {
+      "type": "buttonedge",
+      "style": {
+        "stroke": "#E0AA3E",
+        "strokeWidth": 2.5,
+        "opacity": 0.65,
+        "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
+      },
+      "animated": false,
+      "source": "bufferMemory_0",
+      "sourceHandle": "bufferMemory_0-output-bufferMemory-BufferMemory|BaseChatMemory|BaseMemory",
+      "target": "toolAgent_1",
+      "targetHandle": "toolAgent_1-input-memory-BaseChatMemory",
+      "id": "bufferMemory_0-bufferMemory_0-output-bufferMemory-BufferMemory|BaseChatMemory|BaseMemory-toolAgent_1-toolAgent_1-input-memory-BaseChatMemory"
+    },
+    {
+      "type": "buttonedge",
+      "style": {
+        "stroke": "#E0AA3E",
+        "strokeWidth": 2.5,
+        "opacity": 0.65,
+        "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
+      },
+      "animated": false,
+      "source": "chatPromptTemplate_0",
+      "sourceHandle": "chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable",
+      "target": "toolAgent_1",
+      "targetHandle": "toolAgent_1-input-chatPromptTemplate-ChatPromptTemplate",
+      "id": "chatPromptTemplate_0-chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable-toolAgent_1-toolAgent_1-input-chatPromptTemplate-ChatPromptTemplate"
+    },
+    {
+      "type": "buttonedge",
+      "style": {
+        "stroke": "#E0AA3E",
+        "strokeWidth": 2.5,
+        "opacity": 0.65,
+        "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
+      },
+      "animated": false,
+      "source": "messengerTrigger_0",
+      "sourceHandle": "messengerTrigger_0-output-fullData-json",
+      "target": "chatPromptTemplate_0",
+      "targetHandle": "chatPromptTemplate_0-input-promptValues-json",
+      "id": "messengerTrigger_0-messengerTrigger_0-output-fullData-json-chatPromptTemplate_0-chatPromptTemplate_0-input-promptValues-json"
+    },
+    {
+      "type": "buttonedge",
+      "style": {
+        "stroke": "#E0AA3E",
+        "strokeWidth": 2.5,
+        "opacity": 0.65,
+        "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
+      },
+      "animated": false,
+      "source": "facebookMessengerTool_0",
+      "sourceHandle": "facebookMessengerTool_0-output-facebookMessengerTool-FacebookMessenger|Tool",
+      "target": "toolAgent_1",
+      "targetHandle": "toolAgent_1-input-tools-Tool",
+      "id": "facebookMessengerTool_0-facebookMessengerTool_0-output-facebookMessengerTool-FacebookMessenger|Tool-toolAgent_1-toolAgent_1-input-tools-Tool"
+    }
+  ],
+  "config": null,
+  "apiConfig": null,
+  "analytic": "{\"mindsmith\":{\"status\":true,\"credentialId\":\"Testing\",\"inputs\":{\"projectName\":\"Default Project\"}}}",
+  "speechToText": null,
+  "textToSpeech": null,
+  "followUpPrompts": null,
+  "iconSrc": null
+}

@@ -9,6 +9,7 @@ import {
   Upload, Check, X, Plus, Trash2, UserPlus, Instagram, MessageCircle, Facebook, Music, Globe, Sparkles, Shield, LogOut
 } from 'lucide-react';
 import { OrbitLogo } from '../components/shared/OrbitLogo';
+import { ChannelsPanel } from '../components/settings/ChannelsPanel';
 
 const settingsTabs = ['Business Profile', 'Channels', 'AI Settings', 'Working Hours', 'Notifications', 'Team Members'];
 
@@ -91,34 +92,11 @@ export function Settings() {
 
       case 'Channels':
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 520 }}>
-            {Object.entries(state.channelsConnected).map(([channel, connected]) => {
-              const Icon = channelIcons[channel] || Globe;
-              const colors: Record<string, string> = { instagram: '#E4405F', whatsapp: '#25D366', facebook: '#1877F2', tiktok: '#171717', website: '#343434' };
-              return (
-                <div key={channel} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface-1)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--surface-0)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Icon size={20} color={colors[channel]} />
-                    </div>
-                    <div>
-                      <span style={{ fontSize: 14, fontWeight: 700, textTransform: 'capitalize', color: 'var(--midnight-ink)', display: 'block' }}>{channel}</span>
-                      <span style={{ fontSize: 11, color: connected ? '#0F8357' : 'var(--stone-gray)' }}>
-                        {connected ? '🟢 Syncing inquiries & webhooks' : '⚪ Disconnected'}
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleToggleChannel(channel)}
-                    className="btn"
-                    style={{ height: 32, padding: '0 16px', fontSize: 12.5, fontWeight: 700, background: connected ? 'var(--danger-bg)' : 'var(--signal-orange)', color: connected ? 'var(--burnt-coral)' : 'white' }}
-                  >
-                    {connected ? 'Disconnect' : 'Connect'}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+          <ChannelsPanel
+            showToast={showToast}
+            local={state.channelsConnected}
+            onToggleLocal={handleToggleChannel}
+          />
         );
 
       case 'AI Settings':

@@ -1,0 +1,803 @@
+{
+  "nodes": [
+    {
+      "id": "chatOpenRouter_0",
+      "position": {
+        "x": -238.44877913901217,
+        "y": 612.253220454129
+      },
+      "type": "customNode",
+      "data": {
+        "id": "chatOpenRouter_0",
+        "label": "ChatOpenRouter",
+        "version": 2.1,
+        "name": "chatOpenRouter",
+        "type": "ChatOpenRouter",
+        "baseClasses": [
+          "ChatOpenRouter",
+          "ChatOpenAI",
+          "BaseChatOpenAI",
+          "BaseChatModel",
+          "BaseLanguageModel",
+          "Runnable"
+        ],
+        "category": "Chat Models",
+        "description": "Wrapper around Open Router Inference API. Supports all frontier models (GPT-5.6 Luna, DeepSeek R1/V3, Claude 4.6/3.7, Gemini 3.7/2.0, Llama 3.3, Qwen 2.5) and multimodal vision.",
+        "inputParams": [
+          {
+            "label": "Connect Credential",
+            "name": "credential",
+            "type": "credential",
+            "credentialNames": [
+              "openRouterApi"
+            ],
+            "optional": false,
+            "id": "chatOpenRouter_0-input-credential-credential"
+          },
+          {
+            "label": "Model Name",
+            "name": "modelName",
+            "type": "asyncOptions",
+            "loadMethod": "listModels",
+            "default": "openai/gpt-5.6-luna",
+            "description": "Select a model from the list or use Custom Model Name below",
+            "id": "chatOpenRouter_0-input-modelName-asyncOptions"
+          },
+          {
+            "label": "Custom Model Name",
+            "name": "customModelName",
+            "type": "string",
+            "placeholder": "openai/gpt-5.6-luna",
+            "description": "Custom model name to use on OpenRouter. If provided, it overrides the dropdown selection above.",
+            "additionalParams": true,
+            "optional": true,
+            "id": "chatOpenRouter_0-input-customModelName-string"
+          },
+          {
+            "label": "Temperature",
+            "name": "temperature",
+            "type": "number",
+            "step": 0.1,
+            "default": 0.7,
+            "optional": true,
+            "description": "Sampling temperature (0 to 2). Note: Reasoning models (o1, o3, DeepSeek R1, Luna) automatically omit temperature if not supported.",
+            "id": "chatOpenRouter_0-input-temperature-number"
+          },
+          {
+            "label": "Streaming",
+            "name": "streaming",
+            "type": "boolean",
+            "default": true,
+            "optional": true,
+            "additionalParams": true,
+            "id": "chatOpenRouter_0-input-streaming-boolean"
+          },
+          {
+            "label": "Max Tokens",
+            "name": "maxTokens",
+            "type": "number",
+            "step": 1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "chatOpenRouter_0-input-maxTokens-number"
+          },
+          {
+            "label": "Top Probability",
+            "name": "topP",
+            "type": "number",
+            "step": 0.1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "chatOpenRouter_0-input-topP-number"
+          },
+          {
+            "label": "Frequency Penalty",
+            "name": "frequencyPenalty",
+            "type": "number",
+            "step": 0.1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "chatOpenRouter_0-input-frequencyPenalty-number"
+          },
+          {
+            "label": "Presence Penalty",
+            "name": "presencePenalty",
+            "type": "number",
+            "step": 0.1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "chatOpenRouter_0-input-presencePenalty-number"
+          },
+          {
+            "label": "Timeout",
+            "name": "timeout",
+            "type": "number",
+            "step": 1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "chatOpenRouter_0-input-timeout-number"
+          },
+          {
+            "label": "BasePath",
+            "name": "basepath",
+            "type": "string",
+            "optional": true,
+            "default": "https://openrouter.ai/api/v1",
+            "additionalParams": true,
+            "description": "API endpoint URL for OpenRouter",
+            "id": "chatOpenRouter_0-input-basepath-string"
+          },
+          {
+            "label": "BaseOptions",
+            "name": "baseOptions",
+            "type": "json",
+            "optional": true,
+            "additionalParams": true,
+            "description": "Additional headers (e.g., {\"HTTP-Referer\": \"https://yourapp.com\"})",
+            "id": "chatOpenRouter_0-input-baseOptions-json"
+          },
+          {
+            "label": "Allow Image Uploads",
+            "name": "allowImageUploads",
+            "type": "boolean",
+            "description": "Allow image input. Only applicable when using a vision-supported model on OpenRouter (e.g. Claude 3+, GPT-4o, GPT-5+, Gemini 2.0+, Pixtral, Llama 3.2 Vision). Refer to the <a href=\"https://docs.aimicromind.com/using-aimicromind/uploads#image\" target=\"_blank\">docs</a> for details.",
+            "default": false,
+            "optional": true,
+            "id": "chatOpenRouter_0-input-allowImageUploads-boolean"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Cache",
+            "name": "cache",
+            "type": "BaseCache",
+            "optional": true,
+            "id": "chatOpenRouter_0-input-cache-BaseCache"
+          }
+        ],
+        "inputs": {
+          "cache": "",
+          "modelName": "openai/gpt-5.6-luna",
+          "customModelName": "",
+          "temperature": 0.9,
+          "streaming": true,
+          "maxTokens": "",
+          "topP": "",
+          "frequencyPenalty": "",
+          "presencePenalty": "",
+          "timeout": "",
+          "basepath": "https://openrouter.ai/api/v1",
+          "baseOptions": "",
+          "allowImageUploads": ""
+        },
+        "outputAnchors": [
+          {
+            "id": "chatOpenRouter_0-output-chatOpenRouter-ChatOpenRouter|ChatOpenAI|BaseChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable",
+            "name": "chatOpenRouter",
+            "label": "ChatOpenRouter",
+            "description": "Wrapper around Open Router Inference API. Supports all frontier models (GPT-5.6 Luna, DeepSeek R1/V3, Claude 4.6/3.7, Gemini 3.7/2.0, Llama 3.3, Qwen 2.5) and multimodal vision.",
+            "type": "ChatOpenRouter | ChatOpenAI | BaseChatOpenAI | BaseChatModel | BaseLanguageModel | Runnable"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 789,
+      "selected": false,
+      "dragging": false,
+      "positionAbsolute": {
+        "x": -238.44877913901217,
+        "y": 612.253220454129
+      }
+    },
+    {
+      "id": "toolAgent_0",
+      "position": {
+        "x": 1200.3737729567863,
+        "y": 266.96491581211177
+      },
+      "type": "customNode",
+      "data": {
+        "id": "toolAgent_0",
+        "label": "Tool Agent",
+        "version": 2,
+        "name": "toolAgent",
+        "type": "AgentExecutor",
+        "baseClasses": [
+          "AgentExecutor",
+          "BaseChain",
+          "Runnable"
+        ],
+        "category": "Agents",
+        "description": "Agent that uses Function Calling to pick the tools and args to call",
+        "inputParams": [
+          {
+            "label": "System Message",
+            "name": "systemMessage",
+            "type": "string",
+            "default": "You are a helpful AI assistant.",
+            "description": "If Chat Prompt Template is provided, this will be ignored",
+            "rows": 4,
+            "optional": true,
+            "additionalParams": true,
+            "id": "toolAgent_0-input-systemMessage-string"
+          },
+          {
+            "label": "Max Iterations",
+            "name": "maxIterations",
+            "type": "number",
+            "optional": true,
+            "additionalParams": true,
+            "id": "toolAgent_0-input-maxIterations-number"
+          },
+          {
+            "label": "Enable Detailed Streaming",
+            "name": "enableDetailedStreaming",
+            "type": "boolean",
+            "default": false,
+            "description": "Stream detailed intermediate steps during agent execution",
+            "optional": true,
+            "additionalParams": true,
+            "id": "toolAgent_0-input-enableDetailedStreaming-boolean"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Tools",
+            "name": "tools",
+            "type": "Tool",
+            "list": true,
+            "id": "toolAgent_0-input-tools-Tool"
+          },
+          {
+            "label": "Memory",
+            "name": "memory",
+            "type": "BaseChatMemory",
+            "id": "toolAgent_0-input-memory-BaseChatMemory"
+          },
+          {
+            "label": "Tool Calling Chat Model",
+            "name": "model",
+            "type": "BaseChatModel",
+            "description": "Only compatible with models that are capable of function calling: ChatOpenAI, ChatMistral, ChatAnthropic, GoogleGenerativeAI, ChatVertexAI, GroqChat",
+            "id": "toolAgent_0-input-model-BaseChatModel"
+          },
+          {
+            "label": "Chat Prompt Template",
+            "name": "chatPromptTemplate",
+            "type": "ChatPromptTemplate",
+            "description": "Override existing prompt with Chat Prompt Template. Human Message must includes {input} variable",
+            "optional": true,
+            "id": "toolAgent_0-input-chatPromptTemplate-ChatPromptTemplate"
+          },
+          {
+            "label": "Input Moderation",
+            "description": "Detect text that could generate harmful output and prevent it from being sent to the language model",
+            "name": "inputModeration",
+            "type": "Moderation",
+            "optional": true,
+            "list": true,
+            "id": "toolAgent_0-input-inputModeration-Moderation"
+          }
+        ],
+        "inputs": {
+          "tools": [
+            "{{instagramMessenger_0.data.instance}}"
+          ],
+          "memory": "{{bufferMemory_0.data.instance}}",
+          "model": "{{chatOpenRouter_0.data.instance}}",
+          "chatPromptTemplate": "{{chatPromptTemplate_0.data.instance}}",
+          "systemMessage": "You are a helpful AI assistant.",
+          "inputModeration": "",
+          "maxIterations": "",
+          "enableDetailedStreaming": ""
+        },
+        "outputAnchors": [
+          {
+            "id": "toolAgent_0-output-toolAgent-AgentExecutor|BaseChain|Runnable",
+            "name": "toolAgent",
+            "label": "AgentExecutor",
+            "description": "Agent that uses Function Calling to pick the tools and args to call",
+            "type": "AgentExecutor | BaseChain | Runnable"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 510,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 1200.3737729567863,
+        "y": 266.96491581211177
+      },
+      "dragging": false
+    },
+    {
+      "id": "bufferMemory_0",
+      "position": {
+        "x": -233.41655536388436,
+        "y": 211.1052155005583
+      },
+      "type": "customNode",
+      "data": {
+        "id": "bufferMemory_0",
+        "label": "Buffer Memory",
+        "version": 2,
+        "name": "bufferMemory",
+        "type": "BufferMemory",
+        "baseClasses": [
+          "BufferMemory",
+          "BaseChatMemory",
+          "BaseMemory"
+        ],
+        "category": "Memory",
+        "description": "Retrieve chat messages stored in database",
+        "inputParams": [
+          {
+            "label": "Session Id",
+            "name": "sessionId",
+            "type": "string",
+            "description": "If not specified, a random id will be used. Learn <a target=\"_blank\" href=\"https://docs.aimicromind.com/memory#ui-and-embedded-chat\">more</a>",
+            "default": "",
+            "additionalParams": true,
+            "optional": true,
+            "id": "bufferMemory_0-input-sessionId-string"
+          },
+          {
+            "label": "Memory Key",
+            "name": "memoryKey",
+            "type": "string",
+            "default": "chat_history",
+            "additionalParams": true,
+            "id": "bufferMemory_0-input-memoryKey-string"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "sessionId": "",
+          "memoryKey": "chat_history"
+        },
+        "outputAnchors": [
+          {
+            "id": "bufferMemory_0-output-bufferMemory-BufferMemory|BaseChatMemory|BaseMemory",
+            "name": "bufferMemory",
+            "label": "BufferMemory",
+            "description": "Retrieve chat messages stored in database",
+            "type": "BufferMemory | BaseChatMemory | BaseMemory"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 342,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -233.41655536388436,
+        "y": 211.1052155005583
+      },
+      "dragging": false
+    },
+    {
+      "id": "chatPromptTemplate_0",
+      "position": {
+        "x": 503.56652573290705,
+        "y": 221.25940729055083
+      },
+      "type": "customNode",
+      "data": {
+        "id": "chatPromptTemplate_0",
+        "label": "Chat Prompt Template",
+        "version": 2,
+        "name": "chatPromptTemplate",
+        "type": "ChatPromptTemplate",
+        "baseClasses": [
+          "ChatPromptTemplate",
+          "BaseChatPromptTemplate",
+          "BasePromptTemplate",
+          "Runnable"
+        ],
+        "category": "Prompts",
+        "description": "Schema to represent a chat prompt",
+        "inputParams": [
+          {
+            "label": "System Message",
+            "name": "systemMessagePrompt",
+            "type": "string",
+            "rows": 4,
+            "placeholder": "You are a helpful assistant that translates {input_language} to {output_language}.",
+            "id": "chatPromptTemplate_0-input-systemMessagePrompt-string"
+          },
+          {
+            "label": "Human Message",
+            "name": "humanMessagePrompt",
+            "description": "This prompt will be added at the end of the messages as human message",
+            "type": "string",
+            "rows": 4,
+            "placeholder": "{text}",
+            "id": "chatPromptTemplate_0-input-humanMessagePrompt-string"
+          },
+          {
+            "label": "Format Prompt Values",
+            "name": "promptValues",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "chatPromptTemplate_0-input-promptValues-json"
+          },
+          {
+            "label": "Messages History",
+            "name": "messageHistory",
+            "description": "Add messages after System Message. This is useful when you want to provide few shot examples",
+            "type": "tabs",
+            "tabIdentifier": "selectedMessagesTab",
+            "additionalParams": true,
+            "default": "messageHistoryCode",
+            "tabs": [
+              {
+                "label": "Add Messages (Code)",
+                "name": "messageHistoryCode",
+                "type": "code",
+                "hideCodeExecute": true,
+                "codeExample": "const { AIMessage, HumanMessage, ToolMessage } = require('@langchain/core/messages');\n\nreturn [\n    new HumanMessage(\"What is 333382 🦜 1932?\"),\n    new AIMessage({\n        content: \"\",\n        tool_calls: [\n        {\n            id: \"12345\",\n            name: \"calulator\",\n            args: {\n                number1: 333382,\n                number2: 1932,\n                operation: \"divide\",\n            },\n        },\n        ],\n    }),\n    new ToolMessage({\n        tool_call_id: \"12345\",\n        content: \"The answer is 172.558.\",\n    }),\n    new AIMessage(\"The answer is 172.558.\"),\n]",
+                "optional": true,
+                "additionalParams": true
+              }
+            ],
+            "id": "chatPromptTemplate_0-input-messageHistory-tabs"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "systemMessagePrompt": "You are a helpful AI assistant responding to Instagram Direct Messages.\n\nContext:\n- Instagram Sender IGSID: {senderIgsid}\n- User Message: {input}\n\nReply naturally and helpfully to the user's message.\n\nSTRICT RULE:\nYou MUST use the Instagram Messenger \"Send Text Message\" tool to send your final response.\n\nWhen calling the tool:\n- recipientPsid: {senderIgsid}\n- messageText: Your final reply to the user.\n\nDo not only return text.\nAlways send the final response using the Instagram Messenger tool.",
+          "humanMessagePrompt": "{input}",
+          "promptValues": "{\"senderIgsid\":\"{{instagramTrigger_0.data.instance.senderIgsid}}\",\"input\":\"{{instagramTrigger_0.data.instance.text}}\\n\"}",
+          "messageHistory": "messageHistoryCode"
+        },
+        "outputAnchors": [
+          {
+            "id": "chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable",
+            "name": "chatPromptTemplate",
+            "label": "ChatPromptTemplate",
+            "description": "Schema to represent a chat prompt",
+            "type": "ChatPromptTemplate | BaseChatPromptTemplate | BasePromptTemplate | Runnable"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 878,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 503.56652573290705,
+        "y": 221.25940729055083
+      },
+      "dragging": false
+    },
+    {
+      "id": "instagramTrigger_0",
+      "position": {
+        "x": 120.17290678510511,
+        "y": 184.8156455263926
+      },
+      "type": "customNode",
+      "data": {
+        "id": "instagramTrigger_0",
+        "label": "Instagram Trigger",
+        "version": 1,
+        "name": "instagramTrigger",
+        "type": "InstagramTrigger",
+        "baseClasses": [
+          "InstagramTrigger",
+          "triggers",
+          "json",
+          "string"
+        ],
+        "category": "Triggers",
+        "description": "Real-time Instagram Direct Message (DM) webhook trigger — receives DMs and auto-replies via Meta Graph API",
+        "inputParams": [
+          {
+            "label": "Webhook Path",
+            "name": "webhookName",
+            "type": "string",
+            "default": "instagram",
+            "description": "The unique path for your Instagram webhook URL.",
+            "id": "instagramTrigger_0-input-webhookName-string"
+          },
+          {
+            "label": "Verify Token",
+            "name": "verifyToken",
+            "type": "string",
+            "placeholder": "e.g. my-instagram-token",
+            "description": "The token you entered in the Meta Developer Portal for verification.",
+            "id": "instagramTrigger_0-input-verifyToken-string"
+          },
+          {
+            "label": "Page Access Token",
+            "name": "accessToken",
+            "type": "password",
+            "placeholder": "e.g. EAAB...",
+            "description": "Your Meta Page Access Token for direct Instagram DM auto-reply.",
+            "optional": false,
+            "id": "instagramTrigger_0-input-accessToken-password"
+          },
+          {
+            "label": "Handshake Mode (Verification)",
+            "name": "handshakeMode",
+            "type": "boolean",
+            "default": false,
+            "description": "Enable this during initial Meta \"Verify\" handshake. Disable after verification.",
+            "id": "instagramTrigger_0-input-handshakeMode-boolean"
+          },
+          {
+            "label": "How to Use",
+            "name": "howToUse",
+            "type": "string",
+            "default": "",
+            "optional": true,
+            "additionalParams": true,
+            "hint": {
+              "label": "Setup Guide",
+              "value": "\n## 📸 Instagram Direct Message (DM) Setup & Token Guide\n\n### Step 1: Get Page Access Token\n1. Go to [Meta Graph API Explorer](https://developers.facebook.com/tools/explorer/).\n2. Under **Meta App**, select your App (`MicroMind Connect` or `Ranim_core_Inst`).\n3. Under **User or Page**, select **Get Page Access Token** and pick your Facebook Page.\n4. Under **Permissions**, add `instagram_basic`, `instagram_manage_messages`, and `pages_messaging`.\n5. Click **Generate Access Token** and copy the token into the **Page Access Token** field below.\n\n### Step 2: Set Meta Webhook Callback URL\n1. Copy the Webhook URL from the top of this node (`https://core.aimicromind.com/webhook/{chatflowId}/instagram`).\n2. In Meta Developer Portal ➔ **Messenger / Instagram** ➔ **Webhooks** ➔ click **Add Callback URL**.\n3. Paste the Webhook URL and enter your **Verify Token** (e.g. `insta`).\n4. Click **Verify and Save** ✅.\n5. Subscribe to `messages` and `messaging_postbacks`.\n\n### Step 3: Activate & Test Live\n1. Toggle the workflow to **ACTIVE** in the canvas header!\n2. Send an Instagram DM to your page — AI will auto-reply in real-time!\n"
+            },
+            "description": "Open \"Additional Parameters\" to see the setup guide.",
+            "id": "instagramTrigger_0-input-howToUse-string"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "webhookName": "instagram",
+          "verifyToken": "orbit_instagram_verify",
+          "handshakeMode": "",
+          "howToUse": ""
+        },
+        "outputAnchors": [
+          {
+            "name": "output",
+            "label": "Output",
+            "type": "options",
+            "description": "The text content of the incoming Instagram DM.",
+            "options": [
+              {
+                "id": "instagramTrigger_0-output-text-string",
+                "name": "text",
+                "label": "Message Text",
+                "description": "The text content of the incoming Instagram DM.",
+                "type": "string"
+              },
+              {
+                "id": "instagramTrigger_0-output-senderIgsid-string",
+                "name": "senderIgsid",
+                "label": "Sender IGSID (User ID)",
+                "description": "The unique Instagram Scoped User ID of the sender.",
+                "type": "string"
+              },
+              {
+                "id": "instagramTrigger_0-output-fullData-json",
+                "name": "fullData",
+                "label": "Full Data (Smart Object)",
+                "description": "Returns object with text, senderIgsid, and timestamp for prompt mapping.",
+                "type": "json"
+              }
+            ],
+            "default": "text"
+          }
+        ],
+        "outputs": {
+          "output": "fullData"
+        },
+        "selected": false
+      },
+      "width": 320,
+      "height": 988,
+      "selected": false,
+      "dragging": false,
+      "positionAbsolute": {
+        "x": 120.17290678510511,
+        "y": 184.8156455263926
+      }
+    },
+    {
+      "id": "instagramMessenger_0",
+      "position": {
+        "x": 855.5107950735967,
+        "y": 252.0115270323039
+      },
+      "type": "customNode",
+      "data": {
+        "id": "instagramMessenger_0",
+        "label": "Instagram Messenger",
+        "version": 1,
+        "name": "instagramMessenger",
+        "type": "InstagramMessenger",
+        "baseClasses": [
+          "InstagramMessenger",
+          "Tool"
+        ],
+        "category": "Social Media",
+        "description": "Manage Instagram Direct Messages: read conversations, send text/image/audio/video DMs, and reply privately to comments via the Meta Graph API",
+        "inputParams": [
+          {
+            "label": "Connect Credential",
+            "name": "credential",
+            "type": "credential",
+            "credentialNames": [
+              "instagramMessengerToken"
+            ],
+            "id": "instagramMessenger_0-input-credential-credential"
+          },
+          {
+            "label": "Actions",
+            "name": "actions",
+            "type": "multiOptions",
+            "options": [
+              {
+                "label": "Get Conversations",
+                "name": "getConversations"
+              },
+              {
+                "label": "Get Conversation by User",
+                "name": "getConversationByUser"
+              },
+              {
+                "label": "Get Messages in Conversation",
+                "name": "getMessages"
+              },
+              {
+                "label": "Get Message Details",
+                "name": "getMessageDetails"
+              },
+              {
+                "label": "Send Text Message",
+                "name": "sendTextMessage"
+              },
+              {
+                "label": "Send Image Message",
+                "name": "sendImageMessage"
+              },
+              {
+                "label": "Send Audio Message",
+                "name": "sendAudioMessage"
+              },
+              {
+                "label": "Send Video Message",
+                "name": "sendVideoMessage"
+              },
+              {
+                "label": "Private Reply to Comment",
+                "name": "privateReplyToComment"
+              }
+            ],
+            "default": [
+              "getConversations",
+              "sendTextMessage"
+            ],
+            "id": "instagramMessenger_0-input-actions-multiOptions"
+          },
+          {
+            "label": "Default Message Limit",
+            "name": "limit",
+            "type": "number",
+            "description": "Default number of conversations to return",
+            "default": 20,
+            "additionalParams": true,
+            "optional": true,
+            "id": "instagramMessenger_0-input-limit-number"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "actions": "[\"sendTextMessage\",\"sendImageMessage\"]",
+          "limit": 20
+        },
+        "outputAnchors": [
+          {
+            "id": "instagramMessenger_0-output-instagramMessenger-InstagramMessenger|Tool",
+            "name": "instagramMessenger",
+            "label": "InstagramMessenger",
+            "description": "Manage Instagram Direct Messages: read conversations, send text/image/audio/video DMs, and reply privately to comments via the Meta Graph API",
+            "type": "InstagramMessenger | Tool"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 617,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 855.5107950735967,
+        "y": 252.0115270323039
+      },
+      "dragging": false
+    }
+  ],
+  "edges": [
+    {
+      "type": "buttonedge",
+      "style": {
+        "stroke": "#E0AA3E",
+        "strokeWidth": 2.5,
+        "opacity": 0.65,
+        "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
+      },
+      "animated": false,
+      "source": "chatOpenRouter_0",
+      "sourceHandle": "chatOpenRouter_0-output-chatOpenRouter-ChatOpenRouter|ChatOpenAI|BaseChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable",
+      "target": "toolAgent_0",
+      "targetHandle": "toolAgent_0-input-model-BaseChatModel",
+      "id": "chatOpenRouter_0-chatOpenRouter_0-output-chatOpenRouter-ChatOpenRouter|ChatOpenAI|BaseChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable-toolAgent_0-toolAgent_0-input-model-BaseChatModel"
+    },
+    {
+      "type": "buttonedge",
+      "style": {
+        "stroke": "#E0AA3E",
+        "strokeWidth": 2.5,
+        "opacity": 0.65,
+        "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
+      },
+      "animated": false,
+      "source": "bufferMemory_0",
+      "sourceHandle": "bufferMemory_0-output-bufferMemory-BufferMemory|BaseChatMemory|BaseMemory",
+      "target": "toolAgent_0",
+      "targetHandle": "toolAgent_0-input-memory-BaseChatMemory",
+      "id": "bufferMemory_0-bufferMemory_0-output-bufferMemory-BufferMemory|BaseChatMemory|BaseMemory-toolAgent_0-toolAgent_0-input-memory-BaseChatMemory"
+    },
+    {
+      "type": "buttonedge",
+      "style": {
+        "stroke": "#b88a30",
+        "strokeWidth": 2.5,
+        "opacity": 0.65,
+        "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
+      },
+      "animated": false,
+      "source": "instagramTrigger_0",
+      "sourceHandle": "instagramTrigger_0-output-fullData-json",
+      "target": "chatPromptTemplate_0",
+      "targetHandle": "chatPromptTemplate_0-input-promptValues-json",
+      "id": "instagramTrigger_0-instagramTrigger_0-output-fullData-json-chatPromptTemplate_0-chatPromptTemplate_0-input-promptValues-json"
+    },
+    {
+      "type": "buttonedge",
+      "style": {
+        "stroke": "#b88a30",
+        "strokeWidth": 2.5,
+        "opacity": 0.65,
+        "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
+      },
+      "animated": false,
+      "source": "instagramMessenger_0",
+      "sourceHandle": "instagramMessenger_0-output-instagramMessenger-InstagramMessenger|Tool",
+      "target": "toolAgent_0",
+      "targetHandle": "toolAgent_0-input-tools-Tool",
+      "id": "instagramMessenger_0-instagramMessenger_0-output-instagramMessenger-InstagramMessenger|Tool-toolAgent_0-toolAgent_0-input-tools-Tool"
+    },
+    {
+      "type": "buttonedge",
+      "style": {
+        "stroke": "#b88a30",
+        "strokeWidth": 2.5,
+        "opacity": 0.65,
+        "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
+      },
+      "animated": false,
+      "source": "chatPromptTemplate_0",
+      "sourceHandle": "chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable",
+      "target": "toolAgent_0",
+      "targetHandle": "toolAgent_0-input-chatPromptTemplate-ChatPromptTemplate",
+      "id": "chatPromptTemplate_0-chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable-toolAgent_0-toolAgent_0-input-chatPromptTemplate-ChatPromptTemplate"
+    }
+  ],
+  "config": null,
+  "apiConfig": null,
+  "analytic": "{\"mindsmith\":{\"status\":true,\"credentialId\":\"Testing\",\"inputs\":{\"projectName\":\"Default Project\"}}}",
+  "speechToText": null,
+  "textToSpeech": null,
+  "followUpPrompts": null,
+  "iconSrc": null
+}

@@ -24,6 +24,7 @@ import { Automations } from './pages/Automations';
 import { Knowledge } from './pages/Knowledge';
 import { Analytics } from './pages/Analytics';
 import { Settings } from './pages/Settings';
+import { Admin } from './pages/Admin';
 import { Demo } from './pages/Demo';
 import { Scheduler } from './pages/Scheduler';
 import { Toast } from './components/shared/Toast';
@@ -124,6 +125,7 @@ function App() {
             <Route path="/knowledge" element={<Knowledge />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<Overview />} />
           </Routes>
         </main>

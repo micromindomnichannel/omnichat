@@ -1,6 +1,6 @@
 // ORBIT Omnichannel API Client for PostgreSQL Database Sync
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5000/api';
 
 async function fetchJson(url: string, options?: RequestInit) {
   try {
@@ -69,5 +69,30 @@ export const api = {
 
   // Business Settings
   getSettings: () => fetchJson('/settings'),
-  updateSettings: (settings: any) => fetchJson('/settings', { method: 'PUT', body: JSON.stringify(settings) })
+  updateSettings: (settings: any) => fetchJson('/settings', { method: 'PUT', body: JSON.stringify(settings) }),
+
+  // Channel connections (multi-tenant slice; null when backend unreachable -> local fallback)
+  getChannels: (workspaceId = 'default') => fetchJson(`/v1/workspaces/${workspaceId}/channels`),
+  connectChannel: (workspaceId: string, channel: string, payload: any) =>
+    fetchJson(`/v1/workspaces/${workspaceId}/channels/${channel}/connect`, { method: 'POST', body: JSON.stringify(payload) }),
+  disconnectChannel: (id: string) => fetchJson(`/v1/channels/${id}/disconnect`, { method: 'POST' }),
+  reconnectChannel: (id: string) => fetchJson(`/v1/channels/${id}/reconnect`, { method: 'POST' }),
+
+  // Human reply via backend (backend resolves credential + sends to provider)
+  replyToConversation: (id: string, text: string) =>
+    fetchJson(`/v1/conversations/${id}/reply`, { method: 'POST', body: JSON.stringify({ text }) }),
+
+  // Knowledge base
+  getKnowledge: (workspaceId = 'default', kind?: string) =>
+    fetchJson(`/v1/workspaces/${workspaceId}/knowledge${kind ? `?kind=${kind}` : ''}`),
+  addKnowledge: (workspaceId: string, item: any) =>
+    fetchJson(`/v1/workspaces/${workspaceId}/knowledge`, { method: 'POST', body: JSON.stringify(item) }),
+  deleteKnowledge: (id: string) => fetchJson(`/v1/knowledge/${id}`, { method: 'DELETE' }),
+
+  // Admin (internal)
+  adminOverview: () => fetchJson('/v1/admin/overview'),
+  adminChannels: () => fetchJson('/v1/admin/channels'),
+  adminFlows: () => fetchJson('/v1/admin/flows'),
+  adminErrors: () => fetchJson('/v1/admin/errors'),
+  adminUsage: () => fetchJson('/v1/admin/usage')
 };

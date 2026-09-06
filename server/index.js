@@ -5,6 +5,15 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { pool, checkDbConnection } from './db.js';
+import { migrate } from './migrate.js';
+import { channelsRouter } from './channels/routes.js';
+import { webhooksRouter } from './webhooks/routes.js';
+import { knowledgeRouter } from './knowledge/routes.js';
+import { adminRouter } from './admin/routes.js';
+import { decryptSecret } from './credentials/crypto.js';
+import { sendTextMessage } from './meta/graph.js';
+import { sendWhatsAppText } from './meta/whatsapp.js';
+import { sendTelegramText } from './integrations/telegram.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -82,13 +91,13 @@ app.get('/api/health', async (req, res) => {
 // 2. Full Application Bootstrap (Loads all DB tables)
 app.get('/api/bootstrap', async (req, res) => {
   try {
-    const products = (await pool.query('SELECT * FROM products ORDER BY created_at DESC')).rows;
-    const services = (await pool.query('SELECT * FROM services')).rows;
-    const customers = (await pool.query('SELECT * FROM customers ORDER BY created_at DESC')).rows;
-    const conversations = (await pool.query('SELECT * FROM conversations ORDER BY updated_at DESC')).rows;
-    const messages = (await pool.query('SELECT * FROM messages ORDER BY created_at ASC')).rows;
-    const orders = (await pool.query('SELECT * FROM orders ORDER BY created_at DESC')).rows;
-    const appointments = (await pool.query('SELECT * FROM appointments ORDER BY date DESC, time ASC')).rows;
+    const products = (await pool.query("SELECT * FROM products WHERE workspace_id = 'default' ORDER BY created_at DESC")).rows;
+    const services = (await pool.query("SELECT * FROM services WHERE workspace_id = 'default'")).rows;
+    const customers = (await pool.query("SELECT * FROM customers WHERE workspace_id = 'default' ORDER BY created_at DESC")).rows;
+    const conversations = (await pool.query("SELECT * FROM conversations WHERE workspace_id = 'default' ORDER BY updated_at DESC")).rows;
+    const messages = (await pool.query("SELECT * FROM messages WHERE workspace_id = 'default' ORDER BY created_at ASC")).rows;
+    const orders = (await pool.query("SELECT * FROM orders WHERE workspace_id = 'default' ORDER BY created_at DESC")).rows;
+    const appointments = (await pool.query("SELECT * FROM appointments WHERE workspace_id = 'default' ORDER BY date DESC, time ASC")).rows;
     const automations = (await pool.query('SELECT * FROM automations')).rows;
     const faqs = (await pool.query('SELECT * FROM faqs')).rows;
     const schedules = (await pool.query('SELECT * FROM content_schedules ORDER BY scheduled_time ASC')).rows;
@@ -113,7 +122,7 @@ app.get('/api/bootstrap', async (req, res) => {
 // 3. Products Inventory API
 app.get('/api/products', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM products ORDER BY created_at DESC');
+    const result = await pool.query("SELECT * FROM products WHERE workspace_id = 'default' ORDER BY created_at DESC");
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -125,8 +134,8 @@ app.post('/api/products', async (req, res) => {
   const prodId = id || `p${Date.now()}`;
   try {
     const result = await pool.query(
-      `INSERT INTO products (id, name, price, stock, category, sku, image, available)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO products (id, workspace_id, name, price, stock, category, sku, image, available)
+       VALUES ($1, 'default', $2, $3, $4, $5, $6, $7, $8)
        ON CONFLICT (id) DO UPDATE SET
        name = EXCLUDED.name, price = EXCLUDED.price, stock = EXCLUDED.stock,
        category = EXCLUDED.category, sku = EXCLUDED.sku, available = EXCLUDED.available
@@ -146,7 +155,7 @@ app.put('/api/products/:id', async (req, res) => {
     const result = await pool.query(
       `UPDATE products 
        SET name = $1, price = $2, stock = $3, category = $4, sku = $5, available = $6
-       WHERE id = $7 RETURNING *`,
+       WHERE id = $7 AND workspace_id = 'default' RETURNING *`,
       [name, price, stock, category, sku, available, id]
     );
     res.json(result.rows[0] || req.body);
@@ -158,7 +167,7 @@ app.put('/api/products/:id', async (req, res) => {
 app.delete('/api/products/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    await pool.query('DELETE FROM products WHERE id = $1', [id]);
+    await pool.query("DELETE FROM products WHERE id = $1 AND workspace_id = 'default'", [id]);
     res.json({ success: true, message: `Product ${id} deleted` });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -168,7 +177,7 @@ app.delete('/api/products/:id', async (req, res) => {
 // 4. Services API
 app.get('/api/services', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM services');
+    const result = await pool.query("SELECT * FROM services WHERE workspace_id = 'default'");
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -180,8 +189,8 @@ app.post('/api/services', async (req, res) => {
   const srvId = id || `s${Date.now()}`;
   try {
     const result = await pool.query(
-      `INSERT INTO services (id, name, price, duration, category, description, available)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO services (id, workspace_id, name, price, duration, category, description, available)
+       VALUES ($1, 'default', $2, $3, $4, $5, $6, $7)
        ON CONFLICT (id) DO UPDATE SET
        name = EXCLUDED.name, price = EXCLUDED.price, duration = EXCLUDED.duration,
        category = EXCLUDED.category, description = EXCLUDED.description, available = EXCLUDED.available
@@ -200,7 +209,7 @@ app.put('/api/services/:id', async (req, res) => {
   try {
     const result = await pool.query(
       `UPDATE services SET name = $1, price = $2, duration = $3, category = $4, description = $5, available = $6
-       WHERE id = $7 RETURNING *`,
+       WHERE id = $7 AND workspace_id = 'default' RETURNING *`,
       [name, price, duration, category, description, available, id]
     );
     res.json(result.rows[0] || req.body);
@@ -212,7 +221,7 @@ app.put('/api/services/:id', async (req, res) => {
 app.delete('/api/services/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    await pool.query('DELETE FROM services WHERE id = $1', [id]);
+    await pool.query("DELETE FROM services WHERE id = $1 AND workspace_id = 'default'", [id]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -226,6 +235,7 @@ app.get('/api/conversations', async (req, res) => {
       SELECT c.*, cust.name as customer_name, cust.avatar as customer_avatar
       FROM conversations c
       LEFT JOIN customers cust ON c.customer_id = cust.id
+      WHERE c.workspace_id = 'default'
       ORDER BY c.updated_at DESC
     `);
     res.json(result.rows);
@@ -239,7 +249,7 @@ app.put('/api/conversations/:id/status', async (req, res) => {
   const { status } = req.body;
   try {
     const result = await pool.query(
-      'UPDATE conversations SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
+      'UPDATE conversations SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND workspace_id = \'default\' RETURNING *',
       [status, id]
     );
     res.json(result.rows[0] || { id, status });
@@ -253,8 +263,8 @@ app.post('/api/messages', async (req, res) => {
   const msgId = message.id || `m_${Date.now()}`;
   try {
     await pool.query(
-      `INSERT INTO messages (id, conversation_id, sender, content, timestamp, agent_name, is_arabic)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      `INSERT INTO messages (id, workspace_id, conversation_id, sender, content, timestamp, agent_name, is_arabic)
+       VALUES ($1, 'default', $2, $3, $4, $5, $6, $7)`,
       [msgId, conversationId, message.sender, message.content, message.timestamp || new Date().toISOString(), message.agentName, message.isArabic || false]
     );
 
@@ -273,7 +283,7 @@ app.post('/api/messages', async (req, res) => {
 // 6. Customers API
 app.get('/api/customers', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM customers ORDER BY created_at DESC');
+    const result = await pool.query("SELECT * FROM customers WHERE workspace_id = 'default' ORDER BY created_at DESC");
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -285,7 +295,7 @@ app.put('/api/customers/:id', async (req, res) => {
   const { name, phone, tags, status, governorate } = req.body;
   try {
     const result = await pool.query(
-      `UPDATE customers SET name = $1, phone = $2, tags = $3, status = $4, governorate = $5 WHERE id = $6 RETURNING *`,
+      `UPDATE customers SET name = $1, phone = $2, tags = $3, status = $4, governorate = $5 WHERE id = $6 AND workspace_id = 'default' RETURNING *`,
       [name, phone, tags, status, governorate, id]
     );
     res.json(result.rows[0] || req.body);
@@ -297,7 +307,7 @@ app.put('/api/customers/:id', async (req, res) => {
 // 7. Orders API
 app.get('/api/orders', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM orders ORDER BY created_at DESC');
+    const result = await pool.query("SELECT * FROM orders WHERE workspace_id = 'default' ORDER BY created_at DESC");
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -309,8 +319,8 @@ app.post('/api/orders', async (req, res) => {
   const orderId = id || `ord_${Date.now()}`;
   try {
     const result = await pool.query(
-      `INSERT INTO orders (id, customer_id, product_id, product_name, total, status, date, payment_method, governorate, address)
-       VALUES ($1, $2, $3, $4, $5, $6, CURRENT_DATE, $7, $8, $9)
+      `INSERT INTO orders (id, workspace_id, customer_id, product_id, product_name, total, status, date, payment_method, governorate, address)
+       VALUES ($1, 'default', $2, $3, $4, $5, $6, CURRENT_DATE, $7, $8, $9)
        RETURNING *`,
       [orderId, customerId, productId, productName, total, status || 'Confirmed', paymentMethod || 'COD', governorate || 'Cairo', address || '']
     );
@@ -324,7 +334,7 @@ app.put('/api/orders/:id', async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
   try {
-    const result = await pool.query('UPDATE orders SET status = $1 WHERE id = $2 RETURNING *', [status, id]);
+    const result = await pool.query("UPDATE orders SET status = $1 WHERE id = $2 AND workspace_id = 'default' RETURNING *", [status, id]);
     res.json(result.rows[0] || { id, status });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -336,8 +346,8 @@ app.post('/api/orders/ai-confirm', async (req, res) => {
   try {
     const orderId = `ORD-${Math.floor(1000 + Math.random() * 9000)}`;
     const result = await pool.query(
-      `INSERT INTO orders (id, customer_id, product_name, total, status, payment_method, governorate, confirmed_by_ai)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO orders (id, workspace_id, customer_id, product_name, total, status, payment_method, governorate, confirmed_by_ai)
+       VALUES ($1, 'default', $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
       [orderId, customer_id, product_name, total, 'Confirmed', 'COD', shipping_city || 'Cairo', true]
     );
@@ -355,7 +365,7 @@ app.post('/api/orders/ai-confirm', async (req, res) => {
 // 8. Appointments API
 app.get('/api/appointments', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM appointments ORDER BY date DESC, time ASC');
+    const result = await pool.query("SELECT * FROM appointments WHERE workspace_id = 'default' ORDER BY date DESC, time ASC");
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -367,8 +377,8 @@ app.post('/api/appointments', async (req, res) => {
   const apptId = id || `apt_${Date.now()}`;
   try {
     const result = await pool.query(
-      `INSERT INTO appointments (id, customer_id, service_id, service_name, date, time, status, doctor_name)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO appointments (id, workspace_id, customer_id, service_id, service_name, date, time, status, doctor_name)
+       VALUES ($1, 'default', $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
       [apptId, customerId, serviceId, serviceName, date, time, status || 'Confirmed', doctorName || 'Dr. Ahmed Hassan']
     );
@@ -382,7 +392,7 @@ app.put('/api/appointments/:id', async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
   try {
-    const result = await pool.query('UPDATE appointments SET status = $1 WHERE id = $2 RETURNING *', [status, id]);
+    const result = await pool.query("UPDATE appointments SET status = $1 WHERE id = $2 AND workspace_id = 'default' RETURNING *", [status, id]);
     res.json(result.rows[0] || { id, status });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -522,6 +532,64 @@ app.put('/api/settings', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// 13. Human reply: dashboard -> ORBIT -> provider (never dashboard -> provider).
+// Resolves workspace + channel account + credential server-side, stores the message.
+app.post('/api/v1/conversations/:id/reply', async (req, res) => {
+  const { id } = req.params;
+  const { text } = req.body || {};
+  if (!text) return res.status(400).json({ error: 'text required' });
+  try {
+    const conv = (await pool.query("SELECT * FROM conversations WHERE id = $1 AND workspace_id = 'default'", [id])).rows[0];
+    if (!conv) return res.status(404).json({ error: 'conversation not found' });
+    const msgId = `m_${Date.now()}`;
+    await pool.query(
+      "INSERT INTO messages (id, workspace_id, conversation_id, sender, content, timestamp, source) VALUES ($1,'default',$2,'human',$3,$4,'dashboard')",
+      [msgId, id, String(text).slice(0, 2000), new Date().toISOString()]
+    );
+    await pool.query('UPDATE conversations SET last_message = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [text, id]);
+
+    // Best-effort provider send when the conversation is linked to a channel account.
+    let sent = false;
+    if (conv.channel_account_id) {
+      const acc = (await pool.query('SELECT * FROM channel_accounts WHERE id = $1', [conv.channel_account_id])).rows[0];
+      const senderId = conv.external_conversation_id || JSON.parse(conv.ai_context || '{}')?.senderId;
+      if (acc?.credential_id && senderId) {
+        const cred = (await pool.query('SELECT encrypted_secret, metadata FROM credentials WHERE id = $1', [acc.credential_id])).rows[0];
+        if (cred) {
+          const secret = decryptSecret(cred.encrypted_secret);
+          if (acc.channel === 'messenger' || acc.channel === 'instagram') {
+            await sendTextMessage({ pageAccessToken: secret, recipientId: senderId, text });
+          } else if (acc.channel === 'whatsapp') {
+            const phoneNumberId = cred.metadata?.phone_number_id || acc.metadata?.phone_number_id;
+            await sendWhatsAppText({ token: secret, phoneNumberId, to: senderId, text });
+          } else if (acc.channel === 'telegram') {
+            await sendTelegramText({ botToken: secret, chatId: senderId, text });
+          } else {
+            throw new Error(`${acc.channel} send not implemented`);
+          }
+          sent = true;
+        }
+      }
+    }
+    res.json({ success: true, messageId: msgId, sent });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Channel connection + provider webhook + knowledge + admin routers (multi-tenant slice)
+app.use(channelsRouter(pool));
+app.use(webhooksRouter(pool));
+app.use(knowledgeRouter(pool));
+app.use(adminRouter(pool));
+
+// Run pending migrations on boot (idempotent; warn-and-continue if DB is down)
+try {
+  await migrate();
+} catch (err) {
+  console.warn('⚠️ Migration skipped (DB unreachable):', err.message);
+}
 
 app.listen(PORT, () => {
   console.log(`📡 ORBIT Omnichannel API Server running on port ${PORT}`);

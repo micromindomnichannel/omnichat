@@ -1,6 +1,6 @@
 export type Vertical = 'commerce' | 'appointments';
 
-export type Channel = 'instagram' | 'whatsapp' | 'facebook' | 'tiktok' | 'website';
+export type Channel = 'instagram' | 'whatsapp' | 'facebook' | 'messenger' | 'telegram' | 'gmail' | 'tiktok' | 'website';
 
 export interface Customer {
   id: string;
@@ -157,6 +157,9 @@ export const CHANNEL_COLORS: Record<Channel, string> = {
   instagram: '#E4405F',
   whatsapp: '#25D366',
   facebook: '#1877F2',
+  messenger: '#0099FF',
+  telegram: '#229ED9',
+  gmail: '#EA4335',
   tiktok: '#000000',
   website: '#6B7280'
 };
@@ -165,6 +168,9 @@ export const CHANNEL_NAMES: Record<Channel, string> = {
   instagram: 'Instagram',
   whatsapp: 'WhatsApp',
   facebook: 'Facebook',
+  messenger: 'Messenger',
+  telegram: 'Telegram',
+  gmail: 'Gmail',
   tiktok: 'TikTok',
   website: 'Website'
 };

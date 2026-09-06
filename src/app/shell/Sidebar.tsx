@@ -5,7 +5,7 @@ import { useStore } from '../../state/store';
 import { OrbitLogo } from '../../components/shared/OrbitLogo';
 import {
   LayoutDashboard, MessageSquare, Users, ShoppingBag, Calendar, Package, Scissors,
-  Bot, BookOpen, BarChart3, Settings, HelpCircle, ChevronDown, Menu, X, Home, ExternalLink
+  Bot, BookOpen, BarChart3, Settings, ShieldAlert, HelpCircle, ChevronDown, Menu, X, Home, ExternalLink
 } from 'lucide-react';
 
 const navItems = [
@@ -25,6 +25,7 @@ const navItems = [
 const bottomItems = [
   { id: 'landing', label: 'Landing Page', icon: Home, path: '/' },
   { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
+  { id: 'admin', label: 'Admin', icon: ShieldAlert, path: '/admin' },
 ];
 
 export function Sidebar() {
