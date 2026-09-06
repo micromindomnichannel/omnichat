@@ -16,6 +16,8 @@ import { decryptSecret } from '../credentials/crypto.js';
 import { CHANNELS, buildSessionId } from '../micromind/provisionChannel.js';
 import { predict } from '../micromind/client.js';
 import { sendTextMessage } from '../meta/graph.js';
+import { verifyMetaSignature } from '../meta/verify.js';
+import { webhookLimit } from '../middleware/rateLimit.js';
 import { parseWhatsAppWebhook, sendWhatsAppText } from '../meta/whatsapp.js';
 import { parseTelegramUpdate, sendTelegramText } from '../integrations/telegram.js';
 import { gmailPending } from '../integrations/gmail.js';
@@ -63,11 +65,15 @@ export function webhooksRouter(pool) {
     return res.status(200).send(challenge);
   });
 
-  // Inbound events.
-  r.post('/webhooks/:provider', async (req, res) => {
+  // Inbound events. Meta providers require a valid app signature when
+  // META_APP_SECRET is configured (forgery would mint fake chats + paid AI calls).
+  r.post('/webhooks/:provider', webhookLimit, async (req, res) => {
     const { provider } = req.params;
     if (provider === 'gmail') return res.status(501).json({ code: 'gmail_pending', error: gmailPending().message });
     if (!KNOWN.includes(provider)) return res.sendStatus(404);
+    if ((provider === 'messenger' || provider === 'instagram' || provider === 'whatsapp') && !verifyMetaSignature(req)) {
+      return res.sendStatus(403);
+    }
     try {
       if (provider === 'messenger' || provider === 'instagram') {
         for (const entry of req.body?.entry || []) {

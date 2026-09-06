@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../../state/store';
+import { api } from '../../services/api';
 import { useVertical } from '../../state/verticalContext';
 import { ChannelIcon } from '../../components/shared/ChannelIcon';
 import { Send, User, Bot, Loader2, Image as ImageIcon, Sparkles } from 'lucide-react';
@@ -34,22 +35,45 @@ export function ConversationThread({ conversationId }: Props) {
     scrollToBottom();
   }, [threadMessages, isTyping]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!inputValue.trim() || !conversation) return;
 
+    const text = inputValue;
+    setInputValue('');
+
+    // Real path first: backend stores the message and sends it to the provider
+    // (resolves workspace + channel credential server-side). Single write —
+    // the dispatched message is flagged _synced so the legacy hook skips.
+    const res = await api.replyToConversation(conversationId, text);
+    if (res) {
+      const newMessage: any = {
+        id: res.messageId || `m-${Date.now()}`,
+        conversationId,
+        sender: 'human',
+        content: text,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        agentName: 'You',
+        _synced: true
+      };
+      dispatch({ type: 'ADD_MESSAGE', conversationId, message: newMessage });
+      if (conversation.status !== 'ai_handling') {
+        showToast(res.sent ? 'Reply sent to customer' : 'Reply saved (provider send unavailable)', res.sent ? 'success' : 'warning');
+      }
+      return;
+    }
+
+    // Offline fallback only (backend unreachable): local message + simulated AI.
     const newMessage: any = {
       id: `m-${Date.now()}`,
       conversationId,
       sender: 'human',
-      content: inputValue,
+      content: text,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       agentName: 'You'
     };
 
     dispatch({ type: 'ADD_MESSAGE', conversationId, message: newMessage });
-    setInputValue('');
 
-    // Simulate AI reply after 1-2 seconds if still AI handling
     if (conversation.status === 'ai_handling') {
       setIsTyping(true);
       setTimeout(() => {

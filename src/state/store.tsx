@@ -2,6 +2,7 @@ import React, { createContext, useContext, useReducer, useCallback, useEffect } 
 import type { Conversation, Message, Product, Service, Order, Appointment, Automation, FAQ, Source, FollowUp, TeamMember, NotificationSetting, Customer } from './mockData';
 import * as mockData from './mockData';
 import { api } from '../services/api';
+import { normalizeConversation, normalizeCustomer, groupMessages } from '../services/normalize';
 
 interface AppState {
   conversations: Conversation[];
@@ -113,8 +114,9 @@ function reducer(state: AppState, action: Action): AppState {
         ...state,
         products: action.payload.products?.length ? action.payload.products : state.products,
         services: action.payload.services?.length ? action.payload.services : state.services,
-        customers: action.payload.customers?.length ? action.payload.customers : state.customers,
-        conversations: action.payload.conversations?.length ? action.payload.conversations : state.conversations,
+        customers: action.payload.customers?.length ? action.payload.customers.map(normalizeCustomer) : state.customers,
+        conversations: action.payload.conversations?.length ? action.payload.conversations.map(normalizeConversation) : state.conversations,
+        messages: action.payload.messages?.length ? groupMessages(action.payload.messages) : state.messages,
         orders: action.payload.orders?.length ? action.payload.orders : state.orders,
         appointments: action.payload.appointments?.length ? action.payload.appointments : state.appointments,
         dbConnected: true
@@ -130,7 +132,8 @@ function reducer(state: AppState, action: Action): AppState {
       };
 
     case 'ADD_MESSAGE':
-      api.addMessage(action.conversationId, action.message);
+      // _synced messages were already persisted server-side (see replyToConversation).
+      if (!(action.message as any)._synced) api.addMessage(action.conversationId, action.message);
       return {
         ...state,
         messages: {
