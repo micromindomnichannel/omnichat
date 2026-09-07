@@ -614,6 +614,23 @@ app.put('/api/settings', async (req, res) => {
   }
 });
 
+// Thread messages (realtime polling): workspace-checked, newest last.
+app.get('/api/v1/conversations/:id/messages', requireAuth, async (req, res) => {
+  try {
+    const conv = (await pool.query('SELECT workspace_id FROM conversations WHERE id=$1', [req.params.id])).rows[0];
+    const workspaceId = workspaceFor(req, conv?.workspace_id);
+    if (!workspaceId) return res.status(404).json({ error: 'conversation not found' });
+    const limit = Math.min(parseInt(req.query.limit || '200', 10), 500);
+    const { rows } = await pool.query(
+      'SELECT * FROM messages WHERE conversation_id=$1 AND workspace_id=$2 ORDER BY created_at ASC LIMIT $3',
+      [req.params.id, workspaceId, limit]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 13. Human reply: dashboard -> ORBIT -> provider (never dashboard -> provider).
 // Session-authenticated; workspace + channel account + credential resolved
 // server-side, and the conversation must belong to the caller's workspace.

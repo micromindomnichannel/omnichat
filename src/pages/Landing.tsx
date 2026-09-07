@@ -3,15 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { OrbitLogo } from '../components/shared/OrbitLogo';
 import {
   MessageSquare, ShoppingBag, Calendar, Bot, Zap, Shield, ArrowRight, CheckCircle2,
-  Sparkles, Layers, Users, TrendingUp, ChevronRight, Globe, Check, Smartphone, BarChart3, RefreshCw
+  Sparkles, Layers, Users, ChevronRight, Check, BarChart3
 } from 'lucide-react';
 
 export function Landing() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'commerce' | 'appointments'>('commerce');
-  const [selectedChannel, setSelectedChannel] = useState<'whatsapp' | 'instagram' | 'facebook' | 'email'>('instagram');
+  const [selectedChannel, setSelectedChannel] = useState<'messenger' | 'instagram' | 'whatsapp' | 'telegram'>('instagram');
 
   const channelExamples = {
+    messenger: {
+      channel: 'Facebook Messenger',
+      color: '#0099FF',
+      inbound: 'Customer: "Can I get a 10% discount if I buy 2 pairs of running shoes?"',
+      orbitProcess: 'ORBIT AI validated promotional rules, generated a 10% bundle coupon, and prepared draft checkout — inside your dedicated Messenger AI flow.',
+      outboundAction: 'Action: Conversion Lead logged in CRM & follow-up queue initialized.'
+    },
     instagram: {
       channel: 'Instagram Direct',
       color: '#E4405F',
@@ -26,18 +33,11 @@ export function Landing() {
       orbitProcess: 'ORBIT AI synced doctor agenda, identified open 11:00 AM slot, and sent calendar confirmation link.',
       outboundAction: 'Action: Appointment #A-104 confirmed + Automated WhatsApp reminder scheduled 2h before.'
     },
-    facebook: {
-      channel: 'Facebook Messenger',
-      color: '#1877F2',
-      inbound: 'Customer: "Can I get a 10% discount if I buy 2 pairs of running shoes?"',
-      orbitProcess: 'ORBIT AI validated promotional rules, generated 10% bundle coupon code, and prepared draft checkout.',
-      outboundAction: 'Action: Conversion Lead logged in CRM & follow-up queue initialized.'
-    },
-    email: {
-      channel: 'Customer Email Support',
-      color: '#171717',
+    telegram: {
+      channel: 'Telegram',
+      color: '#229ED9',
       inbound: 'Client: "My delivery was delayed. Can someone contact the courier?"',
-      orbitProcess: 'ORBIT AI flagged high-priority issue, fetched Bosta logistics status, and alerted human agent.',
+      orbitProcess: 'ORBIT AI flagged high-priority issue, fetched courier status, and alerted a human agent with full context.',
       outboundAction: 'Action: Human Takeover Alert sent to Agent Mariam + Support Ticket #TK-882 escalated.'
     }
   };
@@ -141,7 +141,7 @@ export function Landing() {
             lineHeight: 1.6,
             fontWeight: 400
           }}>
-            ORBIT converges customer chats from Instagram, WhatsApp, Facebook, TikTok, and Web into an intelligent AI engine—automatically turning incoming signals into instant sales orders, clinic bookings, qualified leads, and support tickets.
+            ORBIT converges customer chats from Messenger, Instagram, WhatsApp, Telegram, and Gmail into one intelligent AI engine — every channel gets its own dedicated AI flow, auto-provisioned on connect, turning incoming signals into instant sales orders, clinic bookings, qualified leads, and support tickets.
           </p>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
@@ -163,13 +163,13 @@ export function Landing() {
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24, marginTop: 40, color: 'var(--ink-400)', fontSize: 13, fontWeight: 500 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <CheckCircle2 size={16} color="var(--signal-orange)" /> 24/7 AI Automated Responses
+              <CheckCircle2 size={16} color="var(--signal-orange)" /> Dedicated AI flow per channel, auto-provisioned
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <CheckCircle2 size={16} color="var(--signal-orange)" /> Dual Commerce & Appointment Modes
+              <CheckCircle2 size={16} color="var(--signal-orange)" /> Knowledge-grounded answers + AI executive reports
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <CheckCircle2 size={16} color="var(--signal-orange)" /> Egyptian Dialects & Franco Support
+              <CheckCircle2 size={16} color="var(--signal-orange)" /> Encrypted vault, team roles & audit trail
             </div>
           </div>
         </div>
@@ -203,7 +203,7 @@ export function Landing() {
           }}>
             {/* Channel Selection Buttons */}
             <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginBottom: 36, flexWrap: 'wrap' }}>
-              {(['instagram', 'whatsapp', 'facebook', 'email'] as const).map(ch => (
+              {(['messenger', 'instagram', 'whatsapp', 'telegram'] as const).map(ch => (
                 <button
                   key={ch}
                   onClick={() => setSelectedChannel(ch)}
@@ -430,62 +430,62 @@ export function Landing() {
               </div>
               <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>Omnichannel Unified Inbox</h3>
               <p style={{ fontSize: 13.5, color: 'var(--ink-600)', lineHeight: 1.6 }}>
-                Centralize messages from Instagram DMs, WhatsApp, Facebook Messenger, TikTok comments, and Web Chat into one clean thread with real-time AI takeover controls.
+                Centralize messages from Messenger, Instagram, WhatsApp, Telegram, and Gmail into one clean thread with real-time AI takeover controls and confidence guardrails.
               </p>
             </div>
 
             {/* Feature 2 */}
             <div className="card" style={{ padding: 24 }}>
               <div style={{ width: 42, height: 42, borderRadius: 10, background: 'var(--signal-orange-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                <Bot size={20} color="var(--signal-orange)" />
+                <Zap size={20} color="var(--signal-orange)" />
               </div>
-              <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>AI Guardrails & Thresholds</h3>
+              <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>One-Click Channel Connections</h3>
               <p style={{ fontSize: 13.5, color: 'var(--ink-600)', lineHeight: 1.6 }}>
-                Configure confidence thresholds (e.g. 75%). Higher confidence queries auto-checkout/book; lower confidence inquiries seamlessly trigger human staff escalation.
+                Connect a channel and ORBIT provisions its dedicated AI flow automatically — credentials encrypted in a server-side vault, webhooks registered, replies flowing in minutes.
               </p>
             </div>
 
             {/* Feature 3 */}
             <div className="card" style={{ padding: 24 }}>
               <div style={{ width: 42, height: 42, borderRadius: 10, background: 'var(--signal-orange-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                <Users size={20} color="var(--signal-orange)" />
+                <Bot size={20} color="var(--signal-orange)" />
               </div>
-              <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>Customer CRM & Reliability Scoring</h3>
+              <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>Knowledge Base + AI Answers</h3>
               <p style={{ fontSize: 13.5, color: 'var(--ink-600)', lineHeight: 1.6 }}>
-                Track VIP status, tags, order completion rates, returns, and appointment no-shows so your team always knows who they're talking to.
+                Upload FAQs, policies, and catalogs from files or quick-adds. The AI answers strictly from your approved knowledge — with a preview mode to test every answer.
               </p>
             </div>
 
             {/* Feature 4 */}
             <div className="card" style={{ padding: 24 }}>
               <div style={{ width: 42, height: 42, borderRadius: 10, background: 'var(--signal-orange-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                <RefreshCw size={20} color="var(--signal-orange)" />
+                <BarChart3 size={20} color="var(--signal-orange)" />
               </div>
-              <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>Abandoned Lead Recovery Queue</h3>
+              <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>AI Executive Reports</h3>
               <p style={{ fontSize: 13.5, color: 'var(--ink-600)', lineHeight: 1.6 }}>
-                Automatically queue smart follow-ups for customers who asked about products or clinic slots but left before finalizing their booking or order.
+                One click turns live revenue, AI resolution rate, top channels, and low-stock alerts into a written executive summary — generated by AI over your real data.
               </p>
             </div>
 
             {/* Feature 5 */}
             <div className="card" style={{ padding: 24 }}>
               <div style={{ width: 42, height: 42, borderRadius: 10, background: 'var(--signal-orange-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                <Shield size={20} color="var(--signal-orange)" />
+                <Users size={20} color="var(--signal-orange)" />
               </div>
-              <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>Working Hours & Access Control</h3>
+              <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>Team Roles & Audit Trail</h3>
               <p style={{ fontSize: 13.5, color: 'var(--ink-600)', lineHeight: 1.6 }}>
-                Set support schedules per day and manage staff permissions (Owner, Agent, Viewer) with instant email and in-app alert triggers.
+                Owner, admin, and agent roles with secure session login, self-service password reset, and a full audit log of every channel and workspace action.
               </p>
             </div>
 
             {/* Feature 6 */}
             <div className="card" style={{ padding: 24 }}>
               <div style={{ width: 42, height: 42, borderRadius: 10, background: 'var(--signal-orange-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                <BarChart3 size={20} color="var(--signal-orange)" />
+                <Shield size={20} color="var(--signal-orange)" />
               </div>
-              <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>Analytics & Revenue Reports</h3>
+              <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>Security by Architecture</h3>
               <p style={{ fontSize: 13.5, color: 'var(--ink-600)', lineHeight: 1.6 }}>
-                Visualize revenue trends, AI resolution rate vs. human handoffs, average response times, top products, and service utilization rates.
+                AES-256 encrypted credential vault, verified Meta webhook signatures, rate-limited APIs, tenant-isolated data on every query — secrets never reach the browser.
               </p>
             </div>
           </div>
@@ -552,7 +552,7 @@ export function Landing() {
           </div>
           <div style={{ borderTop: '1px solid #242424', paddingTop: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#666' }}>
             <span>© {new Date().getFullYear()} ORBIT Platform. All rights reserved. Many signals → one intelligent flow.</span>
-            <span>Version 2.4.0 (ORBIT Engine)</span>
+            <span>Version 3.0.0 (ORBIT Engine)</span>
           </div>
         </div>
       </footer>

@@ -36,7 +36,7 @@ export function VerticalSelect({ onSelect }: VerticalSelectProps) {
     }}>
       <div style={{ textAlign: 'center', marginBottom: 48 }}>
         <h1 style={{ fontSize: 28, fontWeight: 650, color: 'var(--ink-900)', marginBottom: 8 }}>
-          Choose your SELLER solution
+          Choose your ORBIT solution
         </h1>
         <p style={{ fontSize: 14, color: 'var(--ink-600)' }}>
           One platform. Two ways to turn conversations into revenue.

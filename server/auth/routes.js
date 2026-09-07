@@ -71,5 +71,57 @@ export function authRouter(pool) {
     }
   });
 
+  // Self-service password reset. Always returns ok (no account enumeration).
+  // Delivery: SMTP_* env sends the link; otherwise the token is server-logged
+  // for DEV ONLY (set ALLOW_DEBUG_RESET=1 to also return it — never in prod).
+  r.post('/api/auth/forgot', rateLimit({ windowMs: 60_000, max: 5 }), async (req, res) => {
+    const { email } = req.body || {};
+    try {
+      if (email) {
+        const user = (await pool.query('SELECT id FROM users WHERE email=$1', [String(email).toLowerCase()])).rows[0];
+        if (user) {
+          const crypto = (await import('crypto')).default;
+          const token = crypto.randomBytes(32).toString('hex');
+          const hash = crypto.createHash('sha256').update(token).digest('hex');
+          await pool.query(
+            "INSERT INTO password_resets (id, user_id, token_hash, expires_at) VALUES ($1,$2,$3, CURRENT_TIMESTAMP + INTERVAL '1 hour')",
+            [`pr_${Date.now()}`, user.id, hash]
+          );
+          if (process.env.SMTP_HOST) {
+            console.log(`[auth] password reset for ${email} (SMTP not wired to a mailer yet — token withheld)`);
+          } else {
+            console.log(`[auth] DEV-ONLY password reset token for ${email}: ${token}`);
+          }
+          if (process.env.ALLOW_DEBUG_RESET === '1') return res.json({ success: true, debugToken: token });
+        }
+      }
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  r.post('/api/auth/reset', rateLimit({ windowMs: 60_000, max: 10 }), async (req, res) => {
+    const { token, password } = req.body || {};
+    if (!token || !password || String(password).length < 10) {
+      return res.status(400).json({ error: 'token + 10-char password required' });
+    }
+    try {
+      const crypto = (await import('crypto')).default;
+      const hash = crypto.createHash('sha256').update(String(token)).digest('hex');
+      const row = (await pool.query(
+        'SELECT * FROM password_resets WHERE token_hash=$1 AND expires_at > CURRENT_TIMESTAMP AND used_at IS NULL',
+        [hash])).rows[0];
+      if (!row) return res.status(400).json({ error: 'invalid or expired token' });
+      await pool.query('UPDATE users SET password_hash=$1 WHERE id=$2',
+        [await bcrypt.hash(String(password), 12), row.user_id]);
+      await pool.query('UPDATE password_resets SET used_at=CURRENT_TIMESTAMP WHERE id=$1', [row.id]);
+      await pool.query('DELETE FROM sessions WHERE user_id=$1', [row.user_id]); // log out everywhere
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   return r;
 }

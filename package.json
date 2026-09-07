@@ -1,5 +1,5 @@
 {
-  "name": "seller-platform",
+  "name": "orbit-platform",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -21,6 +21,8 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "lucide-react": "^0.294.0",
+    "mammoth": "^1.12.2",
+    "pdf-parse": "^2.4.5",
     "pg": "^8.23.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

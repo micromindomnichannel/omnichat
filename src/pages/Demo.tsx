@@ -57,7 +57,7 @@ export function Demo() {
             {isCommerce ? <ShoppingCart size={24} color={accentColor} /> : <Calendar size={24} color={accentColor} />}
           </div>
           <h2 style={{ fontSize: 20, fontWeight: 650, color: 'var(--ink-900)', marginBottom: 8 }}>
-            See SELLER in action
+            See ORBIT in action
           </h2>
           <p style={{ fontSize: 14, color: 'var(--ink-600)' }}>
             Step {step + 1} of {steps.length}

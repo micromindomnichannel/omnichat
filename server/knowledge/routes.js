@@ -3,9 +3,13 @@
 import express from 'express';
 import { askAnalyst } from '../micromind/analyst.js';
 import { requireAuth, requireWorkspace, workspaceFor } from '../auth/middleware.js';
+import pdfParse from 'pdf-parse';
+import mammoth from 'mammoth';
 
 const rid = (p) => `${p}_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
 const KINDS = ['faq', 'policy', 'product', 'service', 'note'];
+const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+const CHUNK_CHARS = 4000;
 
 export function knowledgeRouter(pool) {
   const r = express.Router();
@@ -43,8 +47,59 @@ export function knowledgeRouter(pool) {
     }
   });
 
-  r.delete('/api/v1/knowledge/:id', async (req, res) => {
+  // File upload -> knowledge items. Accepts base64 {filename, mime, base64, kind}.
+  // Parses txt/md/csv/json directly, PDF via pdf-parse, DOCX via mammoth.
+  // Long docs are chunked (~4000 chars) so each item stays retrievable.
+  r.post('/api/v1/workspaces/:workspaceId/knowledge/upload', requireWorkspace, async (req, res) => {
+    const { filename, mime, base64, kind = 'note' } = req.body || {};
+    if (!KINDS.includes(kind)) return res.status(400).json({ error: `kind must be one of ${KINDS.join(',')}` });
+    if (!filename || !base64) return res.status(400).json({ error: 'filename + base64 required' });
+    let buffer;
     try {
+      buffer = Buffer.from(String(base64).split(',').pop(), 'base64');
+    } catch {
+      return res.status(400).json({ error: 'invalid base64' });
+    }
+    if (!buffer.length || buffer.length > MAX_UPLOAD_BYTES) {
+      return res.status(400).json({ error: 'file empty or over 8MB' });
+    }
+    const lower = `${filename}`.toLowerCase();
+    const type = String(mime || '').toLowerCase();
+    try {
+      let text = '';
+      if (lower.endsWith('.pdf') || type.includes('pdf')) {
+        text = (await pdfParse(buffer)).text || '';
+      } else if (lower.endsWith('.docx') || type.includes('officedocument')) {
+        text = (await mammoth.extractRawText({ buffer })).value || '';
+      } else if (lower.endsWith('.doc') || type.includes('msword')) {
+        return res.status(400).json({ error: '.doc (legacy Word) unsupported — save as .docx, .pdf, or .txt' });
+      } else {
+        text = buffer.toString('utf8');
+        if (text.includes('\uFFFD')) return res.status(400).json({ error: 'not a text file — upload .txt/.md/.csv/.json/.pdf/.docx' });
+      }
+      text = text.replace(/\r/g, '').trim();
+      if (text.length < 10) return res.status(400).json({ error: 'no extractable text found' });
+      const chunks = [];
+      for (let i = 0; i < text.length && chunks.length < 25; i += CHUNK_CHARS) {
+        chunks.push(text.slice(i, i + CHUNK_CHARS));
+      }
+      const ids = [];
+      for (let i = 0; i < chunks.length; i++) {
+        const title = chunks.length > 1 ? `${filename} (part ${i + 1}/${chunks.length})` : filename;
+        const row = (await pool.query(
+          'INSERT INTO knowledge_items (id, workspace_id, kind, title, content, metadata) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id',
+          [`kn_${Date.now()}_${i}`, req.workspaceId, kind, title, chunks[i],
+           JSON.stringify({ source: 'upload', filename })]
+        )).rows[0];
+        ids.push(row.id);
+      }
+      res.json({ success: true, items: ids.length, ids, chars: text.length });
+    } catch (err) {
+      res.status(500).json({ error: `parse failed: ${String(err.message).slice(0, 200)}` });
+    }
+  });
+
+  r.delete('/api/v1/knowledge/:id', async (req, res) => {    try {
       const row = (await pool.query('SELECT workspace_id FROM knowledge_items WHERE id=$1', [req.params.id])).rows[0];
       const workspaceId = workspaceFor(req, row?.workspace_id);
       if (!workspaceId) return res.status(404).json({ error: 'not found' });

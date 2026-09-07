@@ -41,7 +41,7 @@ export function Finish({ data, onComplete, onBack }: Props) {
           You're all set!
         </h2>
         <p style={{ fontSize: 14, color: 'var(--ink-600)' }}>
-          Your SELLER workspace is ready. Here's what we configured:
+          Your ORBIT workspace is ready. Here's what we configured:
         </p>
       </div>
 

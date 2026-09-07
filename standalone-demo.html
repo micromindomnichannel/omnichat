@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SELLER — AI Omnichannel Sales & Booking Platform</title>
+<title>ORBIT — AI Omnichannel Sales & Booking Platform</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -143,7 +143,7 @@ const initialState = {
   drawerCustomerId: null,
   toasts: [],
   settings: {
-    businessName: 'SELLER Demo Store',
+    businessName: 'ORBIT Demo Store',
     industry: 'Fashion & Accessories',
     confidence: 75,
     language: 'Egyptian Arabic & English',
@@ -160,10 +160,10 @@ const initialState = {
     { day: 'Friday', open: false, start: '14:00', end: '22:00' },
   ],
   teamMembers: [
-    { id: 'TM-1', name: 'Mariam Saad', email: 'mariam@seller.club', role: 'Owner', status: 'Active' },
-    { id: 'TM-2', name: 'Karim Adel', email: 'karim@seller.club', role: 'Agent', status: 'Active' },
-    { id: 'TM-3', name: 'Sara Mounir', email: 'sara@seller.club', role: 'Agent', status: 'Active' },
-    { id: 'TM-4', name: 'Yara Fathy', email: 'yara@seller.club', role: 'Viewer', status: 'Pending' },
+    { id: 'TM-1', name: 'Mariam Saad', email: 'mariam@orbit.club', role: 'Owner', status: 'Active' },
+    { id: 'TM-2', name: 'Karim Adel', email: 'karim@orbit.club', role: 'Agent', status: 'Active' },
+    { id: 'TM-3', name: 'Sara Mounir', email: 'sara@orbit.club', role: 'Agent', status: 'Active' },
+    { id: 'TM-4', name: 'Yara Fathy', email: 'yara@orbit.club', role: 'Viewer', status: 'Pending' },
   ],
   notifications: [
     { event: 'New Lead Captured', email: true, inApp: true },
@@ -1878,7 +1878,7 @@ const Onboarding = () => {
   const { dispatch } = useApp();
   const [step, setStep] = useState(0);
   const [vertical, setVertical] = useState('commerce');
-  const [bizName, setBizName] = useState('SELLER Demo Store');
+  const [bizName, setBizName] = useState('ORBIT Demo Store');
   const steps = ['Vertical','Business','Channels','Knowledge','Review','Finish'];
 
   return (
@@ -1890,7 +1890,7 @@ const Onboarding = () => {
 
         {step === 0 && (
           <div className="card" style={{ padding: 32, textAlign: 'center' }}>
-            <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>Choose your SELLER solution</h1>
+            <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>Choose your ORBIT solution</h1>
             <p className="muted" style={{ margin: '8px 0 32px' }}>One platform. Two specialized AI workflows to turn conversations into revenue.</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div className="card" style={{ padding: 20, cursor: 'pointer', border: vertical === 'commerce' ? '2px solid var(--brand)' : '1px solid var(--border)', textAlign: 'left' }} onClick={() => setVertical('commerce')}>
@@ -1939,7 +1939,7 @@ const Onboarding = () => {
             <div style={{ width: 64, height: 64, margin: '0 auto 16px', borderRadius: '50%', background: 'var(--success-bg)', color: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{I.Check(32)}</div>
             <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0 }}>You are all set!</h2>
             <p className="muted" style={{ margin: '8px 0 24px' }}>Your AI Omnichannel platform is primed and ready.</p>
-            <button className="btn btn-primary btn-block" onClick={() => { dispatch({ type: 'UPDATE_BIZ', payload: { businessName: bizName } }); dispatch({ type: 'SET_VERTICAL', v: vertical }); dispatch({ type: 'SET_ONBOARDED' }); }}>Enter SELLER Dashboard</button>
+            <button className="btn btn-primary btn-block" onClick={() => { dispatch({ type: 'UPDATE_BIZ', payload: { businessName: bizName } }); dispatch({ type: 'SET_VERTICAL', v: vertical }); dispatch({ type: 'SET_ONBOARDED' }); }}>Enter ORBIT Dashboard</button>
           </div>
         )}
       </div>
@@ -1992,7 +1992,7 @@ const Sidebar = () => {
       <div style={{ padding: '16px 14px 12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
           <div style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--accent)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 14 }}>S</div>
-          <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--ink-900)' }}>SELLER</div>
+          <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--ink-900)' }}>ORBIT</div>
         </div>
         <div style={{ position: 'relative' }}>
           <button onClick={() => setSwitcherOpen(!switcherOpen)} style={{ width: '100%', height: 34, background: 'var(--surface-0)', border: '1px solid var(--border)', borderRadius: 6, padding: '0 10px', display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between', cursor: 'pointer' }}>

@@ -63,7 +63,7 @@ export function AIReview({ data, onNext, onBack }: Props) {
             <Bot size={18} color="white" />
           </div>
           <div>
-            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-900)' }}>SELLER AI</p>
+            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-900)' }}>ORBIT AI</p>
             <p style={{ fontSize: 12, color: 'var(--ink-400)' }}>Your AI assistant</p>
           </div>
         </div>

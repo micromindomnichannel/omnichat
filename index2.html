@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SELLER — AI Omnichannel Sales & Booking Platform</title>
+  <title>ORBIT — AI Omnichannel Sales & Booking Platform</title>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -329,7 +329,7 @@
       selectedConvId: 'CV-01',
       selectedCustomerId: null,
       toasts: [],
-      settings: { businessName: 'SELLER Demo Store', confidence: 70, channels: { instagram: true, whatsapp: true, facebook: true, tiktok: false, website: true } },
+      settings: { businessName: 'ORBIT Demo Store', confidence: 70, channels: { instagram: true, whatsapp: true, facebook: true, tiktok: false, website: true } },
       customers: [
         { id: 'C-01', name: 'Mariam Hassan', phone: '0100 1234 567', channels: ['instagram', 'whatsapp'], status: 'VIP', tags: ['VIP', 'Returning'], createdAt: '2024-01-12', lastInteraction: '2024-08-17', totalValue: 12450, reliability: { label: 'Good', completed: 5, cancelled: 0, returns: 0 } },
         { id: 'C-02', name: 'Youssef Adel', phone: '0111 4321 098', channels: ['instagram'], status: 'Returning', tags: ['Returning'], createdAt: '2024-02-03', lastInteraction: '2024-08-17', totalValue: 4180, reliability: { label: 'Good', completed: 3, cancelled: 0, returns: 0 } },
@@ -538,7 +538,7 @@
       return (
         <div style={{ minHeight: '100vh', background: 'var(--surface-0)', padding: '40px 24px' }}>
           <div style={{ maxWidth: 920, margin: '0 auto' }}>
-            <h1 style={{ fontSize: 28, fontWeight: 650, textAlign: 'center', marginBottom: 8 }}>Choose your SELLER solution</h1>
+            <h1 style={{ fontSize: 28, fontWeight: 650, textAlign: 'center', marginBottom: 8 }}>Choose your ORBIT solution</h1>
             <p className="muted" style={{ textAlign: 'center', marginBottom: 48 }}>One platform. Two ways to turn conversations into revenue.</p>
             <div style={{ display: 'flex', gap: 24, justifyContent: 'center', flexWrap: 'wrap' }}>
               {['commerce', 'appointments'].map(v => {
@@ -603,7 +603,7 @@
       return (
         <div style={{ width: 232, background: 'var(--surface-1)', borderRight: '1px solid var(--border)', height: '100%', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
           <div style={{ padding: '20px 16px 12px' }}>
-            <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 12 }}>SELLER</div>
+            <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 12 }}>ORBIT</div>
             <div style={{ position: 'relative' }}>
               <button onClick={() => setSwitcherOpen(!switcherOpen)} style={{ width: '100%', height: 36, background: 'var(--surface-0)', border: '1px solid var(--border)', borderRadius: 8, padding: '0 10px', display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between', cursor: 'pointer' }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600 }}>{isAppt ? I.Calendar(14) : I.Bag(14)} {vertical === 'commerce' ? 'Commerce' : 'Appointments'}</span>
@@ -1630,10 +1630,10 @@
                   <button className="btn btn-primary btn-sm" onClick={() => toast({ kind: 'success', text: 'Invitation sent — simulated' })}>{I.Plus(12)} Invite member</button>
                 </div>
                 {[
-                  { name: 'Mariam Saad', email: 'mariam@seller.club', role: 'Owner' },
-                  { name: 'Karim Adel', email: 'karim@seller.club', role: 'Agent' },
-                  { name: 'Sara Mounir', email: 'sara@seller.club', role: 'Agent' },
-                  { name: 'Yara Fathy', email: 'yara@seller.club', role: 'Viewer' },
+                  { name: 'Mariam Saad', email: 'mariam@orbit.club', role: 'Owner' },
+                  { name: 'Karim Adel', email: 'karim@orbit.club', role: 'Agent' },
+                  { name: 'Sara Mounir', email: 'sara@orbit.club', role: 'Agent' },
+                  { name: 'Yara Fathy', email: 'yara@orbit.club', role: 'Viewer' },
                 ].map(m => (
                   <div key={m.email} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--surface-0)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Avatar name={m.name} size={28} /><div><div style={{ fontWeight: 600, fontSize: 13 }}>{m.name}</div><div className="mono faint" style={{ fontSize: 11 }}>{m.email}</div></div></div>

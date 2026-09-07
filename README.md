@@ -1,4 +1,4 @@
-# SELLER — AI Omnichannel Sales & Booking Platform
+# ORBIT — AI Omnichannel Sales & Booking Platform
 
 An omnichannel AI sales and booking platform for Egyptian & MENA merchants. It unifies
 customer conversations across Messenger, Instagram, WhatsApp, Telegram, and Gmail into
