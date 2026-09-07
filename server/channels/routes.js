@@ -53,14 +53,29 @@ export function channelsRouter(pool) {
   // intercept every request when the router is mounted without a prefix).
   r.use('/api/v1', requireAuth);
 
-  // List connected channels (safe fields only — never secrets)
+  // List connected channels (safe fields only — never secrets).
+  // Includes tenancy state (MicroMind folder + prediction key) per account.
   r.get('/api/v1/workspaces/:workspaceId/channels', requireWorkspace, async (req, res) => {
     try {
       const { rows } = await pool.query(
         'SELECT * FROM channel_accounts WHERE workspace_id = $1 ORDER BY created_at ASC',
         [req.workspaceId]
       );
-      res.json(rows.map(safeAccount));
+      const ws = (await pool.query(
+        'SELECT micromind_folder_id, micromind_folder_status FROM workspaces WHERE id=$1',
+        [req.workspaceId])).rows[0] || {};
+      const keyed = (await pool.query(
+        `SELECT channel_account_id FROM micromind_flows
+         WHERE workspace_id=$1 AND prediction_key_credential_id IS NOT NULL`,
+        [req.workspaceId]).catch(() => ({ rows: [] }))).rows.map((x) => x.channel_account_id);
+      res.json(rows.map((a) => ({
+        ...safeAccount(a),
+        tenancy: {
+          folder: ws.micromind_folder_id ? 'ready' : 'pending',
+          folderId: ws.micromind_folder_id || null,
+          keyProvisioned: keyed.includes(a.id),
+        },
+      })));
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

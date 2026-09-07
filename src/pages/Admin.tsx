@@ -31,17 +31,20 @@ export function Admin() {
   const [flows, setFlows] = useState<any[]>([]);
   const [errors, setErrors] = useState<any>({ webhooks: [], audit: [] });
   const [usage, setUsage] = useState<any[]>([]);
+  const [mm, setMm] = useState<any>(null);
 
   useEffect(() => {
     (async () => {
-      const [o, c, f, e, u] = await Promise.all([
+      const [o, c, f, e, u, m] = await Promise.all([
         api.adminOverview(), api.adminChannels(), api.adminFlows(), api.adminErrors(), api.adminUsage(),
+        api.adminMicromind(),
       ]);
       if (o) setOverview(o);
       if (c) setChannels(c);
       if (f) setFlows(f);
       if (e) setErrors(e);
       if (u) setUsage(u);
+      if (m) setMm(m);
     })();
   }, []);
 
@@ -55,16 +58,29 @@ export function Admin() {
       <p style={{ fontSize: 12, color: 'var(--stone-gray)', margin: '0 0 16px' }}>
         Internal only — DB {overview.dbUp ? '🟢 up' : '🔴 down'}. Put behind SSO before any production pilot.
       </p>
+      <Section title="MicroMind control plane">
+        {!mm ? <div style={{ fontSize: 12, color: 'var(--stone-gray)' }}>No data.</div> : (
+          <Table
+            cols={['Aspect', 'Value']}
+            rows={[
+              ['Provisioner auth', mm.provisioner?.mode],
+              ['Analyst flow', mm.analyst?.flowSet ? 'configured' : 'not set (falls back)'],
+              ['Tenant folder', mm.folder?.id ? `${mm.folder.status} (${String(mm.folder.id).slice(0, 8)}…)` : mm.folder?.status],
+              ['DB', mm.dbUp ? 'up' : 'down'],
+            ]}
+          />
+        )}
+      </Section>
       <Section title="Channels">
         <Table
-          cols={['Channel', 'Name', 'Status', 'Flow', 'Convs', 'Last webhook', 'Last sync']}
-          rows={channels.map((c: any) => [c.channel, c.display_name || c.username, c.status, (c.micromind_flow_id || '').slice(0, 8), c.conversations, c.last_webhook, c.last_sync])}
+          cols={['Channel', 'Name', 'Status', 'Flow', 'Folder', 'Key', 'Convs', 'Last webhook', 'Last sync']}
+          rows={channels.map((c: any) => [c.channel, c.display_name || c.username, c.status, (c.micromind_flow_id || '').slice(0, 8), c.folder_status || '—', c.key_provisioned ? 'linked' : '—', c.conversations, c.last_webhook, c.last_sync])}
         />
       </Section>
       <Section title="MicroMind flows">
         <Table
-          cols={['Template', 'Flow id', 'Status', 'Updated']}
-          rows={flows.map((f: any) => [f.template, (f.external_flow_id || '').slice(0, 13), f.status, f.updated_at])}
+          cols={['Template', 'Flow id', 'Key', 'Status', 'Updated']}
+          rows={flows.map((f: any) => [f.template, (f.external_flow_id || '').slice(0, 13), f.key_linked ? 'linked' : '—', f.status, f.updated_at])}
         />
       </Section>
       <Section title="Errors (24h)">

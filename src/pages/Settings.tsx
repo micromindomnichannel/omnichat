@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../state/store';
 import { useVertical } from '../state/verticalContext';
@@ -26,24 +26,50 @@ export function Settings() {
   const [activeTab, setActiveTab] = useState('Business Profile');
   const [showInvite, setShowInvite] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState('Agent');
+  const [invitePassword, setInvitePassword] = useState('');
+  const [inviteRole, setInviteRole] = useState('agent');
+  const [members, setMembers] = useState<any[] | null>(null);
   const [newRule, setNewRule] = useState('');
 
   const isDirty = false; // Simplified for prototype
+
+  // Real member directory (owner/admin only; null when forbidden/offline).
+  useEffect(() => {
+    api.adminUsers().then((rows) => { if (rows) setMembers(rows); });
+  }, []);
 
   const handleToggleChannel = (channel: string) => {
     dispatch({ type: 'TOGGLE_CHANNEL', channel });
     showToast(`${channel} ${state.channelsConnected[channel] ? 'disconnected' : 'connected'}`, 'success');
   };
 
-  const handleInvite = () => {
-    dispatch({
-      type: 'ADD_TEAM_MEMBER',
-      member: { id: `t${Date.now()}`, name: inviteEmail.split('@')[0], email: inviteEmail, role: inviteRole as any, status: 'Pending' }
+  const handleInvite = async () => {
+    if (!inviteEmail.trim() || invitePassword.length < 10) {
+      showToast('Email + 10-char password required', 'danger');
+      return;
+    }
+    // Real path: owner creates the account server-side (admin/agent roles).
+    const res = await api.adminCreateUser({
+      email: inviteEmail.trim(), password: invitePassword, displayName: inviteEmail.split('@')[0], role: inviteRole,
     });
-    setShowInvite(false);
-    setInviteEmail('');
-    showToast('Invitation sent successfully', 'success');
+    if (res?.user) {
+      showToast(`Account created for ${res.user.email}`, 'success');
+      setShowInvite(false);
+      setInviteEmail('');
+      setInvitePassword('');
+      const rows = await api.adminUsers();
+      if (rows) setMembers(rows);
+    } else {
+      // Fallback: local-only entry (backend unreachable or not owner).
+      dispatch({
+        type: 'ADD_TEAM_MEMBER',
+        member: { id: `t${Date.now()}`, name: inviteEmail.split('@')[0], email: inviteEmail, role: inviteRole as any, status: 'Pending' }
+      });
+      setShowInvite(false);
+      setInviteEmail('');
+      setInvitePassword('');
+      showToast(res?.error || 'Saved locally (backend unreachable or owner-only)', 'warning');
+    }
   };
 
   const handleAddRule = () => {
@@ -301,15 +327,15 @@ export function Settings() {
                   </tr>
                 </thead>
                 <tbody>
-                  {state.teamMembers.map(member => (
+                  {(members || state.teamMembers.map((m) => ({ ...m, display_name: m.name })) ).map((member: any) => (
                     <tr key={member.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                      <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 700, color: 'var(--midnight-ink)' }}>{member.name}</td>
+                      <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 700, color: 'var(--midnight-ink)' }}>{member.display_name || member.name}</td>
                       <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--ink-600)' }}>{member.email}</td>
                       <td style={{ padding: '12px 16px' }}>
-                        <span style={{ padding: '4px 10px', borderRadius: 4, background: 'var(--surface-0)', fontSize: 12, fontWeight: 650, color: 'var(--midnight-ink)', border: '1px solid var(--border)' }}>{member.role}</span>
+                        <span style={{ padding: '4px 10px', borderRadius: 4, background: 'var(--surface-0)', fontSize: 12, fontWeight: 650, color: 'var(--midnight-ink)', border: '1px solid var(--border)', textTransform: 'capitalize' }}>{member.role}</span>
                       </td>
                       <td style={{ padding: '12px 16px' }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: member.status === 'Active' ? '#0F8357' : 'var(--burnt-coral)' }}>● {member.status}</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: member.status === 'Pending' ? 'var(--burnt-coral)' : '#0F8357' }}>● {member.status || 'Active'}</span>
                       </td>
                     </tr>
                   ))}
@@ -353,12 +379,13 @@ export function Settings() {
       <Modal isOpen={showInvite} onClose={() => setShowInvite(false)} title="Invite Team Member" size="sm">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <input className="input" placeholder="Email address" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
+          <input className="input" type="password" placeholder="Temporary password (min 10 chars)" value={invitePassword} onChange={e => setInvitePassword(e.target.value)} />
           <select className="input" value={inviteRole} onChange={e => setInviteRole(e.target.value)}>
-            <option>Owner</option>
-            <option>Agent</option>
-            <option>Viewer</option>
+            <option value="admin">Admin</option>
+            <option value="agent">Agent</option>
           </select>
-          <button onClick={handleInvite} className="btn btn-primary" style={{ width: '100%', background: 'var(--signal-orange)' }}>Send Invitation</button>
+          <p style={{ fontSize: 11.5, color: 'var(--stone-gray)' }}>Owner-only. The account is created immediately and can sign in.</p>
+          <button onClick={handleInvite} className="btn btn-primary" style={{ width: '100%', background: 'var(--signal-orange)' }}>Create Account</button>
         </div>
       </Modal>
 

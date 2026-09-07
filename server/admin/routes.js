@@ -3,6 +3,8 @@
 // 403. Returns counts + safe fields only (never secrets).
 import express from 'express';
 import { requireAuth, workspaceFor, requireRole } from '../auth/middleware.js';
+import { authMode } from '../micromind/provisioner.js';
+import { analystStatus } from '../micromind/analyst.js';
 
 const q = async (pool, sql, params = []) => {
   try {
@@ -42,16 +44,56 @@ export function adminRouter(pool) {
     const rows = await q(pool,
       `SELECT a.id, a.workspace_id, a.channel, a.display_name, a.username, a.status, a.micromind_flow_id,
               a.updated_at AS last_sync,
+              w.micromind_folder_id AS folder_id,
+              w.micromind_folder_status AS folder_status,
+              EXISTS (SELECT 1 FROM micromind_flows f WHERE f.channel_account_id = a.id AND f.prediction_key_credential_id IS NOT NULL) AS key_provisioned,
               (SELECT COUNT(*)::int FROM conversations c WHERE c.channel_account_id = a.id) AS conversations,
               (SELECT MAX(created_at) FROM webhook_events w WHERE w.channel_account_id = a.id) AS last_webhook
-       FROM channel_accounts a WHERE a.workspace_id=$1 ORDER BY a.updated_at DESC`, [req.workspaceId]);
+       FROM channel_accounts a LEFT JOIN workspaces w ON w.id = a.workspace_id
+       WHERE a.workspace_id=$1 ORDER BY a.updated_at DESC`, [req.workspaceId]);
     res.json(rows || []);
   });
 
   r.get('/api/v1/admin/flows', async (req, res) => {
     const rows = await q(pool,
-      'SELECT id, workspace_id, channel_account_id, external_flow_id, template, template_version, status, updated_at FROM micromind_flows WHERE workspace_id=$1 ORDER BY updated_at DESC',
+      `SELECT id, workspace_id, channel_account_id, external_flow_id, template, template_version,
+              (prediction_key_credential_id IS NOT NULL) AS key_linked, status, updated_at
+       FROM micromind_flows WHERE workspace_id=$1 ORDER BY updated_at DESC`,
       [req.workspaceId]);
+    res.json(rows || []);
+  });
+
+  // MicroMind control-plane status: provisioner mode, analyst config, tenant folder.
+  // Safe to expose to workspace admins (modes + ids only, never secrets).
+  r.get('/api/v1/admin/micromind', async (req, res) => {
+    try {
+      const ws = (await pool.query(
+        'SELECT micromind_folder_id, micromind_folder_status FROM workspaces WHERE id=$1',
+        [req.workspaceId])).rows[0] || {};
+      const a = analystStatus();
+      res.json({
+        provisioner: { mode: authMode() },
+        analyst: { configured: a.configured, flowSet: Boolean(a.flowId) },
+        folder: { id: ws.micromind_folder_id || null, status: ws.micromind_folder_status || 'pending' },
+        dbUp: true,
+      });
+    } catch {
+      const a = analystStatus();
+      res.json({
+        provisioner: { mode: authMode() },
+        analyst: { configured: a.configured, flowSet: Boolean(a.flowId) },
+        folder: { id: null, status: 'unknown' },
+        dbUp: false,
+      });
+    }
+  });
+
+  // Member directory for the Team tab (owner/admin only via router gate).
+  r.get('/api/v1/admin/users', async (req, res) => {
+    const rows = await q(pool,
+      `SELECT u.id, u.email, u.display_name, m.role, u.created_at
+       FROM workspace_members m JOIN users u ON u.id = m.user_id
+       WHERE m.workspace_id=$1 ORDER BY u.created_at ASC`, [req.workspaceId]);
     res.json(rows || []);
   });
 

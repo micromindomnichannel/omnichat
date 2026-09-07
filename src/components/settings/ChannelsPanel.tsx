@@ -21,6 +21,7 @@ const LOCAL_ONLY: Record<string, { label: string; Icon: React.ElementType; color
 type Account = {
   id: string; channel: string; display_name?: string; username?: string;
   external_account_id?: string; micromind_flow_id?: string; status: string;
+  tenancy?: { folder: string; folderId: string | null; keyProvisioned: boolean };
 };
 
 export function ChannelsPanel({ showToast, local, onToggleLocal }: {
@@ -92,6 +93,11 @@ export function ChannelsPanel({ showToast, local, onToggleLocal }: {
                   primary ? `${dot(primary.status)} ${primary.status}${primary.display_name ? ` — ${primary.display_name}` : ''}${primary.micromind_flow_id ? ' — flow linked' : ''}` :
                     '⚪ Not connected'}
               </span>
+              {primary?.tenancy && (
+                <span style={{ fontSize: 11, color: 'var(--stone-gray)', display: 'block', marginTop: 2 }}>
+                  📁 folder {primary.tenancy.folder}{primary.tenancy.keyProvisioned ? ' · 🔑 key linked' : ' · key pending'}
+                </span>
+              )}
             </div>
           </div>
           {primary && primary.status === 'active'

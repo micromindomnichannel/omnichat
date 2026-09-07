@@ -120,5 +120,9 @@ export const api = {
   adminChannels: () => fetchJson('/v1/admin/channels'),
   adminFlows: () => fetchJson('/v1/admin/flows'),
   adminErrors: () => fetchJson('/v1/admin/errors'),
-  adminUsage: () => fetchJson('/v1/admin/usage')
+  adminUsage: () => fetchJson('/v1/admin/usage'),
+  adminMicromind: () => fetchJson('/v1/admin/micromind'),
+  adminUsers: () => fetchJson('/v1/admin/users'),
+  adminCreateUser: (payload: { email: string; password: string; displayName?: string; role: string }) =>
+    authJson('/v1/admin/users', payload)
 };
