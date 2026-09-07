@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useVertical } from '../../state/verticalContext';
+import { useStore } from '../../state/store';
 import { ArrowLeft, ArrowRight, Upload, FileText, Image, Link } from 'lucide-react';
+import { api } from '../../services/api';
 
 interface Props {
   data: any;
@@ -10,6 +12,30 @@ interface Props {
 
 export function KnowledgeSetup({ data, onNext, onBack }: Props) {
   const { vertical, accentColor } = useVertical();
+  const { dispatch, showToast } = useStore();
+  const [openForm, setOpenForm] = useState<string | null>(null);
+  const [q, setQ] = useState('');
+  const [a, setA] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  // Working quick-add: FAQs persist via store (which syncs to backend),
+  // policies go straight to the workspace knowledge API. Offline-safe.
+  const handleQuickAdd = async (zoneLabel: string) => {
+    if (!q.trim() || !a.trim() || saving) return;
+    setSaving(true);
+    if (zoneLabel === 'FAQs') {
+      dispatch({ type: 'ADD_FAQ', faq: { id: `faq${Date.now()}`, question: q.trim(), answer: a.trim(), category: 'General', vertical } });
+      showToast('FAQ added', 'success');
+    } else {
+      const kind = zoneLabel === 'Policies' ? 'policy' : vertical === 'commerce' ? 'product' : 'service';
+      const res = await api.addKnowledge('default', { kind, title: q.trim(), content: a.trim(), metadata: { source: 'onboarding' } });
+      showToast(res ? `${zoneLabel} saved to knowledge base` : `${zoneLabel} saved locally (backend unreachable)`, res ? 'success' : 'warning');
+    }
+    setSaving(false);
+    setQ('');
+    setA('');
+    setOpenForm(null);
+  };
 
   const dropzones = vertical === 'commerce'
     ? [
@@ -63,11 +89,37 @@ export function KnowledgeSetup({ data, onNext, onBack }: Props) {
                 {zone.label}
               </p>
               <p style={{ fontSize: 12, color: 'var(--ink-400)' }}>{zone.desc}</p>
-              <div style={{ marginTop: 12, display: 'flex', gap: 8, justifyContent: 'center' }}>
-                <span style={{ fontSize: 11, color: 'var(--ink-400)', padding: '4px 8px', background: 'var(--surface-0)', borderRadius: 4 }}>PDF</span>
-                <span style={{ fontSize: 11, color: 'var(--ink-400)', padding: '4px 8px', background: 'var(--surface-0)', borderRadius: 4 }}>DOCX</span>
-                <span style={{ fontSize: 11, color: 'var(--ink-400)', padding: '4px 8px', background: 'var(--surface-0)', borderRadius: 4 }}>Text</span>
-              </div>
+              {openForm === zone.label ? (
+                <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }} onClick={(e) => e.stopPropagation()}>
+                  <input
+                    className="input" value={q} onChange={(e) => setQ(e.target.value)}
+                    placeholder={zone.label === 'FAQs' ? 'Question (e.g. Do you deliver to Giza?)' : 'Title (e.g. Return policy)'}
+                  />
+                  <textarea
+                    className="input" rows={2} value={a} onChange={(e) => setA(e.target.value)}
+                    placeholder={zone.label === 'FAQs' ? 'Answer' : 'Details'}
+                  />
+                  <button
+                    onClick={() => handleQuickAdd(zone.label)}
+                    disabled={!q.trim() || !a.trim() || saving}
+                    className="btn btn-primary" style={{ background: accentColor }}
+                  >
+                    {saving ? 'Saving…' : `Add ${zone.label === 'FAQs' ? 'FAQ' : 'entry'}`}
+                  </button>
+                </div>
+              ) : (
+                <div style={{ marginTop: 12, display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center' }}>
+                  <span style={{ fontSize: 11, color: 'var(--ink-400)', padding: '4px 8px', background: 'var(--surface-0)', borderRadius: 4 }}>PDF</span>
+                  <span style={{ fontSize: 11, color: 'var(--ink-400)', padding: '4px 8px', background: 'var(--surface-0)', borderRadius: 4 }}>DOCX</span>
+                  <span style={{ fontSize: 11, color: 'var(--ink-400)', padding: '4px 8px', background: 'var(--surface-0)', borderRadius: 4 }}>Text</span>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setOpenForm(zone.label); setQ(''); setA(''); }}
+                    style={{ fontSize: 11, fontWeight: 700, color: accentColor, background: 'none', border: 'none', cursor: 'pointer' }}
+                  >
+                    + Quick add
+                  </button>
+                </div>
+              )}
             </div>
           );
         })}

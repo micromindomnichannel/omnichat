@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useVertical } from '../../state/verticalContext';
+import { useStore } from '../../state/store';
 import { Upload, ArrowLeft, ArrowRight } from 'lucide-react';
+import { api } from '../../services/api';
 
 interface Props {
   data: any;
@@ -10,10 +12,22 @@ interface Props {
 
 export function BusinessInfo({ data, onNext, onBack }: Props) {
   const { vertical, accentColor } = useVertical();
+  const { showToast } = useStore();
   const [businessName, setBusinessName] = useState(data.businessName || '');
   const [industry, setIndustry] = useState(data.industry || '');
+  const [description, setDescription] = useState(data.businessDescription || '');
+  const [saving, setSaving] = useState(false);
 
   const canContinue = businessName.length > 0 && industry.length > 0;
+
+  // Best-effort save to backend (works offline — onboarding continues regardless).
+  const handleContinue = async () => {
+    setSaving(true);
+    const saved = await api.updateSettings({ business_name: businessName, industry, description });
+    setSaving(false);
+    if (!saved) showToast('Backend unreachable — continuing locally', 'warning');
+    onNext({ ...data, businessName, industry, businessDescription: description });
+  };
 
   return (
     <div style={{
@@ -94,6 +108,8 @@ export function BusinessInfo({ data, onNext, onBack }: Props) {
             className="input"
             placeholder="Briefly describe what you sell or offer..."
             rows={3}
+            value={description}
+            onChange={e => setDescription(e.target.value)}
           />
         </div>
       </div>
@@ -103,12 +119,12 @@ export function BusinessInfo({ data, onNext, onBack }: Props) {
           <ArrowLeft size={16} /> Back
         </button>
         <button
-          onClick={() => onNext({ ...data, businessName, industry })}
+          onClick={handleContinue}
           className="btn btn-primary"
-          disabled={!canContinue}
+          disabled={!canContinue || saving}
           style={{ background: accentColor }}
         >
-          Continue <ArrowRight size={16} />
+          {saving ? 'Saving…' : 'Continue'} <ArrowRight size={16} />
         </button>
       </div>
     </div>

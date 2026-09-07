@@ -28,6 +28,7 @@ import { Admin } from './pages/Admin';
 import { Demo } from './pages/Demo';
 import { Scheduler } from './pages/Scheduler';
 import { Toast } from './components/shared/Toast';
+import { api } from './services/api';
 
 // Auth guard helper
 function isAuthenticated(): boolean {
@@ -88,7 +89,10 @@ function App() {
       <KnowledgeSetup key="3" data={onboardingData} onNext={(d) => { setOnboardingData(d); setOnboardingStep(4); }} onBack={() => setOnboardingStep(2)} />,
       <AIReview key="4" data={onboardingData} onNext={() => setOnboardingStep(5)} onBack={() => setOnboardingStep(3)} />,
       <Finish key="5" data={onboardingData} onComplete={() => {
-        dispatch({ type: 'UPDATE_BUSINESS', field: 'businessName', value: onboardingData.businessName || 'My Business' });
+        const name = onboardingData.businessName || 'My Business';
+        dispatch({ type: 'UPDATE_BUSINESS', field: 'businessName', value: name });
+        // Best-effort backend sync (offline-safe — onboarding completes regardless).
+        api.updateSettings({ business_name: name, industry: onboardingData.industry });
         dispatch({ type: 'COMPLETE_ONBOARDING' });
         navigate('/overview');
       }} onBack={() => setOnboardingStep(4)} />

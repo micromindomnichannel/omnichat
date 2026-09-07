@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useVertical } from '../../state/verticalContext';
+import { useStore } from '../../state/store';
 import { ArrowLeft, ArrowRight, Bot } from 'lucide-react';
+import { api } from '../../services/api';
 
 interface Props {
   data: any;
@@ -10,6 +12,21 @@ interface Props {
 
 export function AIReview({ data, onNext, onBack }: Props) {
   const { vertical, accentColor } = useVertical();
+  const { state } = useStore();
+  const [live, setLive] = useState<{ backend: boolean; db: boolean; channels: number } | null>(null);
+
+  // Live wiring check: backend health + real channel connections.
+  useEffect(() => {
+    (async () => {
+      const health = await api.getHealth();
+      const channels = await api.getChannels('default');
+      setLive({
+        backend: !!health,
+        db: !!(health && (health as any).database?.connected),
+        channels: channels ? channels.filter((c: any) => c.status === 'active').length : 0,
+      });
+    })();
+  }, []);
 
   return (
     <div style={{ maxWidth: 560, margin: '0 auto', padding: '48px 24px' }}>
@@ -63,22 +80,25 @@ export function AIReview({ data, onNext, onBack }: Props) {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, background: 'var(--surface-1)', borderRadius: 8, border: '1px solid var(--border)' }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--success)' }} />
-          <span style={{ fontSize: 13, color: 'var(--ink-600)' }}>Answer product/service questions</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, background: 'var(--surface-1)', borderRadius: 8, border: '1px solid var(--border)' }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--success)' }} />
-          <span style={{ fontSize: 13, color: 'var(--ink-600)' }}>Check availability and stock</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, background: 'var(--surface-1)', borderRadius: 8, border: '1px solid var(--border)' }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--success)' }} />
-          <span style={{ fontSize: 13, color: 'var(--ink-600)' }}>Create orders and book appointments</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, background: 'var(--surface-1)', borderRadius: 8, border: '1px solid var(--border)' }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--success)' }} />
-          <span style={{ fontSize: 13, color: 'var(--ink-600)' }}>Escalate to human when needed</span>
-        </div>
+        {[
+          { ok: true, label: 'Answer product/service questions' },
+          { ok: true, label: 'Check availability and stock' },
+          { ok: true, label: 'Create orders and book appointments' },
+          { ok: true, label: 'Escalate to human when needed' },
+          { ok: live?.backend, label: live ? (live.backend ? 'Backend API connected' : 'Backend offline — demo mode') : 'Checking backend…' },
+          { ok: live?.db, label: live ? (live.db ? 'Database connected' : 'Database unreachable — demo data') : 'Checking database…' },
+          { ok: (live?.channels || 0) > 0, label: live ? `${live.channels} live channel${live.channels === 1 ? '' : 's'} connected` : 'Checking channels…' },
+        ].map((row, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, background: 'var(--surface-1)', borderRadius: 8, border: '1px solid var(--border)' }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: row.ok ? 'var(--success)' : row.ok === false ? 'var(--danger)' : 'var(--ink-400)' }} />
+            <span style={{ fontSize: 13, color: 'var(--ink-600)' }}>{row.label}</span>
+          </div>
+        ))}
+        {live && !live.backend && (
+          <p style={{ fontSize: 12, color: 'var(--ink-400)' }}>
+            You can finish onboarding now — everything syncs automatically once the backend is reachable.
+          </p>
+        )}
       </div>
 
       <div style={{ display: 'flex', gap: 12, marginTop: 32, justifyContent: 'flex-end' }}>
