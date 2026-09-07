@@ -3,7 +3,7 @@
 import express from 'express';
 import crypto from 'crypto';
 import { encryptSecret } from '../credentials/crypto.js';
-import { CHANNELS, provisionChannelFlow } from '../micromind/provisionChannel.js';
+import { CHANNELS, provisionTenantChannelFlow } from '../micromind/provisionChannel.js';
 import { assertCanConnectChannel } from '../billing/plans.js';
 import { requireAuth, requireWorkspace, workspaceFor } from '../auth/middleware.js';
 
@@ -134,22 +134,28 @@ export function channelsRouter(pool) {
         )
       ).rows[0].id;
 
-      // Provision dedicated MicroMind flow (needs MICROMIND_API_KEY; otherwise keep supplied id)
+      // Provision: folder -> tenant key -> flow-in-folder + key link (zero-touch).
+      // Falls back to a supplied micromindFlowId (BYOF). Any failure lands the
+      // account in 'error' with the reason in metadata (never a 500).
       let flowId = micromindFlowId || null;
+      let keyCredentialId = null;
+      let folderId = null;
       let status = micromindFlowId ? 'active' : 'connecting';
       if (autoProvision && !micromindFlowId) {
         try {
           const ws = (await pool.query('SELECT * FROM workspace_settings WHERE workspace_id=$1', [workspaceId])).rows[0] || {};
-          const created = await provisionChannelFlow(channel, {
+          const out = await provisionTenantChannelFlow(pool, workspaceId, channel, {
             name: `ORBIT ${channel} - ${ws.business_name || workspaceId}`,
             verifyToken: finalVerify,
             businessName: ws.business_name,
             aiTone: ws.ai_tone,
             language: ws.language,
           });
-          flowId = created.id;
-          await pool.query('INSERT INTO micromind_flows (id, workspace_id, channel_account_id, external_flow_id, template, status) VALUES ($1,$2,$3,$4,$5,\'active\')',
-            [rid('mmf'), workspaceId, accId, flowId, channel]);
+          flowId = out.flow.id;
+          folderId = out.folderId;
+          keyCredentialId = out.credentialId;
+          await pool.query('INSERT INTO micromind_flows (id, workspace_id, channel_account_id, external_flow_id, template, prediction_key_credential_id, status) VALUES ($1,$2,$3,$4,$5,$6,\'active\')',
+            [rid('mmf'), workspaceId, accId, flowId, channel, keyCredentialId]);
           status = 'active';
         } catch (e) {
           status = 'error';
@@ -168,6 +174,11 @@ export function channelsRouter(pool) {
       const { rows } = await pool.query('SELECT * FROM channel_accounts WHERE id=$1', [accId]);
       res.json({
         channel, status, account: safeAccount(rows[0]),
+        tenancy: {
+          folder: folderId ? 'ready' : 'pending',
+          folderId: folderId || null,
+          keyProvisioned: Boolean(keyCredentialId),
+        },
         // Returned ONCE: configure as the Telegram setWebhook secret_token. Never stored elsewhere.
         ...(webhookSecret ? { webhookSecret, webhookUrlHint: 'POST /webhooks/telegram' } : {}),
       });

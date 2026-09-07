@@ -78,7 +78,10 @@ server/
   micromind/client.js      chatflow/credential CRUD + prediction
   micromind/analyst.js       single gateway for ALL non-channel AI (reports, knowledge)
                              (MicroMind primary, local template/match fallback — never 500s)
-  micromind/provisionChannel.js  per-tenant flow provisioner (all channels)
+  micromind/provisioner.js    ops-account login (24h JWT, auto-refresh on 401)
+  micromind/folders.js        one MicroMind folder per workspace (verified API)
+  micromind/keys.js           per-tenant prediction keys (mint/link/revoke, vaulted)
+  micromind/provisionChannel.js  per-tenant flow provisioner (folderId + key link)
   micromind/templates/     messenger.json, instagram.json (sanitized exports)
 src/
   pages/                   Overview, Inbox, Customers, Orders, Appointments,

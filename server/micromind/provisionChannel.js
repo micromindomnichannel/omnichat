@@ -8,6 +8,8 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createChatflow, updateChatflow } from './client.js';
+import { ensureTenantFolder } from './folders.js';
+import { ensureTenantKey, getKeyRecordId, linkKeyToFlow } from './keys.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -112,4 +114,31 @@ export async function provisionChannelFlow(channel, { name, verifyToken, busines
 
 export async function updateChannelFlow(flowId, patch) {
   return updateChatflow(flowId, patch);
+}
+
+// Full zero-touch tenant provisioning: folder -> key -> flow-in-folder + key link.
+// pool-backed (persists folder ID, vaults the prediction key, returns everything
+// the channel_accounts/micromind_flows rows need). Template-missing channels
+// still throw template_pending before any MicroMind call.
+export async function provisionTenantChannelFlow(pool, workspaceId, channel,
+  { name, verifyToken, businessName, aiTone, language } = {}) {
+  const cfg = CHANNELS[channel];
+  if (!cfg) throw new Error(`Unknown channel for provisioning: ${channel}`);
+  if (cfg.placeholder) throw templatePending(channel);
+
+  const { folderId } = await ensureTenantFolder(pool, workspaceId, businessName);
+  const { credentialId } = await ensureTenantKey(pool, workspaceId);
+  const flowData = buildTenantFlowData(channel, loadTemplate(channel), { verifyToken, businessName, aiTone, language });
+  const flow = await createChatflow({
+    name: name || `ORBIT ${channel} - ${businessName || workspaceId}`,
+    flowData: JSON.stringify(flowData),
+    folderId,
+    deployed: true,
+    isPublic: false,
+    type: 'CHATFLOW',
+  });
+  if (!flow?.id) throw new Error('provisionTenantChannelFlow: flow creation returned no id');
+  const keyRecordId = await getKeyRecordId(pool, credentialId);
+  if (keyRecordId) await linkKeyToFlow(flow.id, keyRecordId).catch(() => {});
+  return { flow, folderId, credentialId, keyLinked: Boolean(keyRecordId) };
 }

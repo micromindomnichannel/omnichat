@@ -21,6 +21,8 @@ export function analystConfigured() {
 
 // Low-level ask: returns { text, source: 'micromind' }. Throws on any failure
 // (missing flow id, network, model 500) so callers can apply their fallback.
+// The shared analyst flow is key-enforced: pass MICROMIND_ANALYST_API_KEY
+// (one key linked to the analyst flow) or requests 401.
 export async function askAnalyst(question, { vars, sessionId, history } = {}) {
   const flowId = analystFlowId();
   if (!flowId) {
@@ -33,6 +35,7 @@ export async function askAnalyst(question, { vars, sessionId, history } = {}) {
     sessionId: sessionId || `default:analyst:${Date.now()}`,
     vars,
     history,
+    apiKey: process.env.MICROMIND_ANALYST_API_KEY || undefined,
   });
   const text = String(out?.text || out?.json?.answer || '').trim();
   if (!text) {

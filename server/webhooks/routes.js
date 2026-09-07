@@ -15,6 +15,7 @@ import express from 'express';
 import { decryptSecret } from '../credentials/crypto.js';
 import { CHANNELS, buildSessionId } from '../micromind/provisionChannel.js';
 import { predict } from '../micromind/client.js';
+import { tenantKeyMaterial } from '../micromind/keys.js';
 import { sendTextMessage } from '../meta/graph.js';
 import { verifyMetaSignature } from '../meta/verify.js';
 import { webhookLimit } from '../middleware/rateLimit.js';
@@ -190,13 +191,19 @@ async function handleNormalized(pool, provider, account, { senderId, text, mid }
   );
   await pool.query("UPDATE webhook_events SET status='processed', processed_at=CURRENT_TIMESTAMP WHERE external_event_id=$1", [mid]);
 
-  // AI reply (only when AI-handled and a flow is attached).
+  // AI reply (only when AI-handled and a flow is attached). Prediction carries
+  // the tenant's key (enforced flows 401 without it).
   if (conv.ai_enabled === false || !account.micromind_flow_id) return;
   try {
     const ws = (await pool.query('SELECT * FROM workspace_settings WHERE workspace_id=$1', [workspaceId])).rows[0] || {};
+    const keyRow = (await pool.query(
+      'SELECT prediction_key_credential_id FROM micromind_flows WHERE channel_account_id=$1 ORDER BY updated_at DESC LIMIT 1',
+      [account.id])).rows[0];
+    const apiKey = await tenantKeyMaterial(pool, keyRow?.prediction_key_credential_id).catch(() => null);
     const out = await predict(account.micromind_flow_id, {
       question: text,
       sessionId: buildSessionId(workspaceId, provider, senderId),
+      apiKey,
       vars: {
         ...CHANNELS[provider].runtimeVars(senderId, text),
         business_name: ws.business_name || undefined,
