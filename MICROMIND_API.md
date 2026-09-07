@@ -94,3 +94,19 @@ Chatflow Configuration → Security (`src/using-aimicromind/api.md:124-128`,
   (Graph / Cloud API / Bot API); gmail throws not-implemented.
 - Frontend `Channel` extended: messenger/telegram/gmail icons + names;
   `ChannelsPanel` supports BYOF connect for whatsapp/telegram/gmail.
+
+## Option B — folder-per-tenant zero-touch (verified live via captures)
+
+- Provisioner identity: `POST /api/v1/login` (email+password) → 24h JWT,
+  auto-refresh on 401 (`server/micromind/provisioner.js`). Falls back to
+  static `MICROMIND_API_KEY`. Env: `MICROMIND_PROVISIONER_EMAIL/PASSWORD`.
+- Folders: `POST /api/v1/folders` → 201 + `{id}` (`server/micromind/folders.js`,
+  idempotent per workspace, `004_mm_tenancy.sql`).
+- Flows: `POST /chatflows` accepts `folderId` + `deployed` + `apikeyid`.
+- Prediction keys: `POST /apikey` (member-mintable, user-bound) → one key per
+  tenant, vaulted (`micromind_prediction`), linked to the tenant's flows,
+  sent per prediction call. Enforced flows 401 without it (`server/micromind/keys.js`).
+- Folders are ORGANIZATION, not a permission boundary — tenancy stays
+  backend-enforced (mapping + vault + membership). No per-tenant MicroMind
+  identities (requires admin we don't hold).
+- Shared analyst flow: one flow + `MICROMIND_ANALYST_API_KEY`, all tenants.
