@@ -6,6 +6,7 @@ async function fetchJson(url: string, options?: RequestInit) {
   try {
     const res = await fetch(`${API_BASE}${url}`, {
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', // session cookie (httpOnly, set by backend)
       ...options
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -16,7 +17,30 @@ async function fetchJson(url: string, options?: RequestInit) {
   }
 }
 
+// Raw auth calls: surface server error bodies (invalid credentials, closed
+// registration) instead of collapsing to null. Still null when unreachable.
+async function authJson(url: string, body?: any) {
+  try {
+    const res = await fetch(`${API_BASE}${url}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    return await res.json().catch(() => null);
+  } catch (err) {
+    console.warn(`[Auth Warning] Request to ${url} failed.`, err);
+    return null;
+  }
+}
+
 export const api = {
+  // Auth (session cookie; null only when unreachable)
+  signup: (email: string, password: string, displayName?: string) => authJson('/auth/signup', { email, password, displayName }),
+  login: (email: string, password: string) => authJson('/auth/login', { email, password }),
+  logout: () => authJson('/auth/logout'),
+  me: () => fetchJson('/auth/me'),
+
   // Bootstrap & Health
   getBootstrap: () => fetchJson('/bootstrap'),
   getHealth: () => fetchJson('/health'),

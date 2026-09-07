@@ -1,14 +1,11 @@
-// Channel connection API (MVP: single default workspace, no auth).
-// requireWorkspace() is the ONE place auth plugs in later — every route resolves
-// the workspace server-side and never trusts client-supplied ownership.
-//
-// Supported: messenger, instagram (reference slice).
-// whatsapp | telegram | gmail -> 400 { code: 'channel_pending' } until their slice lands.
+// Channel connection API. Every route requires a session; workspace access is
+// resolved from membership — never trusted from the client.
 import express from 'express';
 import crypto from 'crypto';
 import { encryptSecret } from '../credentials/crypto.js';
 import { CHANNELS, provisionChannelFlow } from '../micromind/provisionChannel.js';
 import { assertCanConnectChannel } from '../billing/plans.js';
+import { requireAuth, requireWorkspace, workspaceFor } from '../auth/middleware.js';
 
 const FULL = ['messenger', 'instagram']; // verified template + auto-provision
 const BYOF = ['whatsapp', 'telegram', 'gmail']; // wiring done, template pending -> micromindFlowId required
@@ -20,12 +17,6 @@ const PROVIDER = {
   telegram: 'telegram_bot',
   gmail: 'google_oauth',
 };
-
-export function requireWorkspace(req, _res, next) {
-  // MVP stub: auth skipped -> default workspace. Replace with JWT/session check.
-  req.workspaceId = 'default';
-  next();
-}
 
 const rid = (p) => `${p}_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
 
@@ -47,21 +38,23 @@ function safeAccount(row) {
   };
 }
 
-async function audit(pool, workspaceId, action, resource, meta = {}) {
+async function audit(pool, workspaceId, action, resource, meta = {}, actor = 'system') {
   try {
     await pool.query(
       'INSERT INTO audit_logs (id, workspace_id, actor, action, resource, meta) VALUES ($1,$2,$3,$4,$5,$6)',
-      [rid('aud'), workspaceId, 'system', action, resource, JSON.stringify(meta)]
+      [rid('aud'), workspaceId, actor, action, resource, JSON.stringify(meta)]
     );
   } catch { /* audit must never break the request */ }
 }
 
 export function channelsRouter(pool) {
   const r = express.Router();
-  r.use(requireWorkspace);
+  // Path-scoped: all channel routes live under /api/v1 (bare r.use would
+  // intercept every request when the router is mounted without a prefix).
+  r.use('/api/v1', requireAuth);
 
   // List connected channels (safe fields only — never secrets)
-  r.get('/api/v1/workspaces/:workspaceId/channels', async (req, res) => {
+  r.get('/api/v1/workspaces/:workspaceId/channels', requireWorkspace, async (req, res) => {
     try {
       const { rows } = await pool.query(
         'SELECT * FROM channel_accounts WHERE workspace_id = $1 ORDER BY created_at ASC',
@@ -77,7 +70,7 @@ export function channelsRouter(pool) {
   // { displayName, username, externalAccountId, pageAccessToken|botToken|secret,
   //   phoneNumberId (whatsapp), verifyToken?, micromindFlowId?, autoProvision? }
   // whatsapp|telegram|gmail are BYOF until their template lands: micromindFlowId required.
-  r.post('/api/v1/workspaces/:workspaceId/channels/:channel/connect', async (req, res) => {
+  r.post('/api/v1/workspaces/:workspaceId/channels/:channel/connect', requireWorkspace, async (req, res) => {
     const { channel } = req.params;
     const workspaceId = req.workspaceId;
     if (NOT_STARTED.includes(channel)) {
@@ -171,7 +164,7 @@ export function channelsRouter(pool) {
         await pool.query('UPDATE channel_accounts SET status=$1, micromind_flow_id=$2, updated_at=CURRENT_TIMESTAMP WHERE id=$3',
           [status, flowId, accId]);
       }
-      await audit(pool, workspaceId, 'channel.connect', `${channel}:${accId}`, { status });
+      await audit(pool, workspaceId, 'channel.connect', `${channel}:${accId}`, { status }, req.user.email);
       const { rows } = await pool.query('SELECT * FROM channel_accounts WHERE id=$1', [accId]);
       res.json({
         channel, status, account: safeAccount(rows[0]),
@@ -184,7 +177,7 @@ export function channelsRouter(pool) {
   });
 
   // OAuth start (Meta app handoff): stores state, returns it for the redirect builder.
-  r.post('/api/v1/workspaces/:workspaceId/channels/:channel/oauth/start', async (req, res) => {
+  r.post('/api/v1/workspaces/:workspaceId/channels/:channel/oauth/start', requireWorkspace, async (req, res) => {
     const { channel } = req.params;
     if (!FULL.includes(channel) && !BYOF.includes(channel)) return res.status(400).json({ error: `Unknown channel: ${channel}` });
     const state = crypto.randomBytes(24).toString('hex');
@@ -208,12 +201,15 @@ export function channelsRouter(pool) {
 
   r.post('/api/v1/channels/:id/disconnect', async (req, res) => {
     try {
+      const row = (await pool.query('SELECT workspace_id FROM channel_accounts WHERE id=$1', [req.params.id])).rows[0];
+      const workspaceId = workspaceFor(req, row?.workspace_id);
+      if (!workspaceId) return res.status(404).json({ error: 'channel not found' });
       const { rows } = await pool.query(
         "UPDATE channel_accounts SET status='disconnected', updated_at=CURRENT_TIMESTAMP WHERE id=$1 AND workspace_id=$2 RETURNING *",
-        [req.params.id, req.workspaceId]
+        [req.params.id, workspaceId]
       );
       if (!rows.length) return res.status(404).json({ error: 'channel not found' });
-      await audit(pool, req.workspaceId, 'channel.disconnect', rows[0].channel + ':' + rows[0].id, {});
+      await audit(pool, workspaceId, 'channel.disconnect', rows[0].channel + ':' + rows[0].id, {}, req.user.email);
       res.json({ channel: rows[0].channel, status: 'disconnected' });
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -222,12 +218,15 @@ export function channelsRouter(pool) {
 
   r.post('/api/v1/channels/:id/reconnect', async (req, res) => {
     try {
+      const row = (await pool.query('SELECT workspace_id FROM channel_accounts WHERE id=$1', [req.params.id])).rows[0];
+      const workspaceId = workspaceFor(req, row?.workspace_id);
+      if (!workspaceId) return res.status(404).json({ error: 'channel not found' });
       const { rows } = await pool.query(
         "UPDATE channel_accounts SET status='active', updated_at=CURRENT_TIMESTAMP WHERE id=$1 AND workspace_id=$2 AND credential_id IS NOT NULL RETURNING *",
-        [req.params.id, req.workspaceId]
+        [req.params.id, workspaceId]
       );
       if (!rows.length) return res.status(404).json({ error: 'channel not found or missing credential — reconnect with a fresh token' });
-      await audit(pool, req.workspaceId, 'channel.reconnect', rows[0].channel + ':' + rows[0].id, {});
+      await audit(pool, workspaceId, 'channel.reconnect', rows[0].channel + ':' + rows[0].id, {}, req.user.email);
       res.json({ channel: rows[0].channel, status: 'active' });
     } catch (err) {
       res.status(500).json({ error: err.message });

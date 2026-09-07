@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useVertical } from '../../state/verticalContext';
 import { useStore } from '../../state/store';
 import { OrbitLogo } from '../../components/shared/OrbitLogo';
+import { isAdmin } from '../../services/session';
 import {
   LayoutDashboard, MessageSquare, Users, ShoppingBag, Calendar, Package, Scissors,
   Bot, BookOpen, BarChart3, Settings, ShieldAlert, HelpCircle, ChevronDown, Menu, X, Home, ExternalLink
@@ -25,7 +26,8 @@ const navItems = [
 const bottomItems = [
   { id: 'landing', label: 'Landing Page', icon: Home, path: '/' },
   { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
-  { id: 'admin', label: 'Admin', icon: ShieldAlert, path: '/admin' },
+  // Admin is hidden for non-admin members (backend also enforces with 403).
+  ...(isAdmin() ? [{ id: 'admin', label: 'Admin', icon: ShieldAlert, path: '/admin' }] : []),
 ];
 
 export function Sidebar() {

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { OrbitLogo } from '../components/shared/OrbitLogo';
 import { Eye, EyeOff, ArrowRight, Mail, Lock, Sparkles } from 'lucide-react';
+import { api } from '../services/api';
 
 export function Login() {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ export function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
       setError('Please enter your email and password.');
@@ -21,15 +22,20 @@ export function Login() {
     setLoading(true);
     setError('');
 
-    // Simulated credential check (dummy auth)
-    setTimeout(() => {
-      setLoading(false);
-      // Accept any credentials for now – store user info in localStorage
-      const userData = { name: email.split('@')[0], email, avatar: '' };
-      localStorage.setItem('orbit_user', JSON.stringify(userData));
+    // Real session auth (httpOnly cookie set by the backend).
+    const res = await api.login(email, password);
+    setLoading(false);
+    if (res?.user) {
+      localStorage.setItem('orbit_user', JSON.stringify({
+        name: res.user.display_name || res.user.email.split('@')[0],
+        email: res.user.email, avatar: '',
+      }));
       localStorage.setItem('orbit_authenticated', 'true');
+      localStorage.setItem('orbit_memberships', JSON.stringify(res.memberships || []));
       navigate('/overview');
-    }, 1200);
+    } else {
+      setError(res?.error || 'Sign in failed — is the backend reachable?');
+    }
   };
 
   return (

@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { OrbitLogo } from '../components/shared/OrbitLogo';
 import { ChannelsPanel } from '../components/settings/ChannelsPanel';
+import { api } from '../services/api';
+import { clearSessionCache } from '../services/session';
 
 const settingsTabs = ['Business Profile', 'Channels', 'AI Settings', 'Working Hours', 'Notifications', 'Team Members'];
 
@@ -367,9 +369,9 @@ export function Settings() {
           <p style={{ fontSize: 12.5, color: 'var(--stone-gray)', marginTop: 2 }}>You will be redirected to the login page.</p>
         </div>
         <button
-          onClick={() => {
-            localStorage.removeItem('orbit_authenticated');
-            localStorage.removeItem('orbit_user');
+          onClick={async () => {
+            await api.logout(); // destroys the server session; cache cleared regardless
+            clearSessionCache();
             navigate('/login');
           }}
           className="btn btn-outline"

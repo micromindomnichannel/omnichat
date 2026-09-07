@@ -29,17 +29,30 @@ import { Demo } from './pages/Demo';
 import { Scheduler } from './pages/Scheduler';
 import { Toast } from './components/shared/Toast';
 import { api } from './services/api';
+import { isAdmin } from './services/session';
 
-// Auth guard helper
-function isAuthenticated(): boolean {
-  return localStorage.getItem('orbit_authenticated') === 'true';
-}
-
-function ProtectedRoute({ children }: { children: React.ReactElement }) {
-  if (!isAuthenticated()) {
-    return <Navigate to="/login" replace />;
-  }
-  return children;
+// Session guard: the server cookie is the source of truth. localStorage is only
+// an optimistic hint so first paint isn't blocked on the network.
+function useSession() {
+  const [status, setStatus] = useState<'checking' | 'in' | 'out'>(() =>
+    localStorage.getItem('orbit_authenticated') === 'true' ? 'in' : 'checking'
+  );
+  useEffect(() => {
+    let cancelled = false;
+    api.me().then((me) => {
+      if (cancelled) return;
+      if (me?.user) {
+        localStorage.setItem('orbit_authenticated', 'true');
+        localStorage.setItem('orbit_memberships', JSON.stringify(me.memberships || []));
+        setStatus('in');
+      } else {
+        localStorage.removeItem('orbit_authenticated');
+        setStatus('out');
+      }
+    });
+    return () => { cancelled = true; };
+  }, []);
+  return status;
 }
 
 function App() {
@@ -56,6 +69,7 @@ function App() {
   const isOnboarding = location.pathname === '/onboarding';
   const isVerticalSelect = location.pathname === '/select-vertical';
   const isDemo = location.pathname === '/demo';
+  const session = useSession();
 
   // Public routes (no auth needed)
   if (isLanding) {
@@ -63,10 +77,12 @@ function App() {
   }
 
   if (isLogin) {
+    if (session === 'in') return <Navigate to="/overview" replace />;
     return <Login />;
   }
 
   if (isSignup) {
+    if (session === 'in') return <Navigate to="/overview" replace />;
     return <Signup />;
   }
 
@@ -74,13 +90,19 @@ function App() {
     return <Demo />;
   }
 
+  if (session === 'checking') {
+    return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--stone-gray)', fontSize: 14 }}>Checking session…</div>;
+  }
+
+  if (session === 'out') {
+    return <Navigate to="/login" replace />;
+  }
+
   if (isVerticalSelect) {
-    if (!isAuthenticated()) return <Navigate to="/login" replace />;
     return <VerticalSelect />;
   }
 
   if (isOnboarding) {
-    if (!isAuthenticated()) return <Navigate to="/login" replace />;
 
     const steps = [
       <VerticalSelect key="0" onSelect={(v) => { setOnboardingData({ ...onboardingData, vertical: v }); setOnboardingStep(1); }} />,
@@ -105,11 +127,7 @@ function App() {
     );
   }
 
-  // All dashboard routes require auth
-  if (!isAuthenticated()) {
-    return <Navigate to="/login" replace />;
-  }
-
+  // Past this point session === 'in' (checked above).
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
       <Sidebar />
@@ -129,7 +147,7 @@ function App() {
             <Route path="/knowledge" element={<Knowledge />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/admin" element={<Admin />} />
+            <Route path="/admin" element={isAdmin() ? <Admin /> : <Navigate to="/overview" replace />} />
             <Route path="*" element={<Overview />} />
           </Routes>
         </main>

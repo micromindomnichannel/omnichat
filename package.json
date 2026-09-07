@@ -9,12 +9,14 @@
     "start": "node server/index.js",
     "db:init": "node server/initDb.js",
     "db:migrate": "node server/migrate.js",
+    "admin:create-user": "node scripts/create-owner.mjs",
     "probe:micromind": "node scripts/micromind-probe.mjs",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
     "@types/pg": "^8.23.1",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",

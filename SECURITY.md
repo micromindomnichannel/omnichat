@@ -1,8 +1,8 @@
-# SECURITY.md — audit of repo + live surface (2026-09-06)
+# SECURITY.md — audit of repo + live surface (2026-09-07 — auth update)
 
 Method: static review of all of `server/` + `src/`, secret scan, `npm audit`,
-behavioral webhook tests. Severity = exploitability in the current MVP
-(single-tenant, auth skipped by decision).
+behavioral webhook + auth harnesses (17/17 auth checks pass).
+Severity = exploitability with strangers on the site.
 
 ## Fixed in this pass
 
@@ -29,16 +29,26 @@ behavioral webhook tests. Severity = exploitability in the current MVP
 - **MicroMind template**: sanitized export — no live tokens in
   `server/micromind/templates/`.
 
-## Accepted risks (MVP, must close before production pilot)
+## Fixed in the auth pass (2026-09-07)
+
+| # | Finding | Fix |
+|---|---|---|
+| 7 | No authN/Z — localStorage flag, open admin, client-trusted workspace | bcryptjs sessions (httpOnly `SameSite` cookies, SHA-256 stored), `requireAuth` on all API, membership-checked workspaces, owner/admin roles, closed registration after bootstrap, `npm run admin:create-user` |
+| 8 | Legacy endpoints hardcoded `workspace_id='default'` (cross-tenant reads once 2nd workspace exists) | All 32 query sites parameterized to the session workspace |
+| 9 | Webhooks resolved a single global workspace | Workspace derived per-event from the channel account (verify token / secret / page-ID routing) |
+| 10 | Admin endpoints returned all workspaces' data, no gate | Owner/admin role + per-workspace scoping on every admin query |
+| 11 | Bare `r.use(auth)` in routers would 401 the whole server (found live in testing) | Path-scoped (`/api/v1…`) + regression check `unknown path 404` |
+| 12 | Login brute-forceable | 10/min/IP rate limit; min-10-char passwords; generic invalid-credentials message |
+
+## Accepted risks (must close before production pilot)
 
 | # | Risk | Why accepted | Closes when |
 |---|---|---|---|
-| A | **No authN/Z** — `localStorage orbit_authenticated`, `requireWorkspace()` → `'default'`, open admin | Explicit MVP decision | Real auth (JWT/session) + workspace membership checks + admin gate |
-| B | **Dev DB password in git history** (`postgres/admin@148.251.171.147` in old commits + `server/db.js` defaults) | Can't un-commit; dev-only host | **Rotate the DB password now**, then update `.env`/deploy env |
-| C | `CRED_KEY` dev fallback (stable local key, loud warning) | Keeps local dev working without setup | Hard-require `CRED_KEY`; refuse boot in production without it |
-| D | Rate limiter is per-process memory | Single instance today | Redis-backed limiter with multi-instance deploy |
-| E | `express.json({limit:'25mb'})` | Needed for photo upload path | Lower + stream uploads to object storage |
-| F | `npm audit`: 2× moderate `react-router-dom` (open-redirect-via-backslash; SSR `deserializeErrors`) | Not exploitable here: no SSR, navigation targets are internal constants; fix is a breaking major (v6→v7) | Schedule the v7 migration + regression pass |
+| A | **DB password in git history** + `server/db.js` dev defaults | Can't un-commit; dev-only host | **Rotate the DB password now** (your step 1), then update `.env` |
+| B | `CRED_KEY` dev fallback | Local dev ergonomics | Hard-required in production (boot refuses without it — implemented) |
+| C | Rate limiter is per-process memory | Single instance today | Redis-backed limiter with multi-instance deploy |
+| D | `express.json({limit:'25mb'})` | Photo upload path | Lower + object storage |
+| E | `npm audit`: 2× moderate `react-router-dom` | Not exploitable here (no SSR, internal nav); breaking major | v7 migration + regression pass |
 
 ## Still TODO (from the plan, unchanged)
 

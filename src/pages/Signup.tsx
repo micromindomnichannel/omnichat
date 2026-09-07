@@ -4,6 +4,7 @@ import { OrbitLogo } from '../components/shared/OrbitLogo';
 import {
   Eye, EyeOff, ArrowRight, Mail, Lock, User, Phone, Building2, Sparkles, CheckCircle2
 } from 'lucide-react';
+import { api } from '../services/api';
 
 export function Signup() {
   const navigate = useNavigate();
@@ -29,15 +30,15 @@ export function Signup() {
       setError('Please fill in all required fields.');
       return;
     }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (password.length < 10) {
+      setError('Password must be at least 10 characters.');
       return;
     }
     setError('');
     setStep(2);
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!businessName) {
       setError('Please enter your business name.');
@@ -47,22 +48,21 @@ export function Signup() {
     setLoading(true);
     setError('');
 
-    // Simulated signup (dummy auth)
-    setTimeout(() => {
-      setLoading(false);
+    // Real signup: first-ever user becomes workspace owner (registration
+    // closes afterwards — further accounts come from an owner).
+    const res = await api.signup(email, password, fullName);
+    setLoading(false);
+    if (res?.user) {
       const userData = {
-        name: fullName,
-        email,
-        phone,
-        businessName,
-        industry,
-        country,
-        avatar: ''
+        name: fullName, email, phone, businessName, industry, country, avatar: ''
       };
       localStorage.setItem('orbit_user', JSON.stringify(userData));
       localStorage.setItem('orbit_authenticated', 'true');
+      localStorage.setItem('orbit_memberships', JSON.stringify(res.memberships || []));
       navigate('/onboarding');
-    }, 1500);
+    } else {
+      setError(res?.error || 'Sign up failed — is the backend reachable?');
+    }
   };
 
   return (

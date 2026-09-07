@@ -28,6 +28,7 @@ npm install
 cp .env.example .env        # then fill CRED_KEY, MICROMIND_*, DB_*
 npm run db:init             # base schema + seed (needs PG up)
 npm run db:migrate          # slice migrations (also auto-run on server boot)
+npm run admin:create-user -- --email=you@biz.com --password='<10+ chars>'  # first owner
 npm run server              # Express API on :5000 (terminal 1)
 npm run dev                 # Vite frontend on :3000 (terminal 2)
 ```
@@ -51,6 +52,8 @@ npm run probe:micromind     # MicroMind prediction + management CRUD probe
 | `MICROMIND_MESSENGER_FLOW_ID` | backend | Reference flow for the probe |
 | `MICROMIND_ANALYST_FLOW_ID` | backend | Dedicated analyst flow for reports + knowledge answers (falls back to messenger flow) |
 | `META_GRAPH_VERSION` | backend | Graph API version for sends (default `v19.0`) |
+| `CORS_ORIGIN` | backend | Comma-separated browser origins (required in production) |
+| `COOKIE_SAMESITE` / `COOKIE_SECURE` | backend | `None`+Secure for cross-site prod (Vercel + VPS); Lax default |
 | `VITE_API_URL` | frontend | API base, default `http://localhost:5000/api` |
 
 ## Project structure
@@ -90,6 +93,12 @@ MICROMIND_API.md           verified endpoints, auth, templates, tenant rules
 ## API overview
 
 ```text
+Auth (bcrypt + server-side sessions in httpOnly cookies)
+  POST   /api/auth/signup     (open only until the first user exists, then 403)
+  POST   /api/auth/login      (rate-limited) | POST /api/auth/logout | GET /api/auth/me
+  All /api/* (except /health, /auth/*, OAuth callback) require a session and
+  resolve the workspace from membership. Admin routes require owner/admin role.
+```
 Catalog & CRM (tenant-scoped to the default workspace until auth lands)
   GET/POST/PUT/DELETE /api/products, /api/services
   GET/POST /api/orders (+ /api/orders/ai-confirm), /api/appointments
