@@ -11,6 +11,10 @@ export function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotMsg, setForgotMsg] = useState('');
+  const [forgotBusy, setForgotBusy] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,9 +163,13 @@ export function Login() {
                 <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)' }}>
                   Password
                 </label>
-                <a href="#" style={{ fontSize: 12, color: 'var(--signal-orange)', textDecoration: 'none', fontWeight: 600 }}>
+                <button
+                  type="button"
+                  onClick={() => { setForgotOpen(true); setForgotMsg(''); setForgotEmail(email); }}
+                  style={{ fontSize: 12, color: 'var(--signal-orange)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+                >
                   Forgot password?
-                </a>
+                </button>
               </div>
               <div style={{ position: 'relative' }}>
                 <Lock size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--stone-gray)' }} />
@@ -226,6 +234,48 @@ export function Login() {
           </div>
         </div>
       </div>
+
+      {forgotOpen && (
+        <div
+          onClick={() => setForgotOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 16 }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: 'white', borderRadius: 12, padding: 28, width: '100%', maxWidth: 380 }}
+          >
+            <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 6 }}>Reset password</h3>
+            <p style={{ fontSize: 13, color: 'var(--stone-gray)', marginBottom: 16 }}>
+              Enter your account email. If it exists, a reset link will be sent (or ask your workspace owner).
+            </p>
+            <input
+              className="input" type="email" placeholder="you@business.com"
+              value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)}
+              style={{ height: 44, marginBottom: 12 }}
+            />
+            {forgotMsg && <p style={{ fontSize: 13, color: 'var(--midnight-ink)', marginBottom: 12 }}>{forgotMsg}</p>}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setForgotOpen(false)} className="btn btn-outline" style={{ flex: 1 }}>Cancel</button>
+              <button
+                disabled={forgotBusy}
+                onClick={async () => {
+                  setForgotBusy(true);
+                  const res = await api.forgotPassword(forgotEmail.trim());
+                  setForgotBusy(false);
+                  setForgotMsg(res
+                    ? (res.debugToken
+                      ? `Dev mode — your reset token (paste after /reset?token=): ${res.debugToken}`
+                      : 'If the email exists, a reset link was sent. It expires in 1 hour.')
+                    : 'Backend unreachable — ask your workspace owner to reset it.');
+                }}
+                className="btn btn-primary" style={{ flex: 1, background: 'var(--signal-orange)' }}
+              >
+                {forgotBusy ? 'Sending…' : 'Send link'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

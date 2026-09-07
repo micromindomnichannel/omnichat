@@ -99,6 +99,7 @@ MICROMIND_API.md           verified endpoints, auth, templates, tenant rules
 Auth (bcrypt + server-side sessions in httpOnly cookies)
   POST   /api/auth/signup     (open only until the first user exists, then 403)
   POST   /api/auth/login      (rate-limited) | POST /api/auth/logout | GET /api/auth/me
+  POST   /api/auth/forgot|reset  (self-service reset, 1h tokens, no enumeration)
   All /api/* (except /health, /auth/*, OAuth callback) require a session and
   resolve the workspace from membership. Admin routes require owner/admin role.
 ```
@@ -117,12 +118,15 @@ Channels (AUTH skipped in MVP → default workspace)
 
 Inbox
   GET    /api/v1/conversations  (+ legacy /api/conversations)
+  GET    /api/v1/conversations/:id/messages  (realtime thread polling)
   POST   /api/v1/conversations/:id/reply   (backend sends to the provider)
 
 Knowledge / Admin
   GET|POST /api/v1/workspaces/:id/knowledge, DELETE /api/v1/knowledge/:id
   POST   /api/v1/workspaces/:id/knowledge/ask   (MicroMind analyst → local-match → none)
-  GET    /api/v1/admin/overview|channels|flows|errors|usage
+  POST   /api/v1/workspaces/:id/knowledge/upload (txt/md/csv/json/pdf/docx → chunked items)
+  GET    /api/v1/workspaces/:id/plan (plan limits + 30d usage; billing provider pending)
+  GET    /api/v1/admin/overview|channels|flows|errors|usage|micromind|users
 
 Webhooks (Meta owns the callback URL → ORBIT)
   GET|POST /webhooks/messenger, /webhooks/instagram, /webhooks/whatsapp

@@ -2,7 +2,7 @@ import React, { createContext, useContext, useReducer, useCallback, useEffect } 
 import type { Conversation, Message, Product, Service, Order, Appointment, Automation, FAQ, Source, FollowUp, TeamMember, NotificationSetting, Customer } from './mockData';
 import * as mockData from './mockData';
 import { api } from '../services/api';
-import { normalizeConversation, normalizeCustomer, groupMessages } from '../services/normalize';
+import { normalizeConversation, normalizeCustomer, groupMessages, normalizeMessage } from '../services/normalize';
 
 interface AppState {
   conversations: Conversation[];
@@ -37,6 +37,8 @@ interface AppState {
 
 type Action =
   | { type: 'SET_BOOTSTRAP_DATA'; payload: any }
+  | { type: 'SET_CONVERSATIONS'; conversations: any[] }
+  | { type: 'SET_THREAD_MESSAGES'; conversationId: string; messages: any[] }
   | { type: 'SET_CONVERSATION_STATUS'; id: string; status: Conversation['status'] }
   | { type: 'ADD_MESSAGE'; conversationId: string; message: Message }
   | { type: 'UPDATE_PRODUCT'; product: Product }
@@ -109,6 +111,21 @@ const initialState: AppState = {
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
+    // Realtime sync: replace conversation list / single thread with fresh rows.
+    case 'SET_CONVERSATIONS':
+      return { ...state, conversations: action.conversations.map(normalizeConversation) };
+    case 'SET_THREAD_MESSAGES': {
+      const msgs = action.messages.map(normalizeMessage);
+      const last = msgs[msgs.length - 1];
+      return {
+        ...state,
+        messages: { ...state.messages, [action.conversationId]: msgs },
+        conversations: last
+          ? state.conversations.map((c) => c.id === action.conversationId
+            ? { ...c, lastMessage: last.content, unreadCount: 0 } : c)
+          : state.conversations,
+      };
+    }
     case 'SET_BOOTSTRAP_DATA':
       return {
         ...state,

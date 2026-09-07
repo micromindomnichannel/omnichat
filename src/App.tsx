@@ -13,6 +13,7 @@ import { Finish } from './app/onboarding/Finish';
 import { Landing } from './pages/Landing';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
+import { ResetPassword } from './pages/ResetPassword';
 import { Overview } from './pages/Overview';
 import { Inbox } from './pages/Inbox';
 import { Customers } from './pages/Customers';
@@ -66,6 +67,7 @@ function App() {
   const isLanding = location.pathname === '/' || location.pathname === '/landing';
   const isLogin = location.pathname === '/login';
   const isSignup = location.pathname === '/signup';
+  const isReset = location.pathname === '/reset';
   const isOnboarding = location.pathname === '/onboarding';
   const isVerticalSelect = location.pathname === '/select-vertical';
   const isDemo = location.pathname === '/demo';
@@ -84,6 +86,10 @@ function App() {
   if (isSignup) {
     if (session === 'in') return <Navigate to="/overview" replace />;
     return <Signup />;
+  }
+
+  if (isReset) {
+    return <ResetPassword />;
   }
 
   if (isDemo) {

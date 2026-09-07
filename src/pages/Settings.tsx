@@ -13,7 +13,7 @@ import { ChannelsPanel } from '../components/settings/ChannelsPanel';
 import { api } from '../services/api';
 import { clearSessionCache } from '../services/session';
 
-const settingsTabs = ['Business Profile', 'Channels', 'AI Settings', 'Working Hours', 'Notifications', 'Team Members'];
+const settingsTabs = ['Business Profile', 'Channels', 'Plan & Usage', 'AI Settings', 'Working Hours', 'Notifications', 'Team Members'];
 
 const channelIcons: Record<string, React.ElementType> = {
   instagram: Instagram, whatsapp: MessageCircle, facebook: Facebook, tiktok: Music, website: Globe
@@ -29,6 +29,7 @@ export function Settings() {
   const [invitePassword, setInvitePassword] = useState('');
   const [inviteRole, setInviteRole] = useState('agent');
   const [members, setMembers] = useState<any[] | null>(null);
+  const [plan, setPlan] = useState<any>(null);
   const [newRule, setNewRule] = useState('');
 
   const isDirty = false; // Simplified for prototype
@@ -36,6 +37,7 @@ export function Settings() {
   // Real member directory (owner/admin only; null when forbidden/offline).
   useEffect(() => {
     api.adminUsers().then((rows) => { if (rows) setMembers(rows); });
+    api.getPlan('default').then((p) => { if (p) setPlan(p); });
   }, []);
 
   const handleToggleChannel = (channel: string) => {
@@ -125,6 +127,36 @@ export function Settings() {
             local={state.channelsConnected}
             onToggleLocal={handleToggleChannel}
           />
+        );
+
+      case 'Plan & Usage':
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 520 }}>
+            {!plan ? (
+              <div style={{ fontSize: 13, color: 'var(--stone-gray)' }}>Plan data unavailable — backend unreachable.</div>
+            ) : (
+              <>
+                <div style={{ padding: 16, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface-1)' }}>
+                  <span style={{ fontSize: 12, color: 'var(--stone-gray)', display: 'block' }}>Current plan</span>
+                  <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--midnight-ink)', textTransform: 'capitalize' }}>{plan.plan?.name || 'Pro'}</span>
+                  <span style={{ fontSize: 12, color: 'var(--stone-gray)', display: 'block', marginTop: 4 }}>
+                    Up to {plan.plan?.channels >= 9007199254740991 ? 'unlimited' : plan.plan?.channels} active channels · {plan.plan?.teamSeats} team seats
+                  </span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div style={{ padding: 16, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface-1)' }}>
+                    <span style={{ fontSize: 20, fontWeight: 800 }}>{plan.usage?.channelsActive ?? '—'}</span>
+                    <span style={{ fontSize: 12, color: 'var(--stone-gray)', display: 'block' }}>Active channels{(plan.usage?.channelsErrored || 0) > 0 ? ` (+${plan.usage.channelsErrored} errored)` : ''}</span>
+                  </div>
+                  <div style={{ padding: 16, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface-1)' }}>
+                    <span style={{ fontSize: 20, fontWeight: 800 }}>{plan.usage?.processed30d ?? '—'}</span>
+                    <span style={{ fontSize: 12, color: 'var(--stone-gray)', display: 'block' }}>Messages handled (30d)</span>
+                  </div>
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--stone-gray)' }}>{plan.billing?.note || ''}</div>
+              </>
+            )}
+          </div>
         );
 
       case 'AI Settings':

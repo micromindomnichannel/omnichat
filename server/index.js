@@ -10,6 +10,7 @@ import { channelsRouter } from './channels/routes.js';
 import { webhooksRouter } from './webhooks/routes.js';
 import { knowledgeRouter } from './knowledge/routes.js';
 import { adminRouter } from './admin/routes.js';
+import { billingRouter } from './billing/routes.js';
 import { decryptSecret } from './credentials/crypto.js';
 import { sendTextMessage } from './meta/graph.js';
 import { sendWhatsAppText } from './meta/whatsapp.js';
@@ -683,6 +684,7 @@ app.use(channelsRouter(pool));
 app.use(webhooksRouter(pool));
 app.use(knowledgeRouter(pool));
 app.use(adminRouter(pool));
+app.use(billingRouter(pool));
 
 // Run pending migrations on boot (idempotent; warn-and-continue if DB is down)
 try {

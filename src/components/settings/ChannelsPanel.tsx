@@ -5,12 +5,12 @@ import React, { useEffect, useState } from 'react';
 import { Instagram, Facebook, MessageCircle, Send, Mail, Music, Globe } from 'lucide-react';
 import { api } from '../../services/api';
 
-const SLICE: Record<string, { label: string; Icon: React.ElementType; color: string; tokenHint: string; byof?: boolean }> = {
-  messenger: { label: 'Messenger', Icon: Facebook, color: '#0099FF', tokenHint: 'Page access token (encrypted server-side)' },
-  instagram: { label: 'Instagram', Icon: Instagram, color: '#E4405F', tokenHint: 'Page access token (encrypted server-side)' },
-  whatsapp: { label: 'WhatsApp', Icon: MessageCircle, color: '#25D366', tokenHint: 'System-user token (encrypted server-side)', byof: true },
-  telegram: { label: 'Telegram', Icon: Send, color: '#229ED9', tokenHint: 'Bot token from @BotFather (encrypted server-side)', byof: true },
-  gmail: { label: 'Gmail', Icon: Mail, color: '#EA4335', tokenHint: 'OAuth refresh token (placeholder — slice pending)', byof: true },
+const SLICE: Record<string, { label: string; Icon: React.ElementType; color: string; tokenHint: string; byof?: boolean; guide: string[] }> = {
+  messenger: { label: 'Messenger', Icon: Facebook, color: '#0099FF', tokenHint: 'Page access token (encrypted server-side)', guide: ['Meta Developers → your app → Messenger → generate a Page access token (pages_messaging).', 'Paste it below — ORBIT encrypts it, provisions your AI flow, and gives you the webhook URL.', 'In Meta → Webhooks, subscribe with that URL + the verify token shown after connect.'] },
+  instagram: { label: 'Instagram', Icon: Instagram, color: '#E4405F', tokenHint: 'Page access token (encrypted server-side)', guide: ['Connect your Instagram Business account to a Facebook Page.', 'Generate a Page token with instagram_manage_messages, paste it below.', 'Subscribe the webhook URL in Meta, then send yourself a test DM.'] },
+  whatsapp: { label: 'WhatsApp', Icon: MessageCircle, color: '#25D366', tokenHint: 'System-user token (encrypted server-side)', byof: true, guide: ['Meta app → WhatsApp → API Setup: copy the phone-number ID and a system-user token.', 'You also need a MicroMind flow ID — paste it below (verified template coming).'] },
+  telegram: { label: 'Telegram', Icon: Send, color: '#229ED9', tokenHint: 'Bot token from @BotFather (encrypted server-side)', byof: true, guide: ['Chat @BotFather → /newbot → copy the token.', 'Paste token + flow ID below — ORBIT returns a webhook secret; set it via setWebhook.'] },
+  gmail: { label: 'Gmail', Icon: Mail, color: '#EA4335', tokenHint: 'OAuth refresh token (placeholder — slice pending)', byof: true, guide: ['Google Cloud OAuth consent + Pub/Sub watch required — slice pending, connect disabled for now.'] },
 };
 
 const LOCAL_ONLY: Record<string, { label: string; Icon: React.ElementType; color: string }> = {
@@ -75,7 +75,7 @@ export function ChannelsPanel({ showToast, local, onToggleLocal }: {
     else showToast(res?.error || `${op} failed`, 'danger');
   };
 
-  const card = (key: string, meta: { label: string; Icon: React.ElementType; color: string; tokenHint: string; byof?: boolean }) => {
+  const card = (key: string, meta: { label: string; Icon: React.ElementType; color: string; tokenHint: string; byof?: boolean; guide?: string[] }) => {
     const { Icon } = meta;
     const rows = byChannel(key);
     const primary = rows[0];
@@ -108,6 +108,14 @@ export function ChannelsPanel({ showToast, local, onToggleLocal }: {
         </div>
         {forming === key && !primary && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+            {meta.guide && (
+              <details style={{ fontSize: 12, color: 'var(--ink-600)', background: 'var(--surface-0)', borderRadius: 8, padding: '8px 12px' }}>
+                <summary style={{ cursor: 'pointer', fontWeight: 700 }}>How to connect</summary>
+                <ol style={{ margin: '8px 0 0', paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {meta.guide.map((g, i) => <li key={i}>{g}</li>)}
+                </ol>
+              </details>
+            )}
             <input className="input" placeholder="Display name (e.g. Luna Store)" value={form.displayName} onChange={(e) => setForm({ ...form, displayName: e.target.value })} />
             <input className="input" placeholder="Username / Page name" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
             <input className="input" placeholder="External account id (Page ID / IG ID, optional)" value={form.externalAccountId} onChange={(e) => setForm({ ...form, externalAccountId: e.target.value })} />

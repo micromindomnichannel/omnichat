@@ -17,6 +17,36 @@ export function KnowledgeSetup({ data, onNext, onBack }: Props) {
   const [q, setQ] = useState('');
   const [a, setA] = useState('');
   const [saving, setSaving] = useState(false);
+  const [uploadingZone, setUploadingZone] = useState<string | null>(null);
+
+  const zoneKind = (label: string) =>
+    label === 'FAQs' ? 'faq' : label === 'Policies' ? 'policy' : vertical === 'commerce' ? 'product' : 'service';
+
+  const handleZoneFile = async (label: string, file: File | undefined) => {
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      showToast('File over 8MB — split it first', 'danger');
+      return;
+    }
+    setUploadingZone(label);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result).split(',').pop() || '');
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+      const res = await api.uploadKnowledge('default', {
+        filename: file.name, mime: file.type, base64, kind: zoneKind(label),
+      });
+      showToast(res?.success
+        ? `Added ${res.items} knowledge ${res.items === 1 ? 'item' : 'items'} from ${file.name}`
+        : (res?.error || 'Upload saved locally (backend unreachable)'), res?.success ? 'success' : 'warning');
+    } catch {
+      showToast('Could not read file', 'danger');
+    }
+    setUploadingZone(null);
+  };
 
   // Working quick-add: FAQs persist via store (which syncs to backend),
   // policies go straight to the workspace knowledge API. Offline-safe.
@@ -108,7 +138,14 @@ export function KnowledgeSetup({ data, onNext, onBack }: Props) {
                   </button>
                 </div>
               ) : (
-                <div style={{ marginTop: 12, display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center' }}>
+                <div style={{ marginTop: 12, display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: uploadingZone === zone.label ? 'var(--ink-400)' : accentColor, background: 'var(--surface-0)', padding: '4px 10px', borderRadius: 4, cursor: 'pointer' }}>
+                    {uploadingZone === zone.label ? 'Uploading…' : '📎 Upload file'}
+                    <input
+                      type="file" hidden accept=".txt,.md,.csv,.json,.pdf,.docx"
+                      onChange={(e) => { handleZoneFile(zone.label, e.target.files?.[0]); e.target.value = ''; }}
+                    />
+                  </label>
                   <span style={{ fontSize: 11, color: 'var(--ink-400)', padding: '4px 8px', background: 'var(--surface-0)', borderRadius: 4 }}>PDF</span>
                   <span style={{ fontSize: 11, color: 'var(--ink-400)', padding: '4px 8px', background: 'var(--surface-0)', borderRadius: 4 }}>DOCX</span>
                   <span style={{ fontSize: 11, color: 'var(--ink-400)', padding: '4px 8px', background: 'var(--surface-0)', borderRadius: 4 }}>Text</span>

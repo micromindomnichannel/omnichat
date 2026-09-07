@@ -1,10 +1,14 @@
 // Workspace knowledge base: FAQs, policies, product/service notes.
 // Feeds AI prompts at provision time and runtime vars (Phase 8 of the plan).
 import express from 'express';
+import { createRequire } from 'module';
 import { askAnalyst } from '../micromind/analyst.js';
 import { requireAuth, requireWorkspace, workspaceFor } from '../auth/middleware.js';
-import pdfParse from 'pdf-parse';
-import mammoth from 'mammoth';
+
+// pdf-parse/mammoth are CJS: load via require for reliable interop.
+const require = createRequire(import.meta.url);
+const pdfParse = require('pdf-parse');
+const mammoth = require('mammoth');
 
 const rid = (p) => `${p}_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
 const KINDS = ['faq', 'policy', 'product', 'service', 'note'];

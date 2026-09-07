@@ -22,6 +22,14 @@ const channels = [
 
 type BackendAccount = { id: string; channel: string; display_name?: string; status: string };
 
+const guides: Record<string, string[]> = {
+  instagram: ['Connect your Instagram Business account to a Facebook Page, then paste a Page token with instagram_manage_messages.'],
+  messenger: ['Meta Developers → your app → Messenger → generate a Page access token (pages_messaging).'],
+  whatsapp: ['Meta app → WhatsApp → copy the phone-number ID + system-user token. A MicroMind flow ID is also required for now.'],
+  telegram: ['Chat @BotFather → /newbot → copy the token. A MicroMind flow ID is also required for now.'],
+  gmail: ['Google OAuth + Pub/Sub watch required — slice pending.'],
+};
+
 export function ConnectChannels({ data, onNext, onBack }: Props) {
   const { accentColor } = useVertical();
   const { state, dispatch, showToast } = useStore();
@@ -144,6 +152,11 @@ export function ConnectChannels({ data, onNext, onBack }: Props) {
               </div>
               {channel.real && forming === channel.id && backend && !realStatus && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+                  {guides[channel.id] && (
+                    <div style={{ fontSize: 12, color: 'var(--ink-600)', background: 'var(--surface-0)', borderRadius: 8, padding: '8px 12px' }}>
+                      {guides[channel.id].map((g, i) => <div key={i} style={{ marginBottom: 4 }}>{i + 1}. {g}</div>)}
+                    </div>
+                  )}
                   <input
                     className="input" type="password" value={token}
                     onChange={(e) => setToken(e.target.value)}

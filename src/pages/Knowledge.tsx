@@ -18,6 +18,30 @@ export function Knowledge() {
   const [askQ, setAskQ] = useState('');
   const [askA, setAskA] = useState<{ answer: string; source: string } | null>(null);
   const [asking, setAsking] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFile = async (file: File | undefined, kind: string) => {
+    if (!file || uploading) return;
+    if (file.size > 8 * 1024 * 1024) {
+      showToast('File over 8MB — split it first', 'danger');
+      return;
+    }
+    setUploading(true);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result).split(',').pop() || '');
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+      const res = await api.uploadKnowledge('default', { filename: file.name, mime: file.type, base64, kind });
+      if (res?.success) showToast(`Added ${res.items} knowledge ${res.items === 1 ? 'item' : 'items'} from ${file.name}`, 'success');
+      else showToast(res?.error || 'Upload failed — backend unreachable?', 'danger');
+    } catch {
+      showToast('Could not read file', 'danger');
+    }
+    setUploading(false);
+  };
 
   const handleAsk = async () => {
     if (!askQ.trim() || asking) return;
@@ -63,9 +87,18 @@ export function Knowledge() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Tabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
-          <button onClick={() => setShowAddFAQ(true)} className="btn btn-primary" style={{ background: accentColor }}>
-            <Plus size={16} /> Add {activeTab === 'FAQs' ? 'FAQ' : activeTab === 'Policies' ? 'Policy' : 'Item'}
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <label className="btn btn-outline" style={{ cursor: uploading ? 'wait' : 'pointer', opacity: uploading ? 0.6 : 1 }}>
+              {uploading ? 'Uploading…' : 'Upload file'}
+              <input
+                type="file" hidden accept=".txt,.md,.csv,.json,.pdf,.docx"
+                onChange={(e) => { handleFile(e.target.files?.[0], activeTab === 'FAQs' ? 'faq' : activeTab === 'Policies' ? 'policy' : 'note'); e.target.value = ''; }}
+              />
+            </label>
+            <button onClick={() => setShowAddFAQ(true)} className="btn btn-primary" style={{ background: accentColor }}>
+              <Plus size={16} /> Add {activeTab === 'FAQs' ? 'FAQ' : activeTab === 'Policies' ? 'Policy' : 'Item'}
+            </button>
+          </div>
         </div>
 
         <div style={{ position: 'relative', marginBottom: 8 }}>

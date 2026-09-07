@@ -59,6 +59,7 @@ export const api = {
 
   // Messages & Conversations
   getConversations: () => fetchJson('/conversations'),
+  getThreadMessages: (id: string) => fetchJson(`/v1/conversations/${id}/messages`),
   addMessage: (conversationId: string, message: any) => fetchJson('/messages', { method: 'POST', body: JSON.stringify({ conversationId, message }) }),
   updateConversationStatus: (id: string, status: string) => fetchJson(`/conversations/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
 
@@ -114,6 +115,15 @@ export const api = {
   deleteKnowledge: (id: string) => fetchJson(`/v1/knowledge/${id}`, { method: 'DELETE' }),
   askKnowledge: (workspaceId: string, question: string) =>
     fetchJson(`/v1/workspaces/${workspaceId}/knowledge/ask`, { method: 'POST', body: JSON.stringify({ question }) }),
+  uploadKnowledge: (workspaceId: string, file: { filename: string; mime: string; base64: string; kind: string }) =>
+    fetchJson(`/v1/workspaces/${workspaceId}/knowledge/upload`, { method: 'POST', body: JSON.stringify(file) }),
+
+  // Plan & usage
+  getPlan: (workspaceId = 'default') => fetchJson(`/v1/workspaces/${workspaceId}/plan`),
+
+  // Password reset (authJson surfaces server messages; null when unreachable)
+  forgotPassword: (email: string) => authJson('/auth/forgot', { email }),
+  resetPassword: (token: string, password: string) => authJson('/auth/reset', { token, password }),
 
   // Admin (internal)
   adminOverview: () => fetchJson('/v1/admin/overview'),
