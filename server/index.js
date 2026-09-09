@@ -28,13 +28,17 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// CORS: lock to explicit origins in production. MVP default allows local dev
-// (Vite :3000) + non-browser callers (webhooks, curl have no Origin).
-const ALLOWED_ORIGINS = (process.env.CORS_ORIGIN || 'http://localhost:3000,http://127.0.0.1:3000').split(',').map((s) => s.trim());
+// CORS: lock to explicit origins in production. Defaults cover local dev and the
+// Vercel deployment (Chrome allows https→http only to localhost-family targets,
+// which is exactly the local-testing case). Unknown origins get NO CORS headers
+// (browser blocks) instead of an Express 500 page.
+const ALLOWED_ORIGINS = (process.env.CORS_ORIGIN ||
+  'http://localhost:3000,http://127.0.0.1:3000,https://orbit-xi-one-60.vercel.app'
+).split(',').map((s) => s.trim());
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin || ALLOWED_ORIGINS.includes(origin)) cb(null, true);
-    else cb(new Error(`CORS blocked for origin ${origin}`));
+    else cb(null, false);
   },
 }));
 // Keep the raw body for Meta webhook signature verification (META_APP_SECRET).
