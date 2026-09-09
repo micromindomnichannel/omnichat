@@ -9,6 +9,23 @@ import { pool } from './db.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export async function migrate() {
+  // Fresh database? Bootstrap the base schema first (legacy db:init path does
+  // this too — this makes `migrate` sufficient on Railway/Supabase/Neon).
+  const base = await pool.query(
+    "SELECT to_regclass('public.products') AS t, to_regclass('public.business_settings') AS s");
+  if (!base.rows[0]?.t) {
+    console.log('📦 base tables missing — applying schema.sql...');
+    const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
+    await pool.query(schema);
+    console.log('✅ base schema applied');
+  }
+  if (!base.rows[0]?.s) {
+    await pool.query(
+      `INSERT INTO business_settings (id, business_name, industry, description, ai_enabled, ai_tone, ai_language, confidence_threshold)
+       VALUES (1, 'ORBIT Store & Clinic', 'Retail & Healthcare', 'ORBIT Powered Omnichannel Business Platform', true, 'Friendly', 'Both', 70)
+       ON CONFLICT (id) DO NOTHING`);
+  }
+
   await pool.query(`CREATE TABLE IF NOT EXISTS schema_migrations (
     version VARCHAR(50) PRIMARY KEY,
     applied_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -50,5 +67,8 @@ if (process.argv[1] && path.basename(process.argv[1]) === 'migrate.js') {
       console.log(ran.length ? `Done (${ran.join(', ')})` : 'Already up to date.');
       process.exit(0);
     })
-    .catch(() => process.exit(1));
+    .catch((err) => {
+      console.error('❌ migrate failed:', err?.message || err);
+      process.exit(1);
+    });
 }
