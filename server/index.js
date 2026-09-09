@@ -30,7 +30,7 @@ const PORT = process.env.PORT || 5000;
 
 // CORS: lock to explicit origins in production. MVP default allows local dev
 // (Vite :3000) + non-browser callers (webhooks, curl have no Origin).
-const ALLOWED_ORIGINS = (process.env.CORS_ORIGIN || 'http://localhost:3000').split(',').map((s) => s.trim());
+const ALLOWED_ORIGINS = (process.env.CORS_ORIGIN || 'http://localhost:3000,http://127.0.0.1:3000').split(',').map((s) => s.trim());
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin || ALLOWED_ORIGINS.includes(origin)) cb(null, true);
