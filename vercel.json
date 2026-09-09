@@ -4,6 +4,14 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "http://148.251.171.147:5000/api/:path*"
+    },
+    {
+      "source": "/webhooks/:path*",
+      "destination": "http://148.251.171.147:5000/webhooks/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
