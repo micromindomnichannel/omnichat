@@ -61,7 +61,7 @@ export function Signup() {
       localStorage.setItem('orbit_memberships', JSON.stringify(res.memberships || []));
       navigate('/onboarding');
     } else {
-      setError(res?.error || 'Sign up failed — is the backend reachable?');
+      setError(res?.error || 'Sign up failed — the request never reached the backend. Try: 1) incognito window (extensions off), 2) pause antivirus web-shield for localhost, 3) another browser.');
     }
   };
 

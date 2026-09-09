@@ -38,7 +38,7 @@ export function Login() {
       localStorage.setItem('orbit_memberships', JSON.stringify(res.memberships || []));
       navigate('/overview');
     } else {
-      setError(res?.error || 'Sign in failed — is the backend reachable?');
+      setError(res?.error || 'Sign in failed — the request never reached the backend. Try incognito (extensions off) or pause antivirus web-shield for localhost.');
     }
   };
 
