@@ -18,7 +18,9 @@ async function fetchJson(url: string, options?: RequestInit) {
 }
 
 // Raw auth calls: surface server error bodies (invalid credentials, closed
-// registration) instead of collapsing to null. Still null when unreachable.
+// registration) instead of collapsing to null. Network failures (server down,
+// CORS/proxy/AV interception) return {_network:true} with the browser message
+// so the UI can show the precise cause instead of guessing.
 async function authJson(url: string, body?: any) {
   try {
     const res = await fetch(`${API_BASE}${url}`, {
@@ -28,9 +30,9 @@ async function authJson(url: string, body?: any) {
       body: body ? JSON.stringify(body) : undefined,
     });
     return await res.json().catch(() => null);
-  } catch (err) {
+  } catch (err: any) {
     console.warn(`[Auth Warning] Request to ${url} failed.`, err);
-    return null;
+    return { _network: true, message: err?.message || 'Network error' };
   }
 }
 

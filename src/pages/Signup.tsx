@@ -61,7 +61,9 @@ export function Signup() {
       localStorage.setItem('orbit_memberships', JSON.stringify(res.memberships || []));
       navigate('/onboarding');
     } else {
-      setError(res?.error || 'Sign up failed — the request never reached the backend. Try: 1) incognito window (extensions off), 2) pause antivirus web-shield for localhost, 3) another browser.');
+      setError(res?._network
+        ? `Cannot reach the backend (${res.message || 'network error'}). Is 'npm run server' running? Try http://localhost:5000/api/health — it must show JSON.`
+        : (res?.error || 'Sign up failed.'));
     }
   };
 

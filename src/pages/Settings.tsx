@@ -61,6 +61,9 @@ export function Settings() {
       setInvitePassword('');
       const rows = await api.adminUsers();
       if (rows) setMembers(rows);
+    } else if (res?._network) {
+      setShowInvite(false);
+      showToast('Backend unreachable — cannot create account right now', 'danger');
     } else {
       // Fallback: local-only entry (backend unreachable or not owner).
       dispatch({

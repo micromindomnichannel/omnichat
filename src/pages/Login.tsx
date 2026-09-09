@@ -38,7 +38,9 @@ export function Login() {
       localStorage.setItem('orbit_memberships', JSON.stringify(res.memberships || []));
       navigate('/overview');
     } else {
-      setError(res?.error || 'Sign in failed — the request never reached the backend. Try incognito (extensions off) or pause antivirus web-shield for localhost.');
+      setError(res?._network
+        ? `Cannot reach the backend (${res.message || 'network error'}). Is 'npm run server' running? Try http://localhost:5000/api/health — it must show JSON.`
+        : (res?.error || 'Sign in failed.'));
     }
   };
 
@@ -262,11 +264,11 @@ export function Login() {
                   setForgotBusy(true);
                   const res = await api.forgotPassword(forgotEmail.trim());
                   setForgotBusy(false);
-                  setForgotMsg(res
-                    ? (res.debugToken
+                  setForgotMsg(!res || res._network
+                    ? 'Backend unreachable — ask your workspace owner to reset it.'
+                    : (res.debugToken
                       ? `Dev mode — your reset token (paste after /reset?token=): ${res.debugToken}`
-                      : 'If the email exists, a reset link was sent. It expires in 1 hour.')
-                    : 'Backend unreachable — ask your workspace owner to reset it.');
+                      : 'If the email exists, a reset link was sent. It expires in 1 hour.'));
                 }}
                 className="btn btn-primary" style={{ flex: 1, background: 'var(--signal-orange)' }}
               >
