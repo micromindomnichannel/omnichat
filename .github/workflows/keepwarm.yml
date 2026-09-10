@@ -1,0 +1,20 @@
+# Keep-warm + availability signal for the backend.
+// Pings /api/health every 10 minutes. On sleep-prone free hosts (Render free)
+// this prevents cold starts; on Railway trial it doubles as an uptime record
+// (check the Actions tab history). Failure = backend or DB unreachable.
+name: backend-keepwarm
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping health endpoint
+        run: |
+          BODY=$(curl -sS -m 60 https://omnichat-production-65a3.up.railway.app/api/health)
+          echo "$BODY"
+          echo "$BODY" | grep -q '"status":"online"' || (echo 'HEALTH CHECK FAILED' && exit 1)
