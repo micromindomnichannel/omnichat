@@ -8,8 +8,8 @@ import { api } from '../services/api';
 const POLL_MS = 10000;
 
 export function Inbox() {
-  const [selectedId, setSelectedId] = useState<string | null>('conv1');
-  const { dispatch } = useStore();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { state, dispatch } = useStore();
 
   // Realtime sync: refresh list + open thread while the inbox is mounted.
   // Silent no-ops when the backend is unreachable (api returns null).
@@ -30,10 +30,19 @@ export function Inbox() {
 
   return (
     <div style={{ display: 'flex', height: 'calc(100vh - 112px)', margin: -24, background: 'var(--surface-1)' }}>
-      <ConversationList selectedId={selectedId} onSelect={setSelectedId} />
-      <ConversationThread conversationId={selectedId || ''} />
-      <div className="hide-below-1180">
-        <ContextPanel conversationId={selectedId || ''} />
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+        {state.dbOnline === false && (
+          <div style={{ padding: '8px 16px', background: 'var(--danger-bg)', color: 'var(--burnt-coral)', fontSize: 12, fontWeight: 600, textAlign: 'center' }}>
+            Backend unreachable — showing last synced state. New messages will appear once reconnected.
+          </div>
+        )}
+        <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+          <ConversationList selectedId={selectedId} onSelect={setSelectedId} />
+          <ConversationThread conversationId={selectedId || ''} />
+          <div className="hide-below-1180">
+            <ContextPanel conversationId={selectedId || ''} />
+          </div>
+        </div>
       </div>
     </div>
   );

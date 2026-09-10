@@ -1,0 +1,36 @@
+-- 007: repair legacy base tables missing columns (older historical schema).
+-- Every statement is ADD COLUMN IF NOT EXISTS: safe no-op on complete DBs.
+-- Types/defaults mirror server/schema.sql (content left nullable: legacy rows).
+
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS channels TEXT[];
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS reliability JSONB;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS customer_since VARCHAR(50);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'New';
+
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS intent VARCHAR(50) DEFAULT 'purchase';
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_message TEXT;
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS ai_context JSONB;
+
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS content TEXT;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS agent_name VARCHAR(100);
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_arabic BOOLEAN DEFAULT false;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS product_id VARCHAR(50);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS variant VARCHAR(100);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS quantity INT DEFAULT 1;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS governorate VARCHAR(100);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS address TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS confirmed_by_ai BOOLEAN DEFAULT false;
+
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS service_id VARCHAR(50);
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS duration INT DEFAULT 30;
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS variants JSONB;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE services ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE services ADD COLUMN IF NOT EXISTS availability JSONB;
+
+ALTER TABLE business_settings ADD COLUMN IF NOT EXISTS ai_handoff_rules TEXT[];
+ALTER TABLE business_settings ADD COLUMN IF NOT EXISTS working_hours JSONB;

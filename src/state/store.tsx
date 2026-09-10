@@ -2,7 +2,7 @@ import React, { createContext, useContext, useReducer, useCallback, useEffect } 
 import type { Conversation, Message, Product, Service, Order, Appointment, Automation, FAQ, Source, FollowUp, TeamMember, NotificationSetting, Customer } from './mockData';
 import * as mockData from './mockData';
 import { api } from '../services/api';
-import { normalizeConversation, normalizeCustomer, groupMessages, normalizeMessage } from '../services/normalize';
+import { normalizeConversation, normalizeCustomer, groupMessages, normalizeMessage, normalizeProduct, normalizeService, normalizeOrder, normalizeAppointment, normalizeFAQ, normalizeAutomation } from '../services/normalize';
 
 interface AppState {
   conversations: Conversation[];
@@ -33,10 +33,16 @@ interface AppState {
   currentUser: { name: string; email: string; avatar: string };
   toasts: Array<{ id: string; message: string; type: 'success' | 'warning' | 'danger' }>;
   dbConnected: boolean;
+  // Live-data flags: null = still checking, true = backend answered (rows may
+  // legitimately be empty), false = unreachable. No mock fallback anywhere.
+  dbOnline: boolean | null;
+  hydrated: boolean;
 }
 
 type Action =
   | { type: 'SET_BOOTSTRAP_DATA'; payload: any }
+  | { type: 'SET_DB_STATUS'; online: boolean }
+  | { type: 'SET_SESSION_USER'; name: string; email: string }
   | { type: 'SET_CONVERSATIONS'; conversations: any[] }
   | { type: 'SET_THREAD_MESSAGES'; conversationId: string; messages: any[] }
   | { type: 'SET_CONVERSATION_STATUS'; id: string; status: Conversation['status'] }
@@ -69,29 +75,29 @@ type Action =
   | { type: 'ADD_NOTE'; customerId: string; note: any };
 
 const initialState: AppState = {
-  conversations: [...mockData.conversations],
-  messages: { ...mockData.messages },
-  customers: [...mockData.customers],
-  products: [...mockData.products],
-  services: [...mockData.services],
-  orders: [...mockData.orders],
-  appointments: [...mockData.appointments],
-  automations: [...mockData.automations],
-  faqs: [...mockData.faqs],
-  sources: [...mockData.sources],
-  followUps: [...mockData.followUps],
-  teamMembers: [...mockData.teamMembers],
+  conversations: [],
+  messages: {},
+  customers: [],
+  products: [],
+  services: [],
+  orders: [],
+  appointments: [],
+  automations: [],
+  faqs: [],
+  sources: [],
+  followUps: [],
+  teamMembers: [],
   notificationSettings: [...mockData.notificationSettings],
   businessName: 'ORBIT Omnichannel Platform',
   businessLogo: '',
   industry: 'Retail & Clinic',
   businessDescription: 'Powered Omnichannel Business & Clinic Platform',
   channelsConnected: {
-    instagram: true,
-    whatsapp: true,
-    facebook: true,
+    instagram: false,
+    whatsapp: false,
+    facebook: false,
     tiktok: false,
-    website: true
+    website: false
   },
   aiEnabled: true,
   aiTone: 'Friendly',
@@ -101,12 +107,14 @@ const initialState: AppState = {
   workingHours: JSON.parse(JSON.stringify(mockData.workingHours)),
   onboardingComplete: false,
   currentUser: {
-    name: 'Ahmed Hassan',
-    email: 'ahmed@orbit.com',
-    avatar: mockData.getAvatar('Ahmed Hassan')
+    name: '',
+    email: '',
+    avatar: mockData.getAvatar('ORBIT User')
   },
   toasts: [],
-  dbConnected: true
+  dbConnected: false,
+  dbOnline: null,
+  hydrated: false
 };
 
 function reducer(state: AppState, action: Action): AppState {
@@ -129,14 +137,31 @@ function reducer(state: AppState, action: Action): AppState {
     case 'SET_BOOTSTRAP_DATA':
       return {
         ...state,
-        products: action.payload.products?.length ? action.payload.products : state.products,
-        services: action.payload.services?.length ? action.payload.services : state.services,
-        customers: action.payload.customers?.length ? action.payload.customers.map(normalizeCustomer) : state.customers,
-        conversations: action.payload.conversations?.length ? action.payload.conversations.map(normalizeConversation) : state.conversations,
-        messages: action.payload.messages?.length ? groupMessages(action.payload.messages) : state.messages,
-        orders: action.payload.orders?.length ? action.payload.orders : state.orders,
-        appointments: action.payload.appointments?.length ? action.payload.appointments : state.appointments,
-        dbConnected: true
+        products: (action.payload.products || []).map(normalizeProduct),
+        services: (action.payload.services || []).map(normalizeService),
+        customers: (action.payload.customers || []).map(normalizeCustomer),
+        conversations: (action.payload.conversations || []).map(normalizeConversation),
+        messages: groupMessages(action.payload.messages || []),
+        orders: (action.payload.orders || []).map(normalizeOrder),
+        appointments: (action.payload.appointments || []).map(normalizeAppointment),
+        automations: (action.payload.automations || []).map(normalizeAutomation),
+        faqs: (action.payload.faqs || []).map(normalizeFAQ),
+        dbConnected: true,
+        dbOnline: true,
+        hydrated: true
+      };
+
+    case 'SET_DB_STATUS':
+      return { ...state, dbOnline: action.online, dbConnected: action.online, hydrated: true };
+
+    case 'SET_SESSION_USER':
+      return {
+        ...state,
+        currentUser: {
+          name: action.name || action.email.split('@')[0],
+          email: action.email,
+          avatar: mockData.getAvatar(action.name || action.email)
+        }
       };
 
     case 'SET_CONVERSATION_STATUS':
@@ -305,11 +330,14 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
 
-  // Fetch initial database bootstrap on app load
+  // Fetch initial database bootstrap on app load. Empty tables stay empty
+  // (truthful empty states); unreachable backend is flagged, not mocked.
   useEffect(() => {
     api.getBootstrap().then(data => {
       if (data) {
         dispatch({ type: 'SET_BOOTSTRAP_DATA', payload: data });
+      } else {
+        dispatch({ type: 'SET_DB_STATUS', online: false });
       }
     });
   }, []);

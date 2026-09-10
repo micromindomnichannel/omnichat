@@ -6,6 +6,7 @@ import { StatCard } from '../components/shared/StatCard';
 import { StatusBadge } from '../components/shared/StatusBadge';
 import { OrbitLogo } from '../components/shared/OrbitLogo';
 import { EmptyState } from '../components/shared/EmptyState';
+import { bucketMessagesByDay } from '../services/normalize';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
@@ -25,49 +26,38 @@ export function Overview() {
   const appointments = state.appointments || [];
   const products = state.products || [];
 
-  // Live Database Computations
-  const totalRevenue = orders.reduce((sum, o) => sum + Number(o.total || 0), 0) || 68400;
-  const totalOrdersCount = orders.length || 98;
-  const totalInquiriesCount = conversations.length ? conversations.length * 35 : 1248;
-  const totalAppointmentsCount = appointments.length || 31;
+  // Live computations over real backend rows — no fallbacks, no demo numbers.
+  const totalRevenue = orders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+  const totalOrdersCount = orders.length;
+  const totalInquiriesCount = conversations.length;
+  const totalAppointmentsCount = appointments.length;
 
   const aiResolvedCount = conversations.filter(c => c.status === 'ai_handling' || c.status === 'resolved').length;
-  const aiResolutionRate = conversations.length ? ((aiResolvedCount / conversations.length) * 100).toFixed(1) : '78.5';
+  const aiResolutionRate = conversations.length ? ((aiResolvedCount / conversations.length) * 100).toFixed(1) : '—';
 
   const lowStockCount = products.filter(p => p.stock <= 5).length;
 
   const commerceStats = [
-    { label: 'Total Inquiries (DB)', value: totalInquiriesCount.toLocaleString(), trend: 12.5 },
-    { label: 'Completed Orders', value: totalOrdersCount.toString(), trend: 8.2 },
-    { label: 'Total Revenue (EGP)', value: `${totalRevenue.toLocaleString()} EGP`, trend: 15.3 },
-    { label: 'AI Resolution Rate', value: `${aiResolutionRate}%`, trend: 5.7 },
+    { label: 'Total Inquiries (DB)', value: totalInquiriesCount.toLocaleString(), trend: undefined as number | undefined },
+    { label: 'Completed Orders', value: totalOrdersCount.toString(), trend: undefined as number | undefined },
+    { label: 'Total Revenue (EGP)', value: `${totalRevenue.toLocaleString()} EGP`, trend: undefined as number | undefined },
+    { label: 'AI Resolution Rate', value: conversations.length ? `${aiResolutionRate}%` : '—', trend: undefined as number | undefined },
   ];
 
   const appointmentStats = [
-    { label: 'Total Inquiries (DB)', value: totalInquiriesCount.toLocaleString(), trend: 18.2 },
-    { label: 'Appointments Booked', value: totalAppointmentsCount.toString(), trend: 8.7 },
-    { label: 'Completed Patients', value: (appointments.filter(a => a.status === 'Completed').length || 24).toString(), trend: 6.3 },
-    { label: 'AI Resolution Rate', value: `${aiResolutionRate}%`, trend: 5.2 },
+    { label: 'Total Inquiries (DB)', value: totalInquiriesCount.toLocaleString(), trend: undefined as number | undefined },
+    { label: 'Appointments Booked', value: totalAppointmentsCount.toString(), trend: undefined as number | undefined },
+    { label: 'Completed Patients', value: appointments.filter(a => a.status === 'Completed').length.toString(), trend: undefined as number | undefined },
+    { label: 'AI Resolution Rate', value: conversations.length ? `${aiResolutionRate}%` : '—', trend: undefined as number | undefined },
   ];
 
   const stats = isCommerce ? commerceStats : appointmentStats;
 
-  const chartData = chartPeriod === '7d'
-    ? [
-        { day: 'Mon', conversations: 120, aiResolved: 95 },
-        { day: 'Tue', conversations: 145, aiResolved: 112 },
-        { day: 'Wed', conversations: 132, aiResolved: 105 },
-        { day: 'Thu', conversations: 168, aiResolved: 128 },
-        { day: 'Fri', conversations: 155, aiResolved: 118 },
-        { day: 'Sat', conversations: 190, aiResolved: 145 },
-        { day: 'Sun', conversations: 210, aiResolved: 162 },
-      ]
-    : [
-        { day: 'Week 1', conversations: 850, aiResolved: 680 },
-        { day: 'Week 2', conversations: 920, aiResolved: 740 },
-        { day: 'Week 3', conversations: 1100, aiResolved: 890 },
-        { day: 'Week 4', conversations: 1248, aiResolved: 980 },
-      ];
+  // Real 7/30-day activity from message timestamps (empty -> chart EmptyState).
+  const allMessages = Object.values(state.messages || {}).flat();
+  const chartData = bucketMessagesByDay(allMessages, chartPeriod === '7d' ? 7 : 30)
+    .map(d => ({ day: d.label, conversations: d.messages, aiResolved: d.aiReplies }));
+  const chartEmpty = chartData.every(d => d.conversations === 0);
 
   const recentConversations = conversations.slice(0, 5);
 
@@ -122,16 +112,24 @@ export function Overview() {
           </div>
 
           <div style={{ height: 260 }}>
+            {chartEmpty ? (
+              <EmptyState
+                icon={<BarChart3 size={24} />}
+                title="No activity yet"
+                description="Message activity will appear here once customers start conversations."
+              />
+            ) : (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="day" />
-                <YAxis />
+                <YAxis allowDecimals={false} />
                 <Tooltip />
                 <Area type="monotone" dataKey="conversations" name="Total Inquiries" stroke="var(--signal-orange)" fill="var(--signal-orange-subtle)" strokeWidth={2} />
                 <Area type="monotone" dataKey="aiResolved" name="AI Resolved" stroke="#25D366" fill="rgba(37, 211, 102, 0.1)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
+            )}
           </div>
         </div>
 

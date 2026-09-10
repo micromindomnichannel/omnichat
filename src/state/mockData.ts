@@ -43,6 +43,7 @@ export interface Conversation {
   lastMessage: string;
   lastMessageTime: string;
   unreadCount: number;
+  updatedAt?: string;
   aiContext: {
     intent: string;
     stage: string;

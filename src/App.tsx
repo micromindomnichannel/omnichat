@@ -35,6 +35,7 @@ import { isAdmin } from './services/session';
 // Session guard: the server cookie is the source of truth. localStorage is only
 // an optimistic hint so first paint isn't blocked on the network.
 function useSession() {
+  const { dispatch } = useStore();
   const [status, setStatus] = useState<'checking' | 'in' | 'out'>(() =>
     localStorage.getItem('orbit_authenticated') === 'true' ? 'in' : 'checking'
   );
@@ -45,6 +46,7 @@ function useSession() {
       if (me?.user) {
         localStorage.setItem('orbit_authenticated', 'true');
         localStorage.setItem('orbit_memberships', JSON.stringify(me.memberships || []));
+        dispatch({ type: 'SET_SESSION_USER', name: me.user.display_name || '', email: me.user.email });
         setStatus('in');
       } else {
         localStorage.removeItem('orbit_authenticated');

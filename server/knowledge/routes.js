@@ -149,9 +149,10 @@ export function knowledgeRouter(pool) {
       );
       return res.json({ answer: out.text, source: 'micromind' });
     } catch (err) {
-      // Local keyword fallback over FAQs + knowledge items.
-      const words = q.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
-      const score = (t) => words.reduce((n, w) => n + (String(t).toLowerCase().includes(w) ? 1 : 0), 0);
+      // Local keyword fallback over FAQs + knowledge items (punctuation-proof).
+      const words = q.toLowerCase().replace(/[^a-z0-9\u0600-\u06FF\s]/g, ' ').split(/\s+/).filter((w) => w.length > 3);
+      const clean = (t) => String(t).toLowerCase().replace(/[^a-z0-9\u0600-\u06FF\s]/g, ' ');
+      const score = (t) => words.reduce((n, w) => n + (clean(t).includes(w) ? 1 : 0), 0);
       const cands = [
         ...faqs.map((f) => ({ s: score(`${f.question} ${f.answer}`), a: f.answer })),
         ...items.map((i) => ({ s: score(`${i.title} ${i.content}`), a: i.content })),
