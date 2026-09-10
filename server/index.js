@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { pool, checkDbConnection } from './db.js';
+import { pool, checkDbConnection, dbTarget } from './db.js';
 import { migrate } from './migrate.js';
 import { channelsRouter } from './channels/routes.js';
 import { webhooksRouter } from './webhooks/routes.js';
@@ -119,16 +119,14 @@ function saveLocalStore(data) {
   } catch (e) {}
 }
 
-// 1. Health Check Endpoint
+// 1. Health Check Endpoint (reports the ACTUAL connection target — see dbTarget)
 app.get('/api/health', async (req, res) => {
   const dbStatus = await checkDbConnection();
   res.json({
     status: 'online',
     timestamp: new Date().toISOString(),
     database: {
-      host: process.env.DB_HOST || '148.251.171.147',
-      port: process.env.DB_PORT || '5432',
-      name: process.env.DB_NAME || 'omnichannel',
+      ...dbTarget(),
       connected: dbStatus.connected,
       user: dbStatus.user,
       version: dbStatus.version,

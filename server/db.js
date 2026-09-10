@@ -38,6 +38,26 @@ function poolConfig() {
 
 export const pool = new Pool(poolConfig());
 
+// Truthful connection target for /api/health: reports the ACTUAL backend
+// (DATABASE_URL host when set), never static env defaults. Passwords excluded.
+export function dbTarget() {
+  const url = process.env.DATABASE_URL;
+  if (url) {
+    try {
+      const u = new URL(url.replace(/^postgresql:\/\//, 'http://'));
+      return { via: 'DATABASE_URL', host: u.hostname, port: u.port || '5432', name: u.pathname.replace(/^\//, '') };
+    } catch {
+      return { via: 'DATABASE_URL', host: '(unparseable)', port: '', name: '' };
+    }
+  }
+  return {
+    via: 'parts',
+    host: process.env.DB_HOST || '148.251.171.147',
+    port: process.env.DB_PORT || '5432',
+    name: process.env.DB_NAME || 'omnichannel',
+  };
+}
+
 pool.on('error', (err) => {
   console.error('Unexpected error on idle PostgreSQL client:', err);
 });
