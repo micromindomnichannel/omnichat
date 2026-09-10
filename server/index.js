@@ -40,6 +40,9 @@ app.use(cors({
     if (!origin || ALLOWED_ORIGINS.includes(origin)) cb(null, true);
     else cb(null, false);
   },
+  // REQUIRED: our session cookie rides on cross-site fetch (credentials:'include').
+  // Without this, browsers discard even perfectly good responses -> TypeError.
+  credentials: true,
 }));
 // Keep the raw body for Meta webhook signature verification (META_APP_SECRET).
 app.use(express.json({
