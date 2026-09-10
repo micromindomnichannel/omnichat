@@ -38,9 +38,11 @@ export function Login() {
       localStorage.setItem('orbit_memberships', JSON.stringify(res.memberships || []));
       navigate('/overview');
     } else {
-      setError(res?._network
-        ? `Cannot reach the backend (${res.message || 'network error'}). Is 'npm run server' running? Try http://localhost:5000/api/health — it must show JSON.`
-        : (res?.error || 'Sign in failed.'));
+      setError(res?._timeout
+        ? 'Server is waking up (cold start takes ~30s on the free tier). Wait a moment and try again.'
+        : res?._network
+          ? `Cannot reach the backend (${res.message || 'network error'}). Is the backend URL reachable? Try opening the API health page directly.`
+          : (res?.error || 'Sign in failed.'));
     }
   };
 

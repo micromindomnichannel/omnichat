@@ -25,6 +25,8 @@ export function ResetPassword() {
     if (res?.success) {
       setDone(true);
       setMsg('Password updated. All other sessions were signed out.');
+    } else if (res?._timeout) {
+      setMsg('Server is waking up (cold start takes ~30s). Wait a moment and try again.');
     } else {
       setMsg(res?.error || 'Reset failed — link may be expired or the backend unreachable.');
     }
