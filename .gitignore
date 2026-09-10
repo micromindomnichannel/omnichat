@@ -14,6 +14,7 @@ dist-ssr
 .env
 server/uploads/
 server/local_db_cache.json
+mcp-micromind/audit.log.jsonl
 
 # Editor directories and files
 .vscode/*

@@ -83,6 +83,9 @@ server/
   micromind/keys.js           per-tenant prediction keys (mint/link/revoke, vaulted)
   micromind/provisionChannel.js  per-tenant flow provisioner (folderId + key link)
   micromind/templates/     messenger.json, instagram.json (sanitized exports)
+mcp-micromind/             MCP server for MicroMind (22 tools: folders, flows,
+                           prediction keys, capped predictions, extended reads;
+                           SKILL.md documents policy + recipes)
 src/
   pages/                   Overview, Inbox, Customers, Orders, Appointments,
                            Products, Services, Scheduler, Automations,
