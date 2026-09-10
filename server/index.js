@@ -609,8 +609,11 @@ app.put('/api/settings', async (req, res) => {
   const { business_name, industry, description, ai_enabled, ai_tone, ai_language, confidence_threshold } = req.body;
   try {
     const result = await pool.query(
-      `UPDATE business_settings 
-       SET business_name = $1, industry = $2, description = $3, ai_enabled = $4, ai_tone = $5, ai_language = $6, confidence_threshold = $7, updated_at = CURRENT_TIMESTAMP
+      `UPDATE business_settings
+       SET business_name = COALESCE($1, business_name), industry = COALESCE($2, industry),
+           description = COALESCE($3, description), ai_enabled = COALESCE($4, ai_enabled),
+           ai_tone = COALESCE($5, ai_tone), ai_language = COALESCE($6, ai_language),
+           confidence_threshold = COALESCE($7, confidence_threshold), updated_at = CURRENT_TIMESTAMP
        WHERE id = 1 RETURNING *`,
       [business_name, industry, description, ai_enabled, ai_tone, ai_language, confidence_threshold]
     );
