@@ -125,6 +125,7 @@ app.get('/api/health', async (req, res) => {
   res.json({
     status: 'online',
     timestamp: new Date().toISOString(),
+    commit: process.env.RAILWAY_GIT_COMMIT_SHA || process.env.VERCEL_GIT_COMMIT_SHA || 'local',
     database: {
       ...dbTarget(),
       connected: dbStatus.connected,
