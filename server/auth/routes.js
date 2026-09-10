@@ -14,7 +14,9 @@ export function authRouter(pool) {
   const r = express.Router();
 
   r.post('/api/auth/signup', async (req, res) => {
-    const { email, password, displayName } = req.body || {};
+    const email = String(req.body?.email || '').trim();
+    const password = req.body?.password;
+    const displayName = req.body?.displayName;
     if (!email || !EMAIL_RE.test(email)) return res.status(400).json({ error: 'valid email required' });
     if (!password || String(password).length < 10) return res.status(400).json({ error: 'password min 10 chars' });
     try {
@@ -38,7 +40,8 @@ export function authRouter(pool) {
   });
 
   r.post('/api/auth/login', loginLimit, async (req, res) => {
-    const { email, password } = req.body || {};
+    const email = String(req.body?.email || '').trim();
+    const password = String(req.body?.password || '');
     if (!email || !password) return res.status(400).json({ error: 'email + password required' });
     try {
       const { rows } = await pool.query('SELECT * FROM users WHERE email=$1', [String(email).toLowerCase()]);
