@@ -64,7 +64,7 @@ export function Admin() {
             cols={['Aspect', 'Value']}
             rows={[
               ['Provisioner auth', mm.provisioner?.mode],
-              ['Analyst flow', mm.analyst?.flowSet ? 'configured' : 'not set (falls back)'],
+              ['Analyst flow', mm.analyst?.flowSet ? `configured (${mm.analyst?.override || 'env'})` : 'not set (falls back)'],
               ['Tenant folder', mm.folder?.id ? `${mm.folder.status} (${String(mm.folder.id).slice(0, 8)}…)` : mm.folder?.status],
               ['DB', mm.dbUp ? 'up' : 'down'],
             ]}
@@ -73,14 +73,23 @@ export function Admin() {
       </Section>
       <Section title="Channels">
         <Table
-          cols={['Channel', 'Name', 'Status', 'Flow', 'Folder', 'Key', 'Convs', 'Last webhook', 'Last sync']}
-          rows={channels.map((c: any) => [c.channel, c.display_name || c.username, c.status, (c.micromind_flow_id || '').slice(0, 8), c.folder_status || '—', c.key_provisioned ? 'linked' : '—', c.conversations, c.last_webhook, c.last_sync])}
+          cols={['Channel', 'Name', 'Status', 'Flow', 'Folder', 'Key', 'Last test', 'Convs', 'Last webhook', 'Last sync']}
+          rows={channels.map((c: any) => [c.channel, c.display_name || c.username, c.status, c.micromind_flow_id || '—', c.folder_status || '—', c.key_provisioned ? 'linked' : '—', c.last_test || 'never', c.conversations, c.last_webhook, c.last_sync])}
         />
       </Section>
       <Section title="MicroMind flows">
         <Table
-          cols={['Template', 'Flow id', 'Key', 'Status', 'Updated']}
-          rows={flows.map((f: any) => [f.template, (f.external_flow_id || '').slice(0, 13), f.key_linked ? 'linked' : '—', f.status, f.updated_at])}
+          cols={['Purpose', 'Label', 'Flow id', 'Source', 'Key', 'Last test', 'Status', 'Updated']}
+          rows={flows.map((f: any) => [
+            f.purpose || 'channel',
+            f.label || f.template,
+            f.external_flow_id || '—',
+            f.source || '—',
+            f.key_linked ? 'linked' : '—',
+            f.last_test_status ? `${f.last_test_status}${f.last_test_at ? ` (${String(f.last_test_at).slice(0, 16).replace('T', ' ')})` : ''}` : 'never',
+            f.status,
+            f.updated_at,
+          ])}
         />
       </Section>
       <Section title="Errors (24h)">

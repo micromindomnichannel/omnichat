@@ -47,6 +47,8 @@ export function adminRouter(pool) {
               w.micromind_folder_id AS folder_id,
               w.micromind_folder_status AS folder_status,
               EXISTS (SELECT 1 FROM micromind_flows f WHERE f.channel_account_id = a.id AND f.prediction_key_credential_id IS NOT NULL) AS key_provisioned,
+              (SELECT last_test_status FROM micromind_flows f WHERE f.channel_account_id = a.id ORDER BY updated_at DESC LIMIT 1) AS last_test,
+              (SELECT last_test_status FROM micromind_flows f WHERE f.channel_account_id = a.id ORDER BY updated_at DESC LIMIT 1) AS last_test,
               (SELECT COUNT(*)::int FROM conversations c WHERE c.channel_account_id = a.id) AS conversations,
               (SELECT MAX(created_at) FROM webhook_events w WHERE w.channel_account_id = a.id) AS last_webhook
        FROM channel_accounts a LEFT JOIN workspaces w ON w.id = a.workspace_id
@@ -57,6 +59,7 @@ export function adminRouter(pool) {
   r.get('/api/v1/admin/flows', async (req, res) => {
     const rows = await q(pool,
       `SELECT id, workspace_id, channel_account_id, external_flow_id, template, template_version,
+              purpose, label, source, last_test_at, last_test_status,
               (prediction_key_credential_id IS NOT NULL) AS key_linked, status, updated_at
        FROM micromind_flows WHERE workspace_id=$1 ORDER BY updated_at DESC`,
       [req.workspaceId]);
@@ -71,9 +74,16 @@ export function adminRouter(pool) {
         'SELECT micromind_folder_id, micromind_folder_status FROM workspaces WHERE id=$1',
         [req.workspaceId])).rows[0] || {};
       const a = analystStatus();
+      let analystOverride = null;
+      try {
+        const srow = (await pool.query(
+          'SELECT analyst_flow_id FROM workspace_settings WHERE workspace_id=$1',
+          [req.workspaceId])).rows[0];
+        if (srow?.analyst_flow_id) analystOverride = { flowSet: true };
+      } catch { /* pre-009 databases */ }
       res.json({
         provisioner: { mode: authMode() },
-        analyst: { configured: a.configured, flowSet: Boolean(a.flowId) },
+        analyst: { configured: a.configured || Boolean(analystOverride), flowSet: Boolean(a.flowId) || Boolean(analystOverride), override: analystOverride ? 'workspace' : 'env' },
         folder: { id: ws.micromind_folder_id || null, status: ws.micromind_folder_status || 'pending' },
         dbUp: true,
       });

@@ -8,8 +8,8 @@ import { api } from '../../services/api';
 const SLICE: Record<string, { label: string; Icon: React.ElementType; color: string; tokenHint: string; byof?: boolean; guide: string[] }> = {
   messenger: { label: 'Messenger', Icon: Facebook, color: '#0099FF', tokenHint: 'Page access token (encrypted server-side)', guide: ['Meta Developers → your app → Messenger → generate a Page access token (pages_messaging).', 'Paste it below — ORBIT encrypts it, provisions your AI flow, and gives you the webhook URL.', 'In Meta → Webhooks, subscribe with that URL + the verify token shown after connect.'] },
   instagram: { label: 'Instagram', Icon: Instagram, color: '#E4405F', tokenHint: 'Page access token (encrypted server-side)', guide: ['Connect your Instagram Business account to a Facebook Page.', 'Generate a Page token with instagram_manage_messages, paste it below.', 'Subscribe the webhook URL in Meta, then send yourself a test DM.'] },
-  whatsapp: { label: 'WhatsApp', Icon: MessageCircle, color: '#25D366', tokenHint: 'System-user token (encrypted server-side)', byof: true, guide: ['Meta app → WhatsApp → API Setup: copy the phone-number ID and a system-user token.', 'You also need a MicroMind flow ID — paste it below (verified template coming).'] },
-  telegram: { label: 'Telegram', Icon: Send, color: '#229ED9', tokenHint: 'Bot token from @BotFather (encrypted server-side)', byof: true, guide: ['Chat @BotFather → /newbot → copy the token.', 'Paste token + flow ID below — ORBIT returns a webhook secret; set it via setWebhook.'] },
+  whatsapp: { label: 'WhatsApp', Icon: MessageCircle, color: '#25D366', tokenHint: 'System-user token (encrypted server-side)', byof: true, guide: ['Meta app → WhatsApp → API Setup: copy the phone-number ID and a system-user token.', 'In MicroMind: open your flow → assign a prediction key (API protection) → copy the flow id and the key.', 'Paste all three below — ORBIT vaults the key and runs a harmless test ping automatically.'] },
+  telegram: { label: 'Telegram', Icon: Send, color: '#229ED9', tokenHint: 'Bot token from @BotFather (encrypted server-side)', byof: true, guide: ['Chat @BotFather → /newbot → copy the token.', 'In MicroMind: open your flow → assign a prediction key (API protection) → copy the flow id and the key.', 'Paste below — ORBIT returns a webhook secret; set it via setWebhook. Link is auto-tested.'] },
   gmail: { label: 'Gmail', Icon: Mail, color: '#EA4335', tokenHint: 'OAuth refresh token (placeholder — slice pending)', byof: true, guide: ['Google Cloud OAuth consent + Pub/Sub watch required — slice pending, connect disabled for now.'] },
 };
 
@@ -21,7 +21,12 @@ const LOCAL_ONLY: Record<string, { label: string; Icon: React.ElementType; color
 type Account = {
   id: string; channel: string; display_name?: string; username?: string;
   external_account_id?: string; micromind_flow_id?: string; status: string;
-  tenancy?: { folder: string; folderId: string | null; keyProvisioned: boolean };
+  tenancy?: { folder: string; folderId: string | null; keyProvisioned: boolean; lastTest?: string | null; lastTestAt?: string | null };
+};
+
+const TEST_LABEL: Record<string, string> = {
+  test_ok: '✅ test passed', invalid_key: '🔴 key rejected', inactive: '🟡 flow inactive',
+  blocked: '🟡 blocked', model_error: '🟡 model error', unreachable: '⚪ unreachable', skipped: '⚪ not tested',
 };
 
 export function ChannelsPanel({ showToast, local, onToggleLocal }: {
@@ -31,8 +36,10 @@ export function ChannelsPanel({ showToast, local, onToggleLocal }: {
 }) {
   const [accounts, setAccounts] = useState<Account[] | null>(null);
   const [forming, setForming] = useState<string | null>(null);
+  const [rekeying, setRekeying] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState({ displayName: '', username: '', externalAccountId: '', pageAccessToken: '', micromindFlowId: '' });
+  const [testingId, setTestingId] = useState<string | null>(null);
+  const [form, setForm] = useState({ displayName: '', username: '', externalAccountId: '', pageAccessToken: '', micromindFlowId: '', flowKey: '' });
 
   const refresh = async () => {
     const rows = await api.getChannels('default');
@@ -55,15 +62,47 @@ export function ChannelsPanel({ showToast, local, onToggleLocal }: {
       externalAccountId: form.externalAccountId || undefined,
       pageAccessToken: form.pageAccessToken || undefined,
       micromindFlowId: form.micromindFlowId || undefined,
+      flowKey: form.flowKey || undefined,
     });
     setBusy(false);
     if (res?.account) {
-      showToast(`${channel} ${res.status}`, 'success');
+      const t = res?.test?.status ? ` — test ${res.test.status.replace(/_/g, ' ')}` : '';
+      showToast(`${channel} ${res.status}${t}`, res?.test && res.test.status !== 'test_ok' && res.test.status !== 'skipped' ? 'warning' : 'success');
       setForming(null);
-      setForm({ displayName: '', username: '', externalAccountId: '', pageAccessToken: '', micromindFlowId: '' });
+      setForm({ displayName: '', username: '', externalAccountId: '', pageAccessToken: '', micromindFlowId: '', flowKey: '' });
       refresh();
     } else {
       showToast(res?.error || `Connect failed (${channel})`, 'danger');
+    }
+  };
+
+  const runTest = async (id: string, channel: string) => {
+    setTestingId(id);
+    const res = await api.testChannel(id);
+    setTestingId(null);
+    if (res?.test) {
+      showToast(`${channel} test: ${res.test.status.replace(/_/g, ' ')}`, res.test.status === 'test_ok' ? 'success' : 'warning');
+      refresh();
+    } else {
+      showToast(res?.error || 'Test failed', 'danger');
+    }
+  };
+
+  const submitRekey = async (id: string, channel: string) => {
+    if (!form.flowKey.trim()) {
+      showToast('Paste the new prediction key first', 'danger');
+      return;
+    }
+    setBusy(true);
+    const res = await api.rotateChannelKey(id, form.flowKey.trim());
+    setBusy(false);
+    if (res?.rotated) {
+      showToast(`${channel} key replaced — test ${res.test?.status?.replace(/_/g, ' ') || 'unknown'}. ${res.manualRevokeNote || ''}`, 'success');
+      setRekeying(null);
+      setForm({ ...form, flowKey: '' });
+      refresh();
+    } else {
+      showToast(res?.error || 'Key rotation failed', 'danger');
     }
   };
 
@@ -96,7 +135,48 @@ export function ChannelsPanel({ showToast, local, onToggleLocal }: {
               {primary?.tenancy && (
                 <span style={{ fontSize: 11, color: 'var(--stone-gray)', display: 'block', marginTop: 2 }}>
                   📁 folder {primary.tenancy.folder}{primary.tenancy.keyProvisioned ? ' · 🔑 key linked' : ' · key pending'}
+                  {primary.tenancy.lastTest ? ` · ${TEST_LABEL[primary.tenancy.lastTest] || primary.tenancy.lastTest}` : ''}
                 </span>
+              )}
+              {primary && (
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  <button
+                    disabled={busy || testingId === primary.id}
+                    onClick={() => runTest(primary.id, key)}
+                    className="btn"
+                    style={{ height: 28, padding: '0 12px', fontSize: 12, fontWeight: 700 }}
+                  >
+                    {testingId === primary.id ? 'Testing…' : 'Test link'}
+                  </button>
+                  <button
+                    disabled={busy}
+                    onClick={() => { setRekeying(rekeying === primary.id ? null : primary.id); setForm({ ...form, flowKey: '' }); }}
+                    className="btn"
+                    style={{ height: 28, padding: '0 12px', fontSize: 12, fontWeight: 700 }}
+                  >
+                    Replace key
+                  </button>
+                </div>
+              )}
+              {primary && rekeying === primary.id && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                  <input
+                    className="input" type="password" value={form.flowKey}
+                    onChange={(e) => setForm({ ...form, flowKey: e.target.value })}
+                    placeholder="New prediction key (from the flow's API protection setting)"
+                  />
+                  <span style={{ fontSize: 11, color: 'var(--stone-gray)' }}>
+                    Stored encrypted, re-tested instantly. Revoke the old key inside MicroMind GUI afterwards.
+                  </span>
+                  <button
+                    disabled={busy}
+                    onClick={() => submitRekey(primary.id, key)}
+                    className="btn btn-primary"
+                    style={{ background: 'var(--signal-orange)' }}
+                  >
+                    {busy ? 'Replacing…' : 'Replace & test'}
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -121,6 +201,7 @@ export function ChannelsPanel({ showToast, local, onToggleLocal }: {
             <input className="input" placeholder="External account id (Page ID / IG ID, optional)" value={form.externalAccountId} onChange={(e) => setForm({ ...form, externalAccountId: e.target.value })} />
             <input className="input" type="password" placeholder={meta.tokenHint} value={form.pageAccessToken} onChange={(e) => setForm({ ...form, pageAccessToken: e.target.value })} />
             <input className="input" placeholder={meta.byof ? 'MicroMind flow id (required — no verified template yet)' : 'MicroMind flow id (optional — auto-provisions if empty + API key set)'} value={form.micromindFlowId} onChange={(e) => setForm({ ...form, micromindFlowId: e.target.value })} />
+            <input className="input" type="password" placeholder="Prediction key for this flow (required on key-enforced flows — auto-tested on connect)" value={form.flowKey} onChange={(e) => setForm({ ...form, flowKey: e.target.value })} />
             <button className="btn btn-primary" disabled={busy} onClick={() => submitConnect(key)} style={{ background: 'var(--signal-orange)' }}>
               {busy ? 'Connecting…' : `Connect ${meta.label}`}
             </button>

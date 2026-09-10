@@ -560,7 +560,7 @@ app.post('/api/reports/generate', async (req, res) => {
     try {
       const out = await askAnalyst(
         `Write a short executive business report (4-6 bullet lines) from these stats: ${statsBrief}`,
-        { vars: { period, business_name: 'ORBIT workspace' }, sessionId: `${w}:analyst:report:${Date.now()}` }
+        { pool, workspaceId: w, vars: { period, business_name: 'ORBIT workspace' }, sessionId: `${w}:analyst:report:${Date.now()}` }
       );
       insights = out.text;
     } catch (err) {

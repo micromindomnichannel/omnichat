@@ -110,3 +110,34 @@ Chatflow Configuration → Security (`src/using-aimicromind/api.md:124-128`,
   backend-enforced (mapping + vault + membership). No per-tenant MicroMind
   identities (requires admin we don't hold).
 - Shared analyst flow: one flow + `MICROMIND_ANALYST_API_KEY`, all tenants.
+
+## BYOF-everything: link any flow (no management token required)
+
+ORBIT hosts zero AI. Every flow — channel or analyst — is a **link record**:
+`micromind_flows { purpose, label, source, external_flow_id,
+prediction_key_credential_id, last_test_* }` (`009_flow_link_registry.sql`).
+
+**Link-any-flow recipe (per flow, MicroMind GUI):**
+1. Build/duplicate the flow in MicroMind.
+2. Flip it **ACTIVE** (inactive flows 403 every prediction).
+3. Assign a prediction key (flow's API protection setting) — mint per tenant.
+4. Copy the **flow id** (from the prediction URL) and the **key value**.
+5. In ORBIT: connect form (channels) or workspace analyst setting →
+   paste both → ORBIT vaults the key, links the row, and runs a harmless
+   test ping (`Reply with exactly: OK`) automatically.
+
+**Validation vocabulary** (`last_test_status` on every row): `test_ok` |
+`invalid_key` (401 — wrong key) | `inactive` (403 — flip ACTIVE) |
+`blocked` (403 other) | `model_error` (500 — fix the model credential) |
+`unreachable` (network) | `skipped` (no key stored yet).
+
+**Key rotation:** paste the new key (Settings → channel → Replace key);
+ORBIT swaps the vault ref and re-tests. The old vault row is left in place
+by design — **revoke the old key inside MicroMind GUI manually**, since
+ORBIT holds no management token and will never pretend to delete server-side.
+
+**Analyst resolution order:** per-workspace override
+(`workspace_settings.analyst_flow_id` + vaulted key) → shared env link
+(`MICROMIND_ANALYST_FLOW_ID` + `MICROMIND_ANALYST_API_KEY`) → legacy
+messenger-flow fallback → local template fallback. Callers pass
+`pool + workspaceId` to `askAnalyst()`.

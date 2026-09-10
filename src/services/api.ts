@@ -107,6 +107,9 @@ export const api = {
     fetchJson(`/v1/workspaces/${workspaceId}/channels/${channel}/connect`, { method: 'POST', body: JSON.stringify(payload) }),
   disconnectChannel: (id: string) => fetchJson(`/v1/channels/${id}/disconnect`, { method: 'POST' }),
   reconnectChannel: (id: string) => fetchJson(`/v1/channels/${id}/reconnect`, { method: 'POST' }),
+  testChannel: (id: string) => fetchJson(`/v1/channels/${id}/test`, { method: 'POST' }),
+  rotateChannelKey: (id: string, flowKey: string) =>
+    fetchJson(`/v1/channels/${id}/key`, { method: 'PUT', body: JSON.stringify({ flowKey }) }),
 
   // Human reply via backend (backend resolves credential + sends to provider)
   replyToConversation: (id: string, text: string) =>

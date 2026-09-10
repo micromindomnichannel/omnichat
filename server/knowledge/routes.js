@@ -143,6 +143,8 @@ export function knowledgeRouter(pool) {
         `Answer this customer question for ${business || 'our business'} using ONLY the knowledge below. ` +
         `If the answer is not in the knowledge, say so briefly. Question: ${q}`,
         {
+          pool,
+          workspaceId,
           vars: { business_name: business || undefined, knowledge: context || '(empty)' },
           sessionId: `${workspaceId}:analyst:kb:${Date.now()}`,
         }

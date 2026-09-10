@@ -4,6 +4,7 @@ import express from 'express';
 import crypto from 'crypto';
 import { encryptSecret } from '../credentials/crypto.js';
 import { CHANNELS, provisionTenantChannelFlow } from '../micromind/provisionChannel.js';
+import { testFlowLink, recordLinkTest } from '../micromind/linktest.js';
 import { assertCanConnectChannel } from '../billing/plans.js';
 import { requireAuth, requireWorkspace, workspaceFor } from '../auth/middleware.js';
 
@@ -68,12 +69,19 @@ export function channelsRouter(pool) {
         `SELECT channel_account_id FROM micromind_flows
          WHERE workspace_id=$1 AND prediction_key_credential_id IS NOT NULL`,
         [req.workspaceId]).catch(() => ({ rows: [] }))).rows.map((x) => x.channel_account_id);
+      const tested = (await pool.query(
+        `SELECT DISTINCT ON (channel_account_id) channel_account_id, last_test_status, last_test_at
+         FROM micromind_flows WHERE workspace_id=$1 ORDER BY channel_account_id, updated_at DESC`,
+        [req.workspaceId]).catch(() => ({ rows: [] }))).rows;
+      const testByAccount = Object.fromEntries(tested.map((t) => [t.channel_account_id, t]));
       res.json(rows.map((a) => ({
         ...safeAccount(a),
         tenancy: {
           folder: ws.micromind_folder_id ? 'ready' : 'pending',
           folderId: ws.micromind_folder_id || null,
           keyProvisioned: keyed.includes(a.id),
+          lastTest: testByAccount[a.id]?.last_test_status || null,
+          lastTestAt: testByAccount[a.id]?.last_test_at || null,
         },
       })));
     } catch (err) {
@@ -83,8 +91,12 @@ export function channelsRouter(pool) {
 
   // Connect: manual token (MVP) or OAuth handoff. Body:
   // { displayName, username, externalAccountId, pageAccessToken|botToken|secret,
-  //   phoneNumberId (whatsapp), verifyToken?, micromindFlowId?, autoProvision? }
-  // whatsapp|telegram|gmail are BYOF until their template lands: micromindFlowId required.
+  //   phoneNumberId (whatsapp), verifyToken?, micromindFlowId?, flowKey?,
+  //   autoProvision? }
+  // flowKey = pasted MicroMind prediction key for the linked flow. Vaulted
+  // (never returned), linked to the flow row, and exercised by an automatic
+  // harmless test ping. whatsapp|telegram|gmail are BYOF until their template
+  // lands: micromindFlowId required.
   r.post('/api/v1/workspaces/:workspaceId/channels/:channel/connect', requireWorkspace, async (req, res) => {
     const { channel } = req.params;
     const workspaceId = req.workspaceId;
@@ -96,7 +108,7 @@ export function channelsRouter(pool) {
     }
 
     const { displayName, username, externalAccountId, pageAccessToken, botToken, secret,
-      phoneNumberId, verifyToken, micromindFlowId, autoProvision = true } = req.body || {};
+      phoneNumberId, verifyToken, micromindFlowId, flowKey, autoProvision = true } = req.body || {};
     const credentialSecret = pageAccessToken || botToken || secret;
     if (BYOF.includes(channel) && !micromindFlowId) {
       return res.status(400).json({ code: 'template_pending', error: `No verified ${channel} template yet — supply micromindFlowId (bring-your-own-flow)` });
@@ -150,11 +162,14 @@ export function channelsRouter(pool) {
       ).rows[0].id;
 
       // Provision: folder -> tenant key -> flow-in-folder + key link (zero-touch).
-      // Falls back to a supplied micromindFlowId (BYOF). Any failure lands the
-      // account in 'error' with the reason in metadata (never a 500).
+      // Falls back to a supplied micromindFlowId (BYOF). A pasted flowKey is
+      // vaulted and linked so enforced flows don't 401 at runtime. Any failure
+      // lands the account in 'error' with the reason in metadata (never a 500).
       let flowId = micromindFlowId || null;
       let keyCredentialId = null;
       let folderId = null;
+      let flowRowId = null;
+      const flowLabel = `ORBIT ${channel} - ${displayName || username || workspaceId}`;
       let status = micromindFlowId ? 'active' : 'connecting';
       if (autoProvision && !micromindFlowId) {
         try {
@@ -169,8 +184,9 @@ export function channelsRouter(pool) {
           flowId = out.flow.id;
           folderId = out.folderId;
           keyCredentialId = out.credentialId;
-          await pool.query('INSERT INTO micromind_flows (id, workspace_id, channel_account_id, external_flow_id, template, prediction_key_credential_id, status) VALUES ($1,$2,$3,$4,$5,$6,\'active\')',
-            [rid('mmf'), workspaceId, accId, flowId, channel, keyCredentialId]);
+          flowRowId = rid('mmf');
+          await pool.query('INSERT INTO micromind_flows (id, workspace_id, channel_account_id, external_flow_id, template, purpose, label, source, prediction_key_credential_id, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,\'active\')',
+            [flowRowId, workspaceId, accId, flowId, channel, 'channel', flowLabel, 'provisioned', keyCredentialId]);
           status = 'active';
         } catch (e) {
           status = 'error';
@@ -178,17 +194,38 @@ export function channelsRouter(pool) {
             [status, JSON.stringify({ provision_error: String(e.message).slice(0, 300) }), accId]);
         }
       } else if (flowId) {
-        await pool.query('INSERT INTO micromind_flows (id, workspace_id, channel_account_id, external_flow_id, template, status) VALUES ($1,$2,$3,$4,$5,\'active\') ON CONFLICT DO NOTHING',
-          [rid('mmf'), workspaceId, accId, flowId, channel]);
+        // BYOF: register the pasted link. A pasted flowKey is vaulted and linked
+        // so key-enforced flows don't 401 at runtime (the pre-existing NULL bug).
+        if (flowKey && String(flowKey).trim()) {
+          const pastedId = rid('cred');
+          await pool.query(
+            'INSERT INTO credentials (id, workspace_id, provider, encrypted_secret, metadata) VALUES ($1,$2,$3,$4,$5)',
+            [pastedId, workspaceId, 'micromind_prediction', encryptSecret(JSON.stringify({ apiKey: String(flowKey).trim(), apiSecret: null })),
+             JSON.stringify({ source: 'pasted', channel })]
+          );
+          keyCredentialId = pastedId;
+        }
+        flowRowId = rid('mmf');
+        await pool.query('INSERT INTO micromind_flows (id, workspace_id, channel_account_id, external_flow_id, template, purpose, label, source, prediction_key_credential_id, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,\'active\') ON CONFLICT DO NOTHING',
+          [flowRowId, workspaceId, accId, flowId, channel, 'channel', flowLabel, 'byof', keyCredentialId]);
       }
       if (status === 'active') {
         await pool.query('UPDATE channel_accounts SET status=$1, micromind_flow_id=$2, updated_at=CURRENT_TIMESTAMP WHERE id=$3',
           [status, flowId, accId]);
       }
-      await audit(pool, workspaceId, 'channel.connect', `${channel}:${accId}`, { status }, req.user.email);
+      // Automatic link validation (fixed harmless ping). Records the result on
+      // the flow row; a failed test never fails the connect itself.
+      let test = { status: 'skipped', detail: 'no key linked — test once a key is added' };
+      if (flowRowId && keyCredentialId) {
+        const result = await testFlowLink(pool, { flowId, credentialId: keyCredentialId, workspaceId });
+        await recordLinkTest(pool, flowRowId, result);
+        test = { status: result.status, latencyMs: result.latencyMs, detail: result.detail || null };
+      }
+      await audit(pool, workspaceId, 'channel.connect', `${channel}:${accId}`, { status, test: test.status }, req.user.email);
       const { rows } = await pool.query('SELECT * FROM channel_accounts WHERE id=$1', [accId]);
       res.json({
         channel, status, account: safeAccount(rows[0]),
+        test,
         tenancy: {
           folder: folderId ? 'ready' : 'pending',
           folderId: folderId || null,
@@ -254,6 +291,68 @@ export function channelsRouter(pool) {
       if (!rows.length) return res.status(404).json({ error: 'channel not found or missing credential — reconnect with a fresh token' });
       await audit(pool, workspaceId, 'channel.reconnect', rows[0].channel + ':' + rows[0].id, {}, req.user.email);
       res.json({ channel: rows[0].channel, status: 'active' });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Re-run the harmless link-validation ping for an account's latest flow row.
+  r.post('/api/v1/channels/:id/test', async (req, res) => {
+    try {
+      const acc = (await pool.query('SELECT * FROM channel_accounts WHERE id=$1', [req.params.id])).rows[0];
+      const workspaceId = workspaceFor(req, acc?.workspace_id);
+      if (!acc || !workspaceId) return res.status(404).json({ error: 'channel not found' });
+      const row = (await pool.query(
+        'SELECT * FROM micromind_flows WHERE channel_account_id=$1 ORDER BY updated_at DESC LIMIT 1',
+        [acc.id])).rows[0];
+      if (!row?.external_flow_id) return res.status(409).json({ error: 'no flow linked yet' });
+      const result = await testFlowLink(pool, {
+        flowId: row.external_flow_id, credentialId: row.prediction_key_credential_id, workspaceId,
+      });
+      await recordLinkTest(pool, row.id, result);
+      await audit(pool, workspaceId, 'channel.test', `${acc.channel}:${acc.id}`, { status: result.status }, req.user.email);
+      res.json({ channel: acc.channel, flowId: row.external_flow_id, test: result });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Rotate the prediction key for an account's latest flow row. The pasted key
+  // is vaulted and swapped in, then re-tested. The OLD vault row is left in
+  // place (swap-only): revoke the old key inside MicroMind GUI manually —
+  // ORBIT cannot delete server-side keys without a management token, and will
+  // never pretend otherwise.
+  r.put('/api/v1/channels/:id/key', async (req, res) => {
+    try {
+      const { flowKey } = req.body || {};
+      if (!flowKey || !String(flowKey).trim()) {
+        return res.status(400).json({ error: 'flowKey required (paste the new prediction key)' });
+      }
+      const acc = (await pool.query('SELECT * FROM channel_accounts WHERE id=$1', [req.params.id])).rows[0];
+      const workspaceId = workspaceFor(req, acc?.workspace_id);
+      if (!acc || !workspaceId) return res.status(404).json({ error: 'channel not found' });
+      const row = (await pool.query(
+        'SELECT * FROM micromind_flows WHERE channel_account_id=$1 ORDER BY updated_at DESC LIMIT 1',
+        [acc.id])).rows[0];
+      if (!row?.external_flow_id) return res.status(409).json({ error: 'no flow linked yet' });
+      const oldCredentialId = row.prediction_key_credential_id || null;
+      const nextId = rid('cred');
+      await pool.query(
+        'INSERT INTO credentials (id, workspace_id, provider, encrypted_secret, metadata) VALUES ($1,$2,$3,$4,$5)',
+        [nextId, workspaceId, 'micromind_prediction', encryptSecret(JSON.stringify({ apiKey: String(flowKey).trim(), apiSecret: null })),
+         JSON.stringify({ source: 'pasted', channel: acc.channel, rotated_from: oldCredentialId })]
+      );
+      await pool.query('UPDATE micromind_flows SET prediction_key_credential_id=$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2',
+        [nextId, row.id]);
+      const result = await testFlowLink(pool, { flowId: row.external_flow_id, credentialId: nextId, workspaceId });
+      await recordLinkTest(pool, row.id, result);
+      await audit(pool, workspaceId, 'channel.key.rotate', `${acc.channel}:${acc.id}`, { status: result.status }, req.user.email);
+      res.json({
+        channel: acc.channel,
+        rotated: true,
+        test: result,
+        manualRevokeNote: 'Old key left untouched server-side: revoke it inside MicroMind GUI (API Keys) to complete rotation.',
+      });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
