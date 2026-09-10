@@ -3,7 +3,7 @@
 import express from 'express';
 import crypto from 'crypto';
 import { encryptSecret } from '../credentials/crypto.js';
-import { CHANNELS, provisionTenantChannelFlow } from '../micromind/provisionChannel.js';
+import { CHANNELS, provisionTenantChannelFlow, templateVersionForAsync } from '../micromind/provisionChannel.js';
 import { testFlowLink, recordLinkTest } from '../micromind/linktest.js';
 import { assertCanConnectChannel } from '../billing/plans.js';
 import { requireAuth, requireWorkspace, workspaceFor } from '../auth/middleware.js';
@@ -180,13 +180,14 @@ export function channelsRouter(pool) {
             businessName: ws.business_name,
             aiTone: ws.ai_tone,
             language: ws.language,
+            phoneNumberId: phoneNumberId || null,
           });
           flowId = out.flow.id;
           folderId = out.folderId;
           keyCredentialId = out.credentialId;
           flowRowId = rid('mmf');
-          await pool.query('INSERT INTO micromind_flows (id, workspace_id, channel_account_id, external_flow_id, template, purpose, label, source, prediction_key_credential_id, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,\'active\')',
-            [flowRowId, workspaceId, accId, flowId, channel, 'channel', flowLabel, 'provisioned', keyCredentialId]);
+          await pool.query('INSERT INTO micromind_flows (id, workspace_id, channel_account_id, external_flow_id, template, template_version, purpose, label, source, prediction_key_credential_id, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,\'active\')',
+            [flowRowId, workspaceId, accId, flowId, channel, await templateVersionForAsync(pool, channel), 'channel', flowLabel, 'provisioned', keyCredentialId]);
           status = 'active';
         } catch (e) {
           status = 'error';
@@ -206,8 +207,8 @@ export function channelsRouter(pool) {
           keyCredentialId = pastedId;
         }
         flowRowId = rid('mmf');
-        await pool.query('INSERT INTO micromind_flows (id, workspace_id, channel_account_id, external_flow_id, template, purpose, label, source, prediction_key_credential_id, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,\'active\') ON CONFLICT DO NOTHING',
-          [flowRowId, workspaceId, accId, flowId, channel, 'channel', flowLabel, 'byof', keyCredentialId]);
+        await pool.query('INSERT INTO micromind_flows (id, workspace_id, channel_account_id, external_flow_id, template, template_version, purpose, label, source, prediction_key_credential_id, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,\'active\') ON CONFLICT DO NOTHING',
+          [flowRowId, workspaceId, accId, flowId, channel, await templateVersionForAsync(pool, channel), 'channel', flowLabel, 'byof', keyCredentialId]);
       }
       if (status === 'active') {
         await pool.query('UPDATE channel_accounts SET status=$1, micromind_flow_id=$2, updated_at=CURRENT_TIMESTAMP WHERE id=$3',

@@ -1,0 +1,8 @@
+{
+  "_comment": "Template registry: version + status per channel. Drafts are usable immediately (auto-provision works); clones record template_version so Admin can flag stale clones when a version bumps. Update versions here when registering new exports. Existing tenant clones stay on their version (badge-only policy, never auto-reclone).",
+  "messenger": { "file": "messenger.json", "version": "v1", "status": "verified" },
+  "instagram": { "file": "instagram.json", "version": "v1", "status": "verified" },
+  "whatsapp": { "file": "whatsapp.json", "version": "v1-draft", "status": "draft" },
+  "telegram": { "file": "telegram.json", "version": "v1-draft", "status": "draft" },
+  "gmail": { "file": null, "version": "v0-todo", "status": "manual" }
+}

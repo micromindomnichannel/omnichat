@@ -75,6 +75,7 @@ export async function askAnalyst(question, { pool = null, workspaceId = null, va
     history,
     apiKey,
   });
+  const text = String(out?.text || out?.json?.answer || '').trim();
   if (!text) {
     const err = new Error('askAnalyst: empty model response');
     err.code = 'empty_response';

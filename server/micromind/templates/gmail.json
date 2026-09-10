@@ -1,0 +1,831 @@
+{
+  "nodes": [
+    {
+      "id": "gmailTrigger_0",
+      "position": {
+        "x": -247.44793236891468,
+        "y": -46.208671093271036
+      },
+      "type": "customNode",
+      "data": {
+        "id": "gmailTrigger_0",
+        "label": "Gmail Trigger",
+        "version": 1,
+        "name": "gmailTrigger",
+        "type": "GmailTrigger",
+        "baseClasses": [
+          "GmailTrigger",
+          "Triggers",
+          "json",
+          "string"
+        ],
+        "category": "Triggers",
+        "description": "Triggers the flow when new emails are received in your Gmail inbox",
+        "inputParams": [
+          {
+            "label": "Connect Gmail Credential",
+            "name": "credential",
+            "type": "credential",
+            "credentialNames": [
+              "gmailOAuth2"
+            ],
+            "id": "gmailTrigger_0-input-credential-credential"
+          },
+          {
+            "label": "Event",
+            "name": "triggerEvent",
+            "type": "options",
+            "options": [
+              {
+                "label": "Message Received",
+                "name": "messageReceived"
+              },
+              {
+                "label": "Star Added",
+                "name": "starAdded"
+              },
+              {
+                "label": "Star Removed",
+                "name": "starRemoved"
+              }
+            ],
+            "default": "messageReceived",
+            "description": "The Gmail event that triggers this flow",
+            "id": "gmailTrigger_0-input-triggerEvent-options"
+          },
+          {
+            "label": "Simplify Output",
+            "name": "simplifyOutput",
+            "type": "boolean",
+            "default": true,
+            "description": "When enabled, returns a simplified email object. When disabled, returns the full Gmail API response.",
+            "id": "gmailTrigger_0-input-simplifyOutput-boolean"
+          },
+          {
+            "label": "Include Attachments",
+            "name": "includeAttachments",
+            "type": "boolean",
+            "default": false,
+            "description": "When enabled, downloads email attachments (images, PDFs, documents) and includes them as base64 data in the output.",
+            "id": "gmailTrigger_0-input-includeAttachments-boolean"
+          },
+          {
+            "label": "From (Sender)",
+            "name": "filterFrom",
+            "type": "string",
+            "default": "",
+            "optional": true,
+            "placeholder": "e.g. boss@company.com",
+            "description": "Only trigger for emails from this sender. Leave empty for all senders.",
+            "additionalParams": true,
+            "id": "gmailTrigger_0-input-filterFrom-string"
+          },
+          {
+            "label": "Label",
+            "name": "filterLabel",
+            "type": "string",
+            "default": "",
+            "optional": true,
+            "placeholder": "e.g. INBOX, STARRED, or custom label",
+            "description": "Only trigger for emails with this label. Leave empty for all labels.",
+            "additionalParams": true,
+            "id": "gmailTrigger_0-input-filterLabel-string"
+          },
+          {
+            "label": "Subject Contains",
+            "name": "filterSubject",
+            "type": "string",
+            "default": "",
+            "optional": true,
+            "placeholder": "e.g. Invoice, Alert",
+            "description": "Only trigger when the subject contains this text.",
+            "additionalParams": true,
+            "id": "gmailTrigger_0-input-filterSubject-string"
+          },
+          {
+            "label": "Search Query",
+            "name": "filterQuery",
+            "type": "string",
+            "default": "",
+            "optional": true,
+            "placeholder": "e.g. has:attachment larger:5M",
+            "description": "Gmail search query for advanced filtering. Supports Gmail search syntax.",
+            "additionalParams": true,
+            "id": "gmailTrigger_0-input-filterQuery-string"
+          },
+          {
+            "label": "Max Results",
+            "name": "maxResults",
+            "type": "number",
+            "default": 10,
+            "optional": true,
+            "description": "Maximum number of emails to fetch per poll cycle.",
+            "additionalParams": true,
+            "id": "gmailTrigger_0-input-maxResults-number"
+          },
+          {
+            "label": "Include Spam & Trash",
+            "name": "includeSpamTrash",
+            "type": "boolean",
+            "default": false,
+            "optional": true,
+            "description": "When enabled, also checks Spam and Trash folders.",
+            "additionalParams": true,
+            "id": "gmailTrigger_0-input-includeSpamTrash-boolean"
+          },
+          {
+            "label": "Read Status",
+            "name": "readStatus",
+            "type": "options",
+            "options": [
+              {
+                "label": "Unread Only",
+                "name": "unread"
+              },
+              {
+                "label": "Read Only",
+                "name": "read"
+              },
+              {
+                "label": "Both",
+                "name": "both"
+              }
+            ],
+            "default": "unread",
+            "optional": true,
+            "description": "Filter by read/unread status.",
+            "additionalParams": true,
+            "id": "gmailTrigger_0-input-readStatus-options"
+          },
+          {
+            "label": "How to Use",
+            "name": "howToUse",
+            "type": "string",
+            "default": "",
+            "optional": true,
+            "additionalParams": true,
+            "hint": {
+              "label": "Usage Guide",
+              "value": "\n## Gmail Trigger\n\nThis node checks your Gmail inbox and passes new emails into the flow.\n\n### How it works\n1. **Connect your Gmail credential** — Use the same Gmail OAuth2 credential used for other Gmail nodes.\n2. **Choose an event** — \"Message Received\" triggers on new incoming emails.\n3. **Set the schedule** — Use the **Schedule** button in the canvas bottom bar to control how often this trigger runs (e.g. every minute, every 5 minutes, etc.). The node itself does NOT have its own interval.\n4. **Add filters** (optional) — Filter by sender, label, subject, or Gmail search query.\n\n### Accessing Email Data in Connected Nodes\n\n#### In Custom JS Function:\n1. Add an **Input Variable** with key `email` and value `{{gmailTrigger_0}}`\n2. Access it in your script:\n\n```js\nconst subject = $email.subject;\nconst from    = $email.from;\nconst body    = $email.bodyText;\nreturn { status: \"received\", subject, from };\n```\n\n### Output Fields\n| Field        | Description                        |\n|--------------|------------------------------------|\n| `id`         | Gmail message ID                   |\n| `threadId`   | Thread ID                          |\n| `from`       | Sender email                       |\n| `to`         | Recipient(s)                       |\n| `subject`    | Email subject                      |\n| `date`       | Date received                      |\n| `snippet`    | Short preview text                 |\n| `bodyText`   | Plain text body                    |\n| `bodyHtml`   | HTML body (if available)           |\n| `labels`     | Applied Gmail labels               |\n| `cc`         | CC recipients (if any)             |\n| `bcc`        | BCC recipients (if any)            |\n\n### Filters\n- **From**: Only trigger for emails from this sender (e.g. `boss@company.com`)\n- **Label**: Only trigger for emails with a specific label (e.g. `INBOX`, `STARRED`, or a custom label)\n- **Subject Contains**: Only trigger when the subject contains specific text\n- **Search Query**: Use Gmail's advanced search syntax (e.g. `has:attachment larger:5M`)\n\n> **Scheduling:** Use the **Schedule** button in the canvas bottom bar to set how often this trigger checks for new emails.\n> Each scheduled execution counts as one run, even if no new emails are found.\n"
+            },
+            "description": "Open \"Additional Parameters\" to see the usage guide.",
+            "id": "gmailTrigger_0-input-howToUse-string"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "triggerEvent": "messageReceived",
+          "simplifyOutput": true,
+          "includeAttachments": "",
+          "filterFrom": "",
+          "filterLabel": "",
+          "filterSubject": "",
+          "filterQuery": "",
+          "maxResults": 10,
+          "includeSpamTrash": "",
+          "readStatus": "unread",
+          "howToUse": ""
+        },
+        "outputAnchors": [
+          {
+            "name": "output",
+            "label": "Output",
+            "type": "options",
+            "description": "Simplified email data: from, to, subject, body, date, labels",
+            "options": [
+              {
+                "id": "gmailTrigger_0-output-emailData-json|string",
+                "name": "emailData",
+                "label": "Email Data",
+                "description": "Simplified email data: from, to, subject, body, date, labels",
+                "type": "json | string"
+              },
+              {
+                "id": "gmailTrigger_0-output-fullResponse-GmailTrigger|Triggers|json|string",
+                "name": "fullResponse",
+                "label": "Full Response",
+                "description": "Full Gmail API response with all metadata",
+                "type": "GmailTrigger | Triggers | json | string"
+              }
+            ],
+            "default": "emailData"
+          }
+        ],
+        "outputs": {
+          "output": "emailData"
+        },
+        "selected": false
+      },
+      "width": 320,
+      "height": 904,
+      "selected": false,
+      "dragging": false,
+      "positionAbsolute": {
+        "x": -247.44793236891468,
+        "y": -46.208671093271036
+      }
+    },
+    {
+      "id": "chatPromptTemplate_0",
+      "position": {
+        "x": 131.60743473300866,
+        "y": -18.828360388090147
+      },
+      "type": "customNode",
+      "data": {
+        "id": "chatPromptTemplate_0",
+        "label": "Chat Prompt Template",
+        "version": 2,
+        "name": "chatPromptTemplate",
+        "type": "ChatPromptTemplate",
+        "baseClasses": [
+          "ChatPromptTemplate",
+          "BaseChatPromptTemplate",
+          "BasePromptTemplate",
+          "Runnable"
+        ],
+        "category": "Prompts",
+        "description": "Schema to represent a chat prompt",
+        "inputParams": [
+          {
+            "label": "System Message",
+            "name": "systemMessagePrompt",
+            "type": "string",
+            "rows": 4,
+            "placeholder": "You are a helpful assistant that translates {input_language} to {output_language}.",
+            "id": "chatPromptTemplate_0-input-systemMessagePrompt-string"
+          },
+          {
+            "label": "Human Message",
+            "name": "humanMessagePrompt",
+            "description": "This prompt will be added at the end of the messages as human message",
+            "type": "string",
+            "rows": 4,
+            "placeholder": "{text}",
+            "id": "chatPromptTemplate_0-input-humanMessagePrompt-string"
+          },
+          {
+            "label": "Format Prompt Values",
+            "name": "promptValues",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "chatPromptTemplate_0-input-promptValues-json"
+          },
+          {
+            "label": "Messages History",
+            "name": "messageHistory",
+            "description": "Add messages after System Message. This is useful when you want to provide few shot examples",
+            "type": "tabs",
+            "tabIdentifier": "selectedMessagesTab",
+            "additionalParams": true,
+            "default": "messageHistoryCode",
+            "tabs": [
+              {
+                "label": "Add Messages (Code)",
+                "name": "messageHistoryCode",
+                "type": "code",
+                "hideCodeExecute": true,
+                "codeExample": "const { AIMessage, HumanMessage, ToolMessage } = require('@langchain/core/messages');\n\nreturn [\n    new HumanMessage(\"What is 333382 🦜 1932?\"),\n    new AIMessage({\n        content: \"\",\n        tool_calls: [\n        {\n            id: \"12345\",\n            name: \"calulator\",\n            args: {\n                number1: 333382,\n                number2: 1932,\n                operation: \"divide\",\n            },\n        },\n        ],\n    }),\n    new ToolMessage({\n        tool_call_id: \"12345\",\n        content: \"The answer is 172.558.\",\n    }),\n    new AIMessage(\"The answer is 172.558.\"),\n]",
+                "optional": true,
+                "additionalParams": true
+              }
+            ],
+            "id": "chatPromptTemplate_0-input-messageHistory-tabs"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "systemMessagePrompt": "You are ORBIT, a helpful and professional AI customer assistant for a business. Answer customer questions clearly, naturally, and concisely. Use the business knowledge, tools, and context provided to you. Never invent prices, stock availability, policies, or other business information. If you do not know something or need human assistance, say so and hand the conversation over to a human agent. Maintain a friendly, professional brand tone. Respond in the same language as the customer whenever possible.",
+          "humanMessagePrompt": "{input}",
+          "promptValues": "",
+          "messageHistory": "messageHistoryCode"
+        },
+        "outputAnchors": [
+          {
+            "id": "chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable",
+            "name": "chatPromptTemplate",
+            "label": "ChatPromptTemplate",
+            "description": "Schema to represent a chat prompt",
+            "type": "ChatPromptTemplate | BaseChatPromptTemplate | BasePromptTemplate | Runnable"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 878,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 131.60743473300866,
+        "y": -18.828360388090147
+      },
+      "dragging": false
+    },
+    {
+      "id": "toolAgent_0",
+      "position": {
+        "x": 559.7510938113036,
+        "y": 132.5620998401788
+      },
+      "type": "customNode",
+      "data": {
+        "id": "toolAgent_0",
+        "label": "Tool Agent",
+        "version": 2,
+        "name": "toolAgent",
+        "type": "AgentExecutor",
+        "baseClasses": [
+          "AgentExecutor",
+          "BaseChain",
+          "Runnable"
+        ],
+        "category": "Agents",
+        "description": "Agent that uses Function Calling to pick the tools and args to call",
+        "inputParams": [
+          {
+            "label": "System Message",
+            "name": "systemMessage",
+            "type": "string",
+            "default": "You are a helpful AI assistant.",
+            "description": "If Chat Prompt Template is provided, this will be ignored",
+            "rows": 4,
+            "optional": true,
+            "additionalParams": true,
+            "id": "toolAgent_0-input-systemMessage-string"
+          },
+          {
+            "label": "Max Iterations",
+            "name": "maxIterations",
+            "type": "number",
+            "optional": true,
+            "additionalParams": true,
+            "id": "toolAgent_0-input-maxIterations-number"
+          },
+          {
+            "label": "Enable Detailed Streaming",
+            "name": "enableDetailedStreaming",
+            "type": "boolean",
+            "default": false,
+            "description": "Stream detailed intermediate steps during agent execution",
+            "optional": true,
+            "additionalParams": true,
+            "id": "toolAgent_0-input-enableDetailedStreaming-boolean"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Tools",
+            "name": "tools",
+            "type": "Tool",
+            "list": true,
+            "id": "toolAgent_0-input-tools-Tool"
+          },
+          {
+            "label": "Memory",
+            "name": "memory",
+            "type": "BaseChatMemory",
+            "id": "toolAgent_0-input-memory-BaseChatMemory"
+          },
+          {
+            "label": "Tool Calling Chat Model",
+            "name": "model",
+            "type": "BaseChatModel",
+            "description": "Only compatible with models that are capable of function calling: ChatOpenAI, ChatMistral, ChatAnthropic, GoogleGenerativeAI, ChatVertexAI, GroqChat",
+            "id": "toolAgent_0-input-model-BaseChatModel"
+          },
+          {
+            "label": "Chat Prompt Template",
+            "name": "chatPromptTemplate",
+            "type": "ChatPromptTemplate",
+            "description": "Override existing prompt with Chat Prompt Template. Human Message must includes {input} variable",
+            "optional": true,
+            "id": "toolAgent_0-input-chatPromptTemplate-ChatPromptTemplate"
+          },
+          {
+            "label": "Input Moderation",
+            "description": "Detect text that could generate harmful output and prevent it from being sent to the language model",
+            "name": "inputModeration",
+            "type": "Moderation",
+            "optional": true,
+            "list": true,
+            "id": "toolAgent_0-input-inputModeration-Moderation"
+          }
+        ],
+        "inputs": {
+          "tools": "",
+          "memory": "{{bufferMemory_0.data.instance}}",
+          "model": "{{chatOpenRouter_0.data.instance}}",
+          "chatPromptTemplate": "{{chatPromptTemplate_0.data.instance}}",
+          "systemMessage": "You are a helpful AI assistant.",
+          "inputModeration": "",
+          "maxIterations": "",
+          "enableDetailedStreaming": ""
+        },
+        "outputAnchors": [
+          {
+            "id": "toolAgent_0-output-toolAgent-AgentExecutor|BaseChain|Runnable",
+            "name": "toolAgent",
+            "label": "AgentExecutor",
+            "description": "Agent that uses Function Calling to pick the tools and args to call",
+            "type": "AgentExecutor | BaseChain | Runnable"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 510,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 559.7510938113036,
+        "y": 132.5620998401788
+      },
+      "dragging": false
+    },
+    {
+      "id": "bufferMemory_0",
+      "position": {
+        "x": -981.8683143108385,
+        "y": -61.86227188222338
+      },
+      "type": "customNode",
+      "data": {
+        "id": "bufferMemory_0",
+        "label": "Buffer Memory",
+        "version": 2,
+        "name": "bufferMemory",
+        "type": "BufferMemory",
+        "baseClasses": [
+          "BufferMemory",
+          "BaseChatMemory",
+          "BaseMemory"
+        ],
+        "category": "Memory",
+        "description": "Retrieve chat messages stored in database",
+        "inputParams": [
+          {
+            "label": "Session Id",
+            "name": "sessionId",
+            "type": "string",
+            "description": "If not specified, a random id will be used. Learn <a target=\"_blank\" href=\"https://docs.aimicromind.com/memory#ui-and-embedded-chat\">more</a>",
+            "default": "",
+            "additionalParams": true,
+            "optional": true,
+            "id": "bufferMemory_0-input-sessionId-string"
+          },
+          {
+            "label": "Memory Key",
+            "name": "memoryKey",
+            "type": "string",
+            "default": "chat_history",
+            "additionalParams": true,
+            "id": "bufferMemory_0-input-memoryKey-string"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "sessionId": "",
+          "memoryKey": "chat_history"
+        },
+        "outputAnchors": [
+          {
+            "id": "bufferMemory_0-output-bufferMemory-BufferMemory|BaseChatMemory|BaseMemory",
+            "name": "bufferMemory",
+            "label": "BufferMemory",
+            "description": "Retrieve chat messages stored in database",
+            "type": "BufferMemory | BaseChatMemory | BaseMemory"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 342,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -981.8683143108385,
+        "y": -61.86227188222338
+      },
+      "dragging": false
+    },
+    {
+      "id": "chatOpenRouter_0",
+      "position": {
+        "x": -633.48446972376,
+        "y": -78.65834111578826
+      },
+      "type": "customNode",
+      "data": {
+        "id": "chatOpenRouter_0",
+        "label": "ChatOpenRouter",
+        "version": 2.1,
+        "name": "chatOpenRouter",
+        "type": "ChatOpenRouter",
+        "baseClasses": [
+          "ChatOpenRouter",
+          "ChatOpenAI",
+          "BaseChatOpenAI",
+          "BaseChatModel",
+          "BaseLanguageModel",
+          "Runnable"
+        ],
+        "category": "Chat Models",
+        "description": "Wrapper around Open Router Inference API. Supports all frontier models (GPT-5.6 Luna, DeepSeek R1/V3, Claude 4.6/3.7, Gemini 3.7/2.0, Llama 3.3, Qwen 2.5) and multimodal vision.",
+        "inputParams": [
+          {
+            "label": "Connect Credential",
+            "name": "credential",
+            "type": "credential",
+            "credentialNames": [
+              "openRouterApi"
+            ],
+            "optional": false,
+            "id": "chatOpenRouter_0-input-credential-credential"
+          },
+          {
+            "label": "Model Name",
+            "name": "modelName",
+            "type": "asyncOptions",
+            "loadMethod": "listModels",
+            "default": "openai/gpt-5.6-luna",
+            "description": "Select a model from the list or use Custom Model Name below",
+            "id": "chatOpenRouter_0-input-modelName-asyncOptions"
+          },
+          {
+            "label": "Custom Model Name",
+            "name": "customModelName",
+            "type": "string",
+            "placeholder": "openai/gpt-5.6-luna",
+            "description": "Custom model name to use on OpenRouter. If provided, it overrides the dropdown selection above.",
+            "additionalParams": true,
+            "optional": true,
+            "id": "chatOpenRouter_0-input-customModelName-string"
+          },
+          {
+            "label": "Temperature",
+            "name": "temperature",
+            "type": "number",
+            "step": 0.1,
+            "default": 0.7,
+            "optional": true,
+            "description": "Sampling temperature (0 to 2). Note: Reasoning models (o1, o3, DeepSeek R1, Luna) automatically omit temperature if not supported.",
+            "id": "chatOpenRouter_0-input-temperature-number"
+          },
+          {
+            "label": "Streaming",
+            "name": "streaming",
+            "type": "boolean",
+            "default": true,
+            "optional": true,
+            "additionalParams": true,
+            "id": "chatOpenRouter_0-input-streaming-boolean"
+          },
+          {
+            "label": "Max Tokens",
+            "name": "maxTokens",
+            "type": "number",
+            "step": 1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "chatOpenRouter_0-input-maxTokens-number"
+          },
+          {
+            "label": "Top Probability",
+            "name": "topP",
+            "type": "number",
+            "step": 0.1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "chatOpenRouter_0-input-topP-number"
+          },
+          {
+            "label": "Frequency Penalty",
+            "name": "frequencyPenalty",
+            "type": "number",
+            "step": 0.1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "chatOpenRouter_0-input-frequencyPenalty-number"
+          },
+          {
+            "label": "Presence Penalty",
+            "name": "presencePenalty",
+            "type": "number",
+            "step": 0.1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "chatOpenRouter_0-input-presencePenalty-number"
+          },
+          {
+            "label": "Timeout",
+            "name": "timeout",
+            "type": "number",
+            "step": 1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "chatOpenRouter_0-input-timeout-number"
+          },
+          {
+            "label": "BasePath",
+            "name": "basepath",
+            "type": "string",
+            "optional": true,
+            "default": "https://openrouter.ai/api/v1",
+            "additionalParams": true,
+            "description": "API endpoint URL for OpenRouter",
+            "id": "chatOpenRouter_0-input-basepath-string"
+          },
+          {
+            "label": "BaseOptions",
+            "name": "baseOptions",
+            "type": "json",
+            "optional": true,
+            "additionalParams": true,
+            "description": "Additional headers (e.g., {\"HTTP-Referer\": \"https://yourapp.com\"})",
+            "id": "chatOpenRouter_0-input-baseOptions-json"
+          },
+          {
+            "label": "Allow Image Uploads",
+            "name": "allowImageUploads",
+            "type": "boolean",
+            "description": "Allow image input. Only applicable when using a vision-supported model on OpenRouter (e.g. Claude 3+, GPT-4o, GPT-5+, Gemini 2.0+, Pixtral, Llama 3.2 Vision). Refer to the <a href=\"https://docs.aimicromind.com/using-aimicromind/uploads#image\" target=\"_blank\">docs</a> for details.",
+            "default": false,
+            "optional": true,
+            "id": "chatOpenRouter_0-input-allowImageUploads-boolean"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Cache",
+            "name": "cache",
+            "type": "BaseCache",
+            "optional": true,
+            "id": "chatOpenRouter_0-input-cache-BaseCache"
+          }
+        ],
+        "inputs": {
+          "cache": "",
+          "modelName": "openai/gpt-5.6-luna",
+          "customModelName": "",
+          "temperature": 0.7,
+          "streaming": true,
+          "maxTokens": "",
+          "topP": "",
+          "frequencyPenalty": "",
+          "presencePenalty": "",
+          "timeout": "",
+          "basepath": "https://openrouter.ai/api/v1",
+          "baseOptions": "",
+          "allowImageUploads": ""
+        },
+        "outputAnchors": [
+          {
+            "id": "chatOpenRouter_0-output-chatOpenRouter-ChatOpenRouter|ChatOpenAI|BaseChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable",
+            "name": "chatOpenRouter",
+            "label": "ChatOpenRouter",
+            "description": "Wrapper around Open Router Inference API. Supports all frontier models (GPT-5.6 Luna, DeepSeek R1/V3, Claude 4.6/3.7, Gemini 3.7/2.0, Llama 3.3, Qwen 2.5) and multimodal vision.",
+            "type": "ChatOpenRouter | ChatOpenAI | BaseChatOpenAI | BaseChatModel | BaseLanguageModel | Runnable"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 789,
+      "selected": false,
+      "dragging": false,
+      "positionAbsolute": {
+        "x": -633.48446972376,
+        "y": -78.65834111578826
+      }
+    },
+    {
+      "id": "stickyNote_0",
+      "position": {
+        "x": 562.237035370527,
+        "y": -167.2552610816119
+      },
+      "type": "stickyNote",
+      "data": {
+        "id": "stickyNote_0",
+        "label": "Sticky Note",
+        "version": 2,
+        "name": "stickyNote",
+        "type": "StickyNote",
+        "baseClasses": [
+          "StickyNote"
+        ],
+        "tags": [
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Add a sticky note",
+        "inputParams": [
+          {
+            "label": "",
+            "name": "note",
+            "type": "string",
+            "rows": 1,
+            "placeholder": "Type something here",
+            "optional": true,
+            "id": "stickyNote_0-input-note-string"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "note": "GMAIL\n\nClient ID\n\n<GOOGLE_CLIENT_ID>\n\nClient secret\n\n<GOOGLE_CLIENT_SECRET>"
+        },
+        "outputAnchors": [
+          {
+            "id": "stickyNote_0-output-stickyNote-StickyNote",
+            "name": "stickyNote",
+            "label": "StickyNote",
+            "description": "Add a sticky note",
+            "type": "StickyNote"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 264,
+      "selected": false,
+      "dragging": false,
+      "positionAbsolute": {
+        "x": 562.237035370527,
+        "y": -167.2552610816119
+      }
+    }
+  ],
+  "edges": [
+    {
+      "type": "buttonedge",
+      "style": {
+        "stroke": "#b88a30",
+        "strokeWidth": 2.5,
+        "opacity": 0.65,
+        "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
+      },
+      "animated": false,
+      "source": "bufferMemory_0",
+      "sourceHandle": "bufferMemory_0-output-bufferMemory-BufferMemory|BaseChatMemory|BaseMemory",
+      "target": "toolAgent_0",
+      "targetHandle": "toolAgent_0-input-memory-BaseChatMemory",
+      "id": "bufferMemory_0-bufferMemory_0-output-bufferMemory-BufferMemory|BaseChatMemory|BaseMemory-toolAgent_0-toolAgent_0-input-memory-BaseChatMemory"
+    },
+    {
+      "type": "buttonedge",
+      "style": {
+        "stroke": "#E0AA3E",
+        "strokeWidth": 2.5,
+        "opacity": 0.65,
+        "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
+      },
+      "animated": false,
+      "source": "chatPromptTemplate_0",
+      "sourceHandle": "chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable",
+      "target": "toolAgent_0",
+      "targetHandle": "toolAgent_0-input-chatPromptTemplate-ChatPromptTemplate",
+      "id": "chatPromptTemplate_0-chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable-toolAgent_0-toolAgent_0-input-chatPromptTemplate-ChatPromptTemplate"
+    },
+    {
+      "type": "buttonedge",
+      "style": {
+        "stroke": "#E0AA3E",
+        "strokeWidth": 2.5,
+        "opacity": 0.65,
+        "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
+      },
+      "animated": false,
+      "source": "chatOpenRouter_0",
+      "sourceHandle": "chatOpenRouter_0-output-chatOpenRouter-ChatOpenRouter|ChatOpenAI|BaseChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable",
+      "target": "toolAgent_0",
+      "targetHandle": "toolAgent_0-input-model-BaseChatModel",
+      "id": "chatOpenRouter_0-chatOpenRouter_0-output-chatOpenRouter-ChatOpenRouter|ChatOpenAI|BaseChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable-toolAgent_0-toolAgent_0-input-model-BaseChatModel"
+    },
+    {
+      "type": "buttonedge",
+      "style": {
+        "stroke": "#E0AA3E",
+        "strokeWidth": 2.5,
+        "opacity": 0.65,
+        "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
+      },
+      "animated": false,
+      "source": "gmailTrigger_0",
+      "sourceHandle": "gmailTrigger_0-output-emailData-json|string",
+      "target": "chatPromptTemplate_0",
+      "targetHandle": "chatPromptTemplate_0-input-promptValues-json",
+      "id": "gmailTrigger_0-gmailTrigger_0-output-emailData-json|string-chatPromptTemplate_0-chatPromptTemplate_0-input-promptValues-json"
+    }
+  ],
+  "config": null,
+  "apiConfig": null,
+  "analytic": "{\"mindsmith\":{\"status\":true,\"credentialId\":\"Testing\",\"inputs\":{\"projectName\":\"Default Project\"}}}",
+  "speechToText": null,
+  "textToSpeech": null,
+  "followUpPrompts": null,
+  "iconSrc": null
+}

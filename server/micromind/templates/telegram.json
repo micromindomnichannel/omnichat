@@ -1,0 +1,994 @@
+{
+  "nodes": [
+    {
+      "id": "telegramTrigger_0",
+      "position": {
+        "x": -1665.3517551731882,
+        "y": -1.3668861857144776
+      },
+      "type": "customNode",
+      "data": {
+        "id": "telegramTrigger_0",
+        "label": "Telegram Trigger",
+        "version": 1,
+        "name": "telegramTrigger",
+        "type": "TelegramTrigger",
+        "baseClasses": [
+          "TelegramTrigger",
+          "triggers",
+          "json",
+          "string"
+        ],
+        "category": "Triggers",
+        "description": "Real-time Telegram Bot trigger — auto-registers a webhook with Telegram and replies to incoming messages instantly",
+        "inputParams": [
+          {
+            "label": "Bot Token",
+            "name": "botToken",
+            "type": "password",
+            "placeholder": "e.g. 123456789:AABBccdd...",
+            "description": "Your Telegram Bot Token from @BotFather. Keep this secret!",
+            "id": "telegramTrigger_0-input-botToken-password"
+          },
+          {
+            "label": "How to Use",
+            "name": "howToUse",
+            "type": "string",
+            "default": "",
+            "optional": true,
+            "additionalParams": true,
+            "hint": {
+              "label": "Setup Guide",
+              "value": "\n## ✈️ Telegram Bot Setup & Token Guide\n\n### Step 1: Get Bot Token from @BotFather\n1. Open Telegram app and search for **@BotFather**.\n2. Send `/newbot` and follow the prompts to choose a bot name and username.\n3. Copy the **HTTP API Bot Token** provided (e.g. `123456789:ABCdefGhIJKlmNo...`).\n4. Paste the token into the **Bot Token** field below.\n\n### Step 2: Activate & Auto-Register Webhook\n1. Toggle the workflow to **ACTIVE** in the canvas header!\n2. MicroMind automatically registers your Webhook (`https://core.aimicromind.com/telegram-webhook/{chatflowId}`) with Telegram's API via `setWebhook`.\n\n### Step 3: Test Live\n1. Open your new bot in Telegram and click **Start** or send a message.\n2. The bot will answer in real-time!\n\n*(Note: For group chats, disable privacy in @BotFather via `/setprivacy` ➔ `Disable`)*\n"
+            },
+            "description": "Open \"Additional Parameters\" to see the full setup guide.",
+            "id": "telegramTrigger_0-input-howToUse-string"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "howToUse": ""
+        },
+        "outputAnchors": [
+          {
+            "name": "output",
+            "label": "Output",
+            "type": "options",
+            "description": "The text content of the incoming Telegram message.",
+            "options": [
+              {
+                "id": "telegramTrigger_0-output-text-string",
+                "name": "text",
+                "label": "Message Text",
+                "description": "The text content of the incoming Telegram message.",
+                "type": "string"
+              },
+              {
+                "id": "telegramTrigger_0-output-chatId-string",
+                "name": "chatId",
+                "label": "Chat ID",
+                "description": "The Telegram Chat ID where the message was sent.",
+                "type": "string"
+              },
+              {
+                "id": "telegramTrigger_0-output-fullData-json",
+                "name": "fullData",
+                "label": "Full Data (Smart Object)",
+                "description": "Full object with input, chatId, fromName, messageId for prompt mapping.",
+                "type": "json"
+              }
+            ],
+            "default": "text"
+          }
+        ],
+        "outputs": {
+          "output": "fullData"
+        },
+        "selected": false
+      },
+      "width": 320,
+      "height": 668,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -1665.3517551731882,
+        "y": -1.3668861857144776
+      },
+      "dragging": false
+    },
+    {
+      "id": "stickyNote_3",
+      "position": {
+        "x": -433.48366667288303,
+        "y": -740.5027284708204
+      },
+      "type": "stickyNote",
+      "data": {
+        "id": "stickyNote_3",
+        "label": "Sticky Note",
+        "version": 2,
+        "name": "stickyNote",
+        "type": "StickyNote",
+        "baseClasses": [
+          "StickyNote"
+        ],
+        "tags": [
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Add a sticky note",
+        "inputParams": [
+          {
+            "label": "",
+            "name": "note",
+            "type": "string",
+            "rows": 1,
+            "placeholder": "Type something here",
+            "optional": true,
+            "id": "stickyNote_3-input-note-string"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "note": "Telegram\n\nBOT Token\n\n<TELEGRAM_BOT_TOKEN>"
+        },
+        "outputAnchors": [
+          {
+            "id": "stickyNote_3-output-stickyNote-StickyNote",
+            "name": "stickyNote",
+            "label": "StickyNote",
+            "description": "Add a sticky note",
+            "type": "StickyNote"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 143,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -433.48366667288303,
+        "y": -740.5027284708204
+      },
+      "dragging": false
+    },
+    {
+      "id": "chatOpenRouter_0",
+      "position": {
+        "x": -1280.8645183028254,
+        "y": 263.556453962238
+      },
+      "type": "customNode",
+      "data": {
+        "id": "chatOpenRouter_0",
+        "label": "ChatOpenRouter",
+        "version": 2.1,
+        "name": "chatOpenRouter",
+        "type": "ChatOpenRouter",
+        "baseClasses": [
+          "ChatOpenRouter",
+          "ChatOpenAI",
+          "BaseChatOpenAI",
+          "BaseChatModel",
+          "BaseLanguageModel",
+          "Runnable"
+        ],
+        "category": "Chat Models",
+        "description": "Wrapper around Open Router Inference API. Supports all frontier models (GPT-5.6 Luna, DeepSeek R1/V3, Claude 4.6/3.7, Gemini 3.7/2.0, Llama 3.3, Qwen 2.5) and multimodal vision.",
+        "inputParams": [
+          {
+            "label": "Connect Credential",
+            "name": "credential",
+            "type": "credential",
+            "credentialNames": [
+              "openRouterApi"
+            ],
+            "optional": false,
+            "id": "chatOpenRouter_0-input-credential-credential"
+          },
+          {
+            "label": "Model Name",
+            "name": "modelName",
+            "type": "asyncOptions",
+            "loadMethod": "listModels",
+            "default": "openai/gpt-5.6-luna",
+            "description": "Select a model from the list or use Custom Model Name below",
+            "id": "chatOpenRouter_0-input-modelName-asyncOptions"
+          },
+          {
+            "label": "Custom Model Name",
+            "name": "customModelName",
+            "type": "string",
+            "placeholder": "openai/gpt-5.6-luna",
+            "description": "Custom model name to use on OpenRouter. If provided, it overrides the dropdown selection above.",
+            "additionalParams": true,
+            "optional": true,
+            "id": "chatOpenRouter_0-input-customModelName-string"
+          },
+          {
+            "label": "Temperature",
+            "name": "temperature",
+            "type": "number",
+            "step": 0.1,
+            "default": 0.7,
+            "optional": true,
+            "description": "Sampling temperature (0 to 2). Note: Reasoning models (o1, o3, DeepSeek R1, Luna) automatically omit temperature if not supported.",
+            "id": "chatOpenRouter_0-input-temperature-number"
+          },
+          {
+            "label": "Streaming",
+            "name": "streaming",
+            "type": "boolean",
+            "default": true,
+            "optional": true,
+            "additionalParams": true,
+            "id": "chatOpenRouter_0-input-streaming-boolean"
+          },
+          {
+            "label": "Max Tokens",
+            "name": "maxTokens",
+            "type": "number",
+            "step": 1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "chatOpenRouter_0-input-maxTokens-number"
+          },
+          {
+            "label": "Top Probability",
+            "name": "topP",
+            "type": "number",
+            "step": 0.1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "chatOpenRouter_0-input-topP-number"
+          },
+          {
+            "label": "Frequency Penalty",
+            "name": "frequencyPenalty",
+            "type": "number",
+            "step": 0.1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "chatOpenRouter_0-input-frequencyPenalty-number"
+          },
+          {
+            "label": "Presence Penalty",
+            "name": "presencePenalty",
+            "type": "number",
+            "step": 0.1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "chatOpenRouter_0-input-presencePenalty-number"
+          },
+          {
+            "label": "Timeout",
+            "name": "timeout",
+            "type": "number",
+            "step": 1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "chatOpenRouter_0-input-timeout-number"
+          },
+          {
+            "label": "BasePath",
+            "name": "basepath",
+            "type": "string",
+            "optional": true,
+            "default": "https://openrouter.ai/api/v1",
+            "additionalParams": true,
+            "description": "API endpoint URL for OpenRouter",
+            "id": "chatOpenRouter_0-input-basepath-string"
+          },
+          {
+            "label": "BaseOptions",
+            "name": "baseOptions",
+            "type": "json",
+            "optional": true,
+            "additionalParams": true,
+            "description": "Additional headers (e.g., {\"HTTP-Referer\": \"https://yourapp.com\"})",
+            "id": "chatOpenRouter_0-input-baseOptions-json"
+          },
+          {
+            "label": "Allow Image Uploads",
+            "name": "allowImageUploads",
+            "type": "boolean",
+            "description": "Allow image input. Only applicable when using a vision-supported model on OpenRouter (e.g. Claude 3+, GPT-4o, GPT-5+, Gemini 2.0+, Pixtral, Llama 3.2 Vision). Refer to the <a href=\"https://docs.aimicromind.com/using-aimicromind/uploads#image\" target=\"_blank\">docs</a> for details.",
+            "default": false,
+            "optional": true,
+            "id": "chatOpenRouter_0-input-allowImageUploads-boolean"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Cache",
+            "name": "cache",
+            "type": "BaseCache",
+            "optional": true,
+            "id": "chatOpenRouter_0-input-cache-BaseCache"
+          }
+        ],
+        "inputs": {
+          "cache": "",
+          "modelName": "openai/gpt-5.6-luna",
+          "customModelName": "",
+          "temperature": 0.7,
+          "streaming": true,
+          "maxTokens": "",
+          "topP": "",
+          "frequencyPenalty": "",
+          "presencePenalty": "",
+          "timeout": "",
+          "basepath": "https://openrouter.ai/api/v1",
+          "baseOptions": "",
+          "allowImageUploads": ""
+        },
+        "outputAnchors": [
+          {
+            "id": "chatOpenRouter_0-output-chatOpenRouter-ChatOpenRouter|ChatOpenAI|BaseChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable",
+            "name": "chatOpenRouter",
+            "label": "ChatOpenRouter",
+            "description": "Wrapper around Open Router Inference API. Supports all frontier models (GPT-5.6 Luna, DeepSeek R1/V3, Claude 4.6/3.7, Gemini 3.7/2.0, Llama 3.3, Qwen 2.5) and multimodal vision.",
+            "type": "ChatOpenRouter | ChatOpenAI | BaseChatOpenAI | BaseChatModel | BaseLanguageModel | Runnable"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 789,
+      "selected": false,
+      "dragging": false,
+      "positionAbsolute": {
+        "x": -1280.8645183028254,
+        "y": 263.556453962238
+      }
+    },
+    {
+      "id": "bufferMemory_0",
+      "position": {
+        "x": -1279.7047003293997,
+        "y": -102.4770442686031
+      },
+      "type": "customNode",
+      "data": {
+        "id": "bufferMemory_0",
+        "label": "Buffer Memory",
+        "version": 2,
+        "name": "bufferMemory",
+        "type": "BufferMemory",
+        "baseClasses": [
+          "BufferMemory",
+          "BaseChatMemory",
+          "BaseMemory"
+        ],
+        "category": "Memory",
+        "description": "Retrieve chat messages stored in database",
+        "inputParams": [
+          {
+            "label": "Session Id",
+            "name": "sessionId",
+            "type": "string",
+            "description": "If not specified, a random id will be used. Learn <a target=\"_blank\" href=\"https://docs.aimicromind.com/memory#ui-and-embedded-chat\">more</a>",
+            "default": "",
+            "additionalParams": true,
+            "optional": true,
+            "id": "bufferMemory_0-input-sessionId-string"
+          },
+          {
+            "label": "Memory Key",
+            "name": "memoryKey",
+            "type": "string",
+            "default": "chat_history",
+            "additionalParams": true,
+            "id": "bufferMemory_0-input-memoryKey-string"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "sessionId": "",
+          "memoryKey": "chat_history"
+        },
+        "outputAnchors": [
+          {
+            "id": "bufferMemory_0-output-bufferMemory-BufferMemory|BaseChatMemory|BaseMemory",
+            "name": "bufferMemory",
+            "label": "BufferMemory",
+            "description": "Retrieve chat messages stored in database",
+            "type": "BufferMemory | BaseChatMemory | BaseMemory"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 342,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -1279.7047003293997,
+        "y": -102.4770442686031
+      },
+      "dragging": false
+    },
+    {
+      "id": "chatPromptTemplate_0",
+      "position": {
+        "x": -916.1100296490346,
+        "y": -70.07549610437894
+      },
+      "type": "customNode",
+      "data": {
+        "id": "chatPromptTemplate_0",
+        "label": "Chat Prompt Template",
+        "version": 2,
+        "name": "chatPromptTemplate",
+        "type": "ChatPromptTemplate",
+        "baseClasses": [
+          "ChatPromptTemplate",
+          "BaseChatPromptTemplate",
+          "BasePromptTemplate",
+          "Runnable"
+        ],
+        "category": "Prompts",
+        "description": "Schema to represent a chat prompt",
+        "inputParams": [
+          {
+            "label": "System Message",
+            "name": "systemMessagePrompt",
+            "type": "string",
+            "rows": 4,
+            "placeholder": "You are a helpful assistant that translates {input_language} to {output_language}.",
+            "id": "chatPromptTemplate_0-input-systemMessagePrompt-string"
+          },
+          {
+            "label": "Human Message",
+            "name": "humanMessagePrompt",
+            "description": "This prompt will be added at the end of the messages as human message",
+            "type": "string",
+            "rows": 4,
+            "placeholder": "{text}",
+            "id": "chatPromptTemplate_0-input-humanMessagePrompt-string"
+          },
+          {
+            "label": "Format Prompt Values",
+            "name": "promptValues",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "chatPromptTemplate_0-input-promptValues-json"
+          },
+          {
+            "label": "Messages History",
+            "name": "messageHistory",
+            "description": "Add messages after System Message. This is useful when you want to provide few shot examples",
+            "type": "tabs",
+            "tabIdentifier": "selectedMessagesTab",
+            "additionalParams": true,
+            "default": "messageHistoryCode",
+            "tabs": [
+              {
+                "label": "Add Messages (Code)",
+                "name": "messageHistoryCode",
+                "type": "code",
+                "hideCodeExecute": true,
+                "codeExample": "const { AIMessage, HumanMessage, ToolMessage } = require('@langchain/core/messages');\n\nreturn [\n    new HumanMessage(\"What is 333382 🦜 1932?\"),\n    new AIMessage({\n        content: \"\",\n        tool_calls: [\n        {\n            id: \"12345\",\n            name: \"calulator\",\n            args: {\n                number1: 333382,\n                number2: 1932,\n                operation: \"divide\",\n            },\n        },\n        ],\n    }),\n    new ToolMessage({\n        tool_call_id: \"12345\",\n        content: \"The answer is 172.558.\",\n    }),\n    new AIMessage(\"The answer is 172.558.\"),\n]",
+                "optional": true,
+                "additionalParams": true
+              }
+            ],
+            "id": "chatPromptTemplate_0-input-messageHistory-tabs"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "systemMessagePrompt": "",
+          "humanMessagePrompt": "",
+          "promptValues": "",
+          "messageHistory": "messageHistoryCode"
+        },
+        "outputAnchors": [
+          {
+            "id": "chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable",
+            "name": "chatPromptTemplate",
+            "label": "ChatPromptTemplate",
+            "description": "Schema to represent a chat prompt",
+            "type": "ChatPromptTemplate | BaseChatPromptTemplate | BasePromptTemplate | Runnable"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 878,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -916.1100296490346,
+        "y": -70.07549610437894
+      },
+      "dragging": false
+    },
+    {
+      "id": "toolAgent_0",
+      "position": {
+        "x": -77.32146170002454,
+        "y": 83.06956014103974
+      },
+      "type": "customNode",
+      "data": {
+        "id": "toolAgent_0",
+        "label": "Tool Agent",
+        "version": 2,
+        "name": "toolAgent",
+        "type": "AgentExecutor",
+        "baseClasses": [
+          "AgentExecutor",
+          "BaseChain",
+          "Runnable"
+        ],
+        "category": "Agents",
+        "description": "Agent that uses Function Calling to pick the tools and args to call",
+        "inputParams": [
+          {
+            "label": "System Message",
+            "name": "systemMessage",
+            "type": "string",
+            "default": "You are a helpful AI assistant.",
+            "description": "If Chat Prompt Template is provided, this will be ignored",
+            "rows": 4,
+            "optional": true,
+            "additionalParams": true,
+            "id": "toolAgent_0-input-systemMessage-string"
+          },
+          {
+            "label": "Max Iterations",
+            "name": "maxIterations",
+            "type": "number",
+            "optional": true,
+            "additionalParams": true,
+            "id": "toolAgent_0-input-maxIterations-number"
+          },
+          {
+            "label": "Enable Detailed Streaming",
+            "name": "enableDetailedStreaming",
+            "type": "boolean",
+            "default": false,
+            "description": "Stream detailed intermediate steps during agent execution",
+            "optional": true,
+            "additionalParams": true,
+            "id": "toolAgent_0-input-enableDetailedStreaming-boolean"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Tools",
+            "name": "tools",
+            "type": "Tool",
+            "list": true,
+            "id": "toolAgent_0-input-tools-Tool"
+          },
+          {
+            "label": "Memory",
+            "name": "memory",
+            "type": "BaseChatMemory",
+            "id": "toolAgent_0-input-memory-BaseChatMemory"
+          },
+          {
+            "label": "Tool Calling Chat Model",
+            "name": "model",
+            "type": "BaseChatModel",
+            "description": "Only compatible with models that are capable of function calling: ChatOpenAI, ChatMistral, ChatAnthropic, GoogleGenerativeAI, ChatVertexAI, GroqChat",
+            "id": "toolAgent_0-input-model-BaseChatModel"
+          },
+          {
+            "label": "Chat Prompt Template",
+            "name": "chatPromptTemplate",
+            "type": "ChatPromptTemplate",
+            "description": "Override existing prompt with Chat Prompt Template. Human Message must includes {input} variable",
+            "optional": true,
+            "id": "toolAgent_0-input-chatPromptTemplate-ChatPromptTemplate"
+          },
+          {
+            "label": "Input Moderation",
+            "description": "Detect text that could generate harmful output and prevent it from being sent to the language model",
+            "name": "inputModeration",
+            "type": "Moderation",
+            "optional": true,
+            "list": true,
+            "id": "toolAgent_0-input-inputModeration-Moderation"
+          }
+        ],
+        "inputs": {
+          "tools": [
+            "{{telegramTool_0.data.instance}}",
+            "{{telegramBot_0.data.instance}}"
+          ],
+          "memory": "{{bufferMemory_0.data.instance}}",
+          "model": "{{chatOpenRouter_0.data.instance}}",
+          "chatPromptTemplate": "{{chatPromptTemplate_0.data.instance}}",
+          "systemMessage": "You are a helpful AI assistant.",
+          "inputModeration": "",
+          "maxIterations": "",
+          "enableDetailedStreaming": ""
+        },
+        "outputAnchors": [
+          {
+            "id": "toolAgent_0-output-toolAgent-AgentExecutor|BaseChain|Runnable",
+            "name": "toolAgent",
+            "label": "AgentExecutor",
+            "description": "Agent that uses Function Calling to pick the tools and args to call",
+            "type": "AgentExecutor | BaseChain | Runnable"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 510,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -77.32146170002454,
+        "y": 83.06956014103974
+      },
+      "dragging": false
+    },
+    {
+      "id": "telegramBot_0",
+      "position": {
+        "x": -406.6543908622851,
+        "y": -526.8400040011086
+      },
+      "type": "customNode",
+      "data": {
+        "id": "telegramBot_0",
+        "label": "Telegram Bot",
+        "version": 1,
+        "name": "telegramBot",
+        "type": "TelegramBot",
+        "baseClasses": [
+          "TelegramBot",
+          "Tool",
+          "StructuredTool",
+          "Runnable"
+        ],
+        "category": "Communication",
+        "description": "Send messages to a Telegram chat",
+        "inputParams": [
+          {
+            "label": "Bot Token",
+            "name": "botToken",
+            "type": "password",
+            "description": "Your Telegram Bot API Token",
+            "id": "telegramBot_0-input-botToken-password"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {},
+        "outputAnchors": [
+          {
+            "id": "telegramBot_0-output-telegramBot-TelegramBot|Tool|StructuredTool|Runnable",
+            "name": "telegramBot",
+            "label": "TelegramBot",
+            "description": "Send messages to a Telegram chat",
+            "type": "TelegramBot | Tool | StructuredTool | Runnable"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 392,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -406.6543908622851,
+        "y": -526.8400040011086
+      },
+      "dragging": false
+    },
+    {
+      "id": "telegramTool_0",
+      "position": {
+        "x": -830.0338460245983,
+        "y": -767.2576615752282
+      },
+      "type": "customNode",
+      "data": {
+        "id": "telegramTool_0",
+        "label": "Telegram",
+        "version": 2,
+        "name": "telegramTool",
+        "type": "Telegram",
+        "baseClasses": [
+          "Telegram",
+          "Tool"
+        ],
+        "category": "Communication",
+        "description": "Perform Telegram Bot operations such as sending messages, editing, replying, deleting, sending contacts and locations.",
+        "inputParams": [
+          {
+            "label": "Connect Credential",
+            "name": "credential",
+            "type": "credential",
+            "credentialNames": [
+              "telegramBotApi"
+            ],
+            "id": "telegramTool_0-input-credential-credential"
+          },
+          {
+            "label": "Telegram Operation Type",
+            "name": "telegramType",
+            "type": "options",
+            "description": "Choose Telegram feature group",
+            "options": [
+              {
+                "label": "Messages",
+                "name": "messages"
+              },
+              {
+                "label": "Contacts & Location",
+                "name": "misc"
+              }
+            ],
+            "default": "messages",
+            "id": "telegramTool_0-input-telegramType-options"
+          },
+          {
+            "label": "Message Actions",
+            "name": "messageActions",
+            "type": "multiOptions",
+            "description": "Select message operations",
+            "options": [
+              {
+                "label": "Send Message",
+                "name": "sendMessage"
+              },
+              {
+                "label": "Edit Message",
+                "name": "editMessage"
+              },
+              {
+                "label": "Reply Message",
+                "name": "replyMessage"
+              },
+              {
+                "label": "Delete Message",
+                "name": "deleteMessage"
+              }
+            ],
+            "show": {
+              "telegramType": [
+                "messages"
+              ]
+            },
+            "id": "telegramTool_0-input-messageActions-multiOptions"
+          },
+          {
+            "label": "Other Actions",
+            "name": "miscActions",
+            "type": "multiOptions",
+            "description": "Select contact or location operations",
+            "options": [
+              {
+                "label": "Send Contact",
+                "name": "sendContact"
+              },
+              {
+                "label": "Send Location",
+                "name": "sendLocation"
+              }
+            ],
+            "show": {
+              "telegramType": [
+                "misc"
+              ]
+            },
+            "id": "telegramTool_0-input-miscActions-multiOptions"
+          },
+          {
+            "label": "Chat ID",
+            "name": "chatId",
+            "type": "string",
+            "description": "Target Chat ID (e.g., 6107265711)",
+            "additionalParams": true,
+            "optional": true,
+            "id": "telegramTool_0-input-chatId-string"
+          },
+          {
+            "label": "Text",
+            "name": "text",
+            "type": "string",
+            "description": "Message text content",
+            "additionalParams": true,
+            "optional": true,
+            "id": "telegramTool_0-input-text-string"
+          },
+          {
+            "label": "Message ID",
+            "name": "messageId",
+            "type": "string",
+            "description": "Message ID (required for edit/reply/delete)",
+            "additionalParams": true,
+            "optional": true,
+            "id": "telegramTool_0-input-messageId-string"
+          },
+          {
+            "label": "Phone Number",
+            "name": "phoneNumber",
+            "type": "string",
+            "description": "Phone number with country code (+20...)",
+            "additionalParams": true,
+            "optional": true,
+            "id": "telegramTool_0-input-phoneNumber-string"
+          },
+          {
+            "label": "First Name",
+            "name": "firstName",
+            "type": "string",
+            "description": "Contact first name",
+            "additionalParams": true,
+            "optional": true,
+            "id": "telegramTool_0-input-firstName-string"
+          },
+          {
+            "label": "Last Name",
+            "name": "lastName",
+            "type": "string",
+            "description": "Contact last name",
+            "additionalParams": true,
+            "optional": true,
+            "id": "telegramTool_0-input-lastName-string"
+          },
+          {
+            "label": "Latitude",
+            "name": "latitude",
+            "type": "string",
+            "description": "Location latitude",
+            "additionalParams": true,
+            "optional": true,
+            "id": "telegramTool_0-input-latitude-string"
+          },
+          {
+            "label": "Longitude",
+            "name": "longitude",
+            "type": "string",
+            "description": "Location longitude",
+            "additionalParams": true,
+            "optional": true,
+            "id": "telegramTool_0-input-longitude-string"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "telegramType": "messages",
+          "messageActions": "[\"sendMessage\",\"replyMessage\"]",
+          "miscActions": "",
+          "chatId": "",
+          "text": "",
+          "messageId": "",
+          "phoneNumber": "",
+          "firstName": "",
+          "lastName": "",
+          "latitude": "",
+          "longitude": ""
+        },
+        "outputAnchors": [
+          {
+            "id": "telegramTool_0-output-telegramTool-Telegram|Tool",
+            "name": "telegramTool",
+            "label": "Telegram",
+            "description": "Perform Telegram Bot operations such as sending messages, editing, replying, deleting, sending contacts and locations.",
+            "type": "Telegram | Tool"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 677,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -830.0338460245983,
+        "y": -767.2576615752282
+      },
+      "dragging": false
+    }
+  ],
+  "edges": [
+    {
+      "type": "buttonedge",
+      "style": {
+        "stroke": "#E0AA3E",
+        "strokeWidth": 2.5,
+        "opacity": 0.65,
+        "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
+      },
+      "animated": false,
+      "source": "chatPromptTemplate_0",
+      "sourceHandle": "chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable",
+      "target": "toolAgent_0",
+      "targetHandle": "toolAgent_0-input-chatPromptTemplate-ChatPromptTemplate",
+      "id": "chatPromptTemplate_0-chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable-toolAgent_0-toolAgent_0-input-chatPromptTemplate-ChatPromptTemplate"
+    },
+    {
+      "type": "buttonedge",
+      "style": {
+        "stroke": "#E0AA3E",
+        "strokeWidth": 2.5,
+        "opacity": 0.65,
+        "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
+      },
+      "animated": false,
+      "source": "chatOpenRouter_0",
+      "sourceHandle": "chatOpenRouter_0-output-chatOpenRouter-ChatOpenRouter|ChatOpenAI|BaseChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable",
+      "target": "toolAgent_0",
+      "targetHandle": "toolAgent_0-input-model-BaseChatModel",
+      "id": "chatOpenRouter_0-chatOpenRouter_0-output-chatOpenRouter-ChatOpenRouter|ChatOpenAI|BaseChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable-toolAgent_0-toolAgent_0-input-model-BaseChatModel"
+    },
+    {
+      "type": "buttonedge",
+      "style": {
+        "stroke": "#E0AA3E",
+        "strokeWidth": 2.5,
+        "opacity": 0.65,
+        "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
+      },
+      "animated": false,
+      "source": "bufferMemory_0",
+      "sourceHandle": "bufferMemory_0-output-bufferMemory-BufferMemory|BaseChatMemory|BaseMemory",
+      "target": "toolAgent_0",
+      "targetHandle": "toolAgent_0-input-memory-BaseChatMemory",
+      "id": "bufferMemory_0-bufferMemory_0-output-bufferMemory-BufferMemory|BaseChatMemory|BaseMemory-toolAgent_0-toolAgent_0-input-memory-BaseChatMemory"
+    },
+    {
+      "type": "buttonedge",
+      "style": {
+        "stroke": "#E0AA3E",
+        "strokeWidth": 2.5,
+        "opacity": 0.65,
+        "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
+      },
+      "animated": false,
+      "source": "telegramTrigger_0",
+      "sourceHandle": "telegramTrigger_0-output-fullData-json",
+      "target": "chatPromptTemplate_0",
+      "targetHandle": "chatPromptTemplate_0-input-promptValues-json",
+      "id": "telegramTrigger_0-telegramTrigger_0-output-fullData-json-chatPromptTemplate_0-chatPromptTemplate_0-input-promptValues-json"
+    },
+    {
+      "type": "buttonedge",
+      "style": {
+        "stroke": "#E0AA3E",
+        "strokeWidth": 2.5,
+        "opacity": 0.65,
+        "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
+      },
+      "animated": false,
+      "source": "telegramTool_0",
+      "sourceHandle": "telegramTool_0-output-telegramTool-Telegram|Tool",
+      "target": "toolAgent_0",
+      "targetHandle": "toolAgent_0-input-tools-Tool",
+      "id": "telegramTool_0-telegramTool_0-output-telegramTool-Telegram|Tool-toolAgent_0-toolAgent_0-input-tools-Tool"
+    },
+    {
+      "type": "buttonedge",
+      "style": {
+        "stroke": "#E0AA3E",
+        "strokeWidth": 2.5,
+        "opacity": 0.65,
+        "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
+      },
+      "animated": false,
+      "source": "telegramBot_0",
+      "sourceHandle": "telegramBot_0-output-telegramBot-TelegramBot|Tool|StructuredTool|Runnable",
+      "target": "toolAgent_0",
+      "targetHandle": "toolAgent_0-input-tools-Tool",
+      "id": "telegramBot_0-telegramBot_0-output-telegramBot-TelegramBot|Tool|StructuredTool|Runnable-toolAgent_0-toolAgent_0-input-tools-Tool"
+    }
+  ],
+  "config": null,
+  "apiConfig": null,
+  "analytic": "{\"mindsmith\":{\"status\":true,\"credentialId\":\"Testing\",\"inputs\":{\"projectName\":\"Default Project\"}}}",
+  "speechToText": null,
+  "textToSpeech": null,
+  "followUpPrompts": null,
+  "iconSrc": null
+}

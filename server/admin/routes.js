@@ -129,8 +129,7 @@ export function adminRouter(pool) {
   });
 
   // Owner-only: create a member account (public registration closes after bootstrap).
-  r.post('/api/v1/admin/users', requireRole('owner'), async (req, res) => {
-    const { email, password, displayName, role = 'agent' } = req.body || {};
+  r.post('/api/v1/admin/users', requireRole('owner'), async (req, res) => {    const { email, password, displayName, role = 'agent' } = req.body || {};
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'valid email required' });
     if (!password || String(password).length < 10) return res.status(400).json({ error: 'password min 10 chars' });
     if (!['admin', 'agent'].includes(role)) return res.status(400).json({ error: 'role must be admin|agent' });
@@ -144,6 +143,78 @@ export function adminRouter(pool) {
       res.json({ user: { id, email: String(email).toLowerCase() }, membership: { workspace_id: req.workspaceId, role } });
     } catch (err) {
       if (String(err.message).includes('duplicate')) return res.status(409).json({ error: 'email taken' });
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Template registry status: manifest defaults + DB overrides + versions
+  // actually in use. Lets Admin badge stale clones (badge-only policy: existing
+  // clones are never auto-recloned).
+  r.get('/api/v1/admin/templates', async (req, res) => {
+    try {
+      const { loadManifest } = await import('../micromind/provisionChannel.js');
+      const manifest = loadManifest();
+      const dbRows = await q(pool, 'SELECT channel, version, status, updated_at FROM flow_templates');
+      const dbByChannel = Object.fromEntries((dbRows || []).map((r) => [r.channel, r]));
+      const inUse = await q(pool,
+        'SELECT template AS channel, template_version AS version, COUNT(*)::int AS clones FROM micromind_flows GROUP BY 1,2');
+      const out = {};
+      for (const [channel, entry] of Object.entries(manifest)) {
+        const current = dbByChannel[channel]?.version || entry.version;
+        out[channel] = {
+          file: entry.file, currentVersion: current,
+          currentSource: dbByChannel[channel] ? 'db' : 'file',
+          status: dbByChannel[channel]?.status || entry.status,
+          inUse: (inUse || []).filter((u) => u.channel === channel)
+            .map((u) => ({ version: u.version, clones: u.clones, stale: u.version !== current })),
+        };
+      }
+      res.json(out);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Owner-only: register/update a channel template export. Validates structure
+  // (trigger + prompt + agent present) and scans for live secrets (bot tokens,
+  // OAuth secrets, page tokens) plus requires an explicit no-secrets
+  // attestation — templates ship to every future tenant clone.
+  r.put('/api/v1/admin/templates/:channel', requireRole('owner'), async (req, res) => {
+    const { channel } = req.params;
+    const { flowData, version, status = 'draft', confirmNoSecrets = false } = req.body || {};
+    const KNOWN = ['messenger', 'instagram', 'whatsapp', 'telegram', 'gmail'];
+    if (!KNOWN.includes(channel)) return res.status(400).json({ error: `Unknown channel: ${channel}` });
+    if (!version || !/^v\d+(-draft)?$/.test(String(version))) {
+      return res.status(400).json({ error: "version required, format 'vN' or 'vN-draft' (e.g. v2-draft)" });
+    }
+    if (!['draft', 'verified'].includes(status)) return res.status(400).json({ error: "status must be 'draft' or 'verified'" });
+    if (confirmNoSecrets !== true) {
+      return res.status(400).json({ error: 'confirmNoSecrets:true required — attest the export holds no live tokens/keys' });
+    }
+    const { validateTemplateExport } = await import('../micromind/templateValidate.js');
+    const check = validateTemplateExport(flowData);
+    if (!check.ok) {
+      return res.status(400).json({
+        error: check.errors.length ? `invalid template: ${check.errors.join(', ')}` : `live secrets detected (${check.hits.length}) — strip them before registering`,
+        errors: check.errors, hits: check.hits.slice(0, 10),
+      });
+    }
+    const flow = flowData;
+    try {
+      await pool.query(
+        `INSERT INTO flow_templates (channel, version, status, flow_data, updated_by, updated_at)
+         VALUES ($1,$2,$3,$4,$5,CURRENT_TIMESTAMP)
+         ON CONFLICT (channel) DO UPDATE SET version=EXCLUDED.version, status=EXCLUDED.status,
+           flow_data=EXCLUDED.flow_data, updated_by=EXCLUDED.updated_by, updated_at=CURRENT_TIMESTAMP`,
+        [channel, String(version), status, JSON.stringify(flow), req.user.email]
+      );
+      await pool.query(
+        'INSERT INTO audit_logs (id, workspace_id, actor, action, resource, meta) VALUES ($1,$2,$3,$4,$5,$6)',
+        [`aud_${Date.now()}`, req.workspaceId, req.user.email, 'template.register',
+         `template:${channel}`, JSON.stringify({ version, status, nodes: flow.nodes.length })]
+      );
+      res.json({ channel, version: String(version), status, nodes: flow.nodes.length });
+    } catch (err) {
       res.status(500).json({ error: err.message });
     }
   });

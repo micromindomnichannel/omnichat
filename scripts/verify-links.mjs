@@ -102,5 +102,86 @@ for (const col of ['purpose', 'label', 'source', 'last_test_at', 'last_test_stat
 ok('009 idempotent guards', (sql.match(/IF NOT EXISTS/g) || []).length >= 7);
 ok('009 backfills purpose+label+source', sql.includes("purpose = 'channel'") && sql.includes('byof'));
 
-console.log(`\n${pass} passed, ${fail} failed`);
+if (!fail) {
+  // ---- Part 2: template registry + buildTenantFlowData policies ----
+  const { buildTenantFlowData, loadManifest, templateVersionFor } = await import('../server/micromind/provisionChannel.js');
+  const { validateTemplateExport, scanSecrets } = await import('../server/micromind/templateValidate.js');
+  const tpls = {};
+  for (const ch of ['messenger', 'instagram', 'whatsapp', 'telegram']) {
+    tpls[ch] = JSON.parse(fs.readFileSync(new URL(`../server/micromind/templates/${ch}.json`, import.meta.url), 'utf8'));
+  }
+  const hasNode = (d, name) => d.nodes.some((n) => n?.data?.name === name);
+
+  // structural validation of the shipped templates
+  for (const [ch, d] of Object.entries(tpls)) {
+    const v = validateTemplateExport(d);
+    ok(`template ${ch} validates`, v.ok && v.errors.length === 0, JSON.stringify(v.errors));
+  }
+  // sanitized templates hold no live secrets
+  for (const [ch, d] of Object.entries(tpls)) {
+    ok(`template ${ch} has no live secrets`, scanSecrets(d).length === 0);
+  }
+  // validator catches each secret shape
+  // Synthetic shape-equivalents (runtime-built so no provider-prefixed literal
+  // ever lands in git — push protection scans file contents, not values).
+  // These carry zero entropy and match no real credential by construction.
+  const SYN_BOT = `${'12345678'}:${'B'.repeat(35)}`;
+  const SYN_OAUTH = `GOCSPX-${'c'.repeat(20)}`;
+  const SYN_CLIENT = `123456789012-${'d'.repeat(24)}.apps.googleusercontent.com`;
+  const SYN_META = `EAA${'e'.repeat(30)}`;
+  ok('validator catches bot token', scanSecrets({ x: SYN_BOT }).length === 1);
+  ok('validator catches oauth secret', scanSecrets({ x: SYN_OAUTH }).length === 1);
+  ok('validator catches google client id', scanSecrets({ x: SYN_CLIENT }).length === 1);
+  ok('validator catches meta token', scanSecrets({ x: SYN_META }).length === 1);
+  ok('validator ignores template refs', scanSecrets({ x: '{{telegramTool_0.data.instance}}', y: 'toolAgent_0-input-tools-Tool' }).length === 0);
+  ok('validator rejects structureless', validateTemplateExport({ nodes: [] }).ok === false);
+
+  // whatsapp: phoneNumberId injected
+  const waBuilt = buildTenantFlowData('whatsapp', tpls.whatsapp, { phoneNumberId: '109823475628109', businessName: 'Luna' });
+  const waTrig = waBuilt.nodes.find((n) => n?.data?.name === 'whatsappTrigger');
+  ok('whatsapp phoneNumberId injected', waTrig?.data?.inputs?.phoneNumberId === '109823475628109');
+  ok('whatsapp source template untouched', tpls.whatsapp.nodes.find((n) => n?.data?.name === 'whatsappTrigger')?.data?.inputs?.phoneNumberId === '');
+
+  // telegram: tokens stay empty, send tools stripped, human message defaulted
+  const tgBuilt = buildTenantFlowData('telegram', tpls.telegram, { businessName: 'Luna', language: 'Arabic' });
+  const tgTrig = tgBuilt.nodes.find((n) => n?.data?.name === 'telegramTrigger');
+  const tgBot = tgBuilt.nodes.find((n) => n?.data?.name === 'telegramBot');
+  const tgAgent = tgBuilt.nodes.find((n) => n?.data?.name === 'toolAgent');
+  const tgPrompt = tgBuilt.nodes.find((n) => n?.data?.name === 'chatPromptTemplate');
+  ok('telegram trigger botToken empty', (tgTrig?.data?.inputs?.botToken || '') === '');
+  ok('telegram tool botToken empty', (tgBot?.data?.inputs?.botToken || '') === '');
+  ok('telegram send tools stripped', Array.isArray(tgAgent?.data?.inputs?.tools) && tgAgent.data.inputs.tools.length === 0);
+  ok('telegram human message defaulted', tgPrompt?.data?.inputs?.humanMessagePrompt === '{input}');
+  ok('telegram prompt gets business ctx', String(tgPrompt?.data?.inputs?.systemMessagePrompt).includes('Business: Luna.'));
+
+  // messenger/instagram byte-identical behavior preserved (tools kept)
+  for (const ch of ['messenger', 'instagram']) {
+    const built = buildTenantFlowData(ch, tpls[ch], { businessName: 'Luna' });
+    const agent = built.nodes.find((n) => /agent/i.test(n?.data?.label || '') && n?.data?.name === 'toolAgent');
+    ok(`${ch} agent tools preserved`, Array.isArray(agent?.data?.inputs?.tools) && agent.data.inputs.tools.length > 0);
+  }
+
+  // manifest versions
+  const manifest = loadManifest();
+  ok('manifest versions', manifest.whatsapp?.version === 'v1-draft' && manifest.telegram?.version === 'v1-draft' && manifest.messenger?.status === 'verified');
+  ok('templateVersionFor falls back', templateVersionFor('gmail') === 'v0-todo');
+
+  // askAnalyst fix: exercises the previously-throwing path with stubbed predict
+  delete process.env.MICROMIND_ANALYST_FLOW_ID;
+  process.env.MICROMIND_ANALYST_FLOW_ID = 'flow-ana-live';
+  const { askAnalyst } = await import('../server/micromind/analyst.js');
+  // stub fetch prediction for the analyst flow id
+  const prevFetch = globalThis.fetch;
+  globalThis.fetch = async (url, opts = {}) => {
+    const u = String(url);
+    const json = (status, body) => ({ ok: status < 400, status, text: async () => JSON.stringify(body), json: async () => body });
+    if (u.includes('/prediction/flow-ana-live')) return json(200, { text: 'Executive summary here.' });
+    return prevFetch(url, opts);
+  };
+  const ans = await askAnalyst('Summarize?', { vars: { period: 'weekly' } });
+  ok('askAnalyst returns text (ReferenceError fixed)', ans.text === 'Executive summary here.' && ans.source === 'micromind');
+  globalThis.fetch = prevFetch;
+
+  console.log(`\nTOTAL ${pass} passed, ${fail} failed`);
+}
 process.exit(fail ? 1 : 0);
