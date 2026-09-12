@@ -32,16 +32,18 @@ import { Toast } from './components/shared/Toast';
 import { api } from './services/api';
 import { isAdmin } from './services/session';
 
-// Session guard: the server cookie is the source of truth. localStorage is only
-// an optimistic hint so first paint isn't blocked on the network.
+// Session guard: the server cookie is the source of truth. We always start at
+// 'checking' — a stale localStorage flag from older builds must never route
+// past the login/signup pages before the server confirms the session.
 function useSession() {
   const { dispatch } = useStore();
-  const [status, setStatus] = useState<'checking' | 'in' | 'out'>(() =>
-    localStorage.getItem('orbit_authenticated') === 'true' ? 'in' : 'checking'
-  );
+  const [status, setStatus] = useState<'checking' | 'in' | 'out'>('checking');
   useEffect(() => {
     let cancelled = false;
-    api.me().then((me) => {
+    // Bound the check: a hanging backend (cold start) must resolve to the
+    // login page, never an endless splash.
+    const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 12000));
+    Promise.race([api.me(), timeout]).then((me: any) => {
       if (cancelled) return;
       if (me?.user) {
         localStorage.setItem('orbit_authenticated', 'true');
