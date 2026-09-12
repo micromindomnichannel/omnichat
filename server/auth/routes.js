@@ -1,42 +1,113 @@
 // Auth endpoints. Registration is OPEN only while zero users exist (bootstrap);
 // afterwards accounts are created by owners via POST /api/v1/admin/users.
+// First-time signup requires email OTP verification (request-code -> verify).
 // Login is rate-limited (anti-brute-force). Sessions are httpOnly cookies.
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import { createSession, destroySession, getSessionUser, parseCookies, sessionCookie, clearSessionCookie, COOKIE_NAME } from './sessions.js';
 import { rateLimit } from '../middleware/rateLimit.js';
+import { sendMail, mailConfigured } from '../mailer.js';
 
 const rid = (p) => `${p}_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const loginLimit = rateLimit({ windowMs: 60_000, max: 10 });
+const otpRequestLimit = rateLimit({ windowMs: 60_000, max: 5 });
+const otpVerifyLimit = rateLimit({ windowMs: 60_000, max: 10 });
+
+const OTP_TTL_MIN = 10;
+const OTP_MAX_ATTEMPTS = 5;
+const newOtpCode = () => String(Math.floor(100000 + Math.random() * 900000));
+
+async function registrationOpen(pool) {
+  const count = await pool.query('SELECT COUNT(*)::int AS n FROM users');
+  return count.rows[0].n === 0;
+}
 
 export function authRouter(pool) {
   const r = express.Router();
 
-  r.post('/api/auth/signup', async (req, res) => {
-    const email = String(req.body?.email || '').trim();
+  // Step 1: validate + create a pending OTP row + email the 6-digit code.
+  // Stores the bcrypt-hashed password now so verify needs only email+code.
+  r.post('/api/auth/signup/request-code', otpRequestLimit, async (req, res) => {
+    const email = String(req.body?.email || '').trim().toLowerCase();
     const password = req.body?.password;
     const displayName = req.body?.displayName;
     if (!email || !EMAIL_RE.test(email)) return res.status(400).json({ error: 'valid email required' });
     if (!password || String(password).length < 10) return res.status(400).json({ error: 'password min 10 chars' });
     try {
-      const count = await pool.query('SELECT COUNT(*)::int AS n FROM users');
-      const first = count.rows[0].n === 0;
-      if (!first) return res.status(403).json({ code: 'registration_closed', error: 'Ask a workspace owner for an account' });
+      if (!(await registrationOpen(pool))) {
+        return res.status(403).json({ code: 'registration_closed', error: 'Ask a workspace owner for an account' });
+      }
+      const taken = await pool.query('SELECT id FROM users WHERE email=$1', [email]);
+      if (taken.rows.length) return res.status(409).json({ error: 'email taken' });
+      const crypto = (await import('crypto')).default;
+      const code = newOtpCode();
+      const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+      await pool.query('DELETE FROM signup_otps WHERE email=$1', [email]); // one active row per email
+      await pool.query(
+        `INSERT INTO signup_otps (id, email, code_hash, password_hash, display_name, expires_at)
+         VALUES ($1,$2,$3,$4,$5, CURRENT_TIMESTAMP + INTERVAL '${OTP_TTL_MIN} minutes')`,
+        [`otp_${Date.now()}`, email, codeHash, await bcrypt.hash(String(password), 12), displayName || email.split('@')[0]]
+      );
+      const sent = await sendMail({
+        to: email,
+        subject: 'Your ORBIT verification code',
+        text: `Your ORBIT verification code is: ${code}\nIt expires in ${OTP_TTL_MIN} minutes. If you did not request this, ignore this email.`,
+      });
+      const out = { success: true, expiresInSec: OTP_TTL_MIN * 60, delivered: sent.delivered };
+      if (!sent.delivered && process.env.ALLOW_DEBUG_OTP === '1') out.debugCode = code;
+      res.json(out);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Step 2: verify code -> create user (+owner if first) -> session cookie.
+  r.post('/api/auth/signup/verify', otpVerifyLimit, async (req, res) => {
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const code = String(req.body?.code || '').trim();
+    if (!email || !/^\d{6}$/.test(code)) return res.status(400).json({ error: 'email + 6-digit code required' });
+    try {
+      const row = (await pool.query(
+        'SELECT * FROM signup_otps WHERE email=$1 AND used_at IS NULL ORDER BY created_at DESC LIMIT 1',
+        [email])).rows[0];
+      if (!row) return res.status(400).json({ error: 'no pending verification for this email — request a new code' });
+      if (new Date(row.expires_at).getTime() < Date.now()) {
+        return res.status(400).json({ error: 'code expired — request a new one' });
+      }
+      if (Number(row.attempts) >= OTP_MAX_ATTEMPTS) {
+        return res.status(429).json({ error: 'too many attempts — request a new code' });
+      }
+      const crypto = (await import('crypto')).default;
+      const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+      if (codeHash !== row.code_hash) {
+        await pool.query('UPDATE signup_otps SET attempts = attempts + 1 WHERE id=$1', [row.id]);
+        return res.status(400).json({ error: 'incorrect code' });
+      }
+      if (!(await registrationOpen(pool))) {
+        return res.status(403).json({ code: 'registration_closed', error: 'Ask a workspace owner for an account' });
+      }
       const id = rid('u');
-      const hash = await bcrypt.hash(String(password), 12);
       await pool.query('INSERT INTO users (id, email, password_hash, display_name) VALUES ($1,$2,$3,$4)',
-        [id, email.toLowerCase(), hash, displayName || email.split('@')[0]]);
+        [id, email, row.password_hash, row.display_name || email.split('@')[0]]);
       // First user owns the default workspace.
       await pool.query(
         "INSERT INTO workspace_members (workspace_id, user_id, role) VALUES ('default',$1,'owner') ON CONFLICT DO NOTHING", [id]);
+      await pool.query('UPDATE signup_otps SET used_at=CURRENT_TIMESTAMP WHERE id=$1', [row.id]);
+      await pool.query('DELETE FROM signup_otps WHERE email=$1 AND id<>$2', [email, row.id]);
       const { token, expires } = await createSession(pool, id);
       res.setHeader('Set-Cookie', sessionCookie(token, expires));
-      res.json({ user: { id, email: email.toLowerCase() }, memberships: [{ workspace_id: 'default', role: 'owner' }] });
+      res.json({ user: { id, email }, memberships: [{ workspace_id: 'default', role: 'owner' }] });
     } catch (err) {
       if (String(err.message).includes('duplicate')) return res.status(409).json({ error: 'email taken' });
       res.status(500).json({ error: err.message });
     }
+  });
+
+  // Legacy single-step signup removed (410 Gone) — email OTP is mandatory.
+  // Kept as an explicit tombstone so old bundles fail loudly, not silently.
+  r.post('/api/auth/signup', async (_req, res) => {
+    res.status(410).json({ error: 'signup moved to email verification', flow: ['POST /api/auth/signup/request-code', 'POST /api/auth/signup/verify'] });
   });
 
   r.post('/api/auth/login', loginLimit, async (req, res) => {

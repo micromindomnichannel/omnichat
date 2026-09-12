@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { OrbitLogo } from '../components/shared/OrbitLogo';
 import {
@@ -8,7 +8,7 @@ import { api } from '../services/api';
 
 export function Signup() {
   const navigate = useNavigate();
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -19,12 +19,40 @@ export function Signup() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
 
-  // Step 2: Business
+  // Step 2: Email OTP
+  const [otp, setOtp] = useState('');
+  const [codeSent, setCodeSent] = useState(false);
+  const [resendIn, setResendIn] = useState(0);
+  const [devCode, setDevCode] = useState('');
+
+  // Step 3: Business
   const [businessName, setBusinessName] = useState('');
   const [industry, setIndustry] = useState<'commerce' | 'appointments'>('commerce');
   const [country, setCountry] = useState('Egypt');
 
-  const handleStep1 = (e: React.FormEvent) => {
+  const apiError = (res: any, fallback: string) =>
+    res?._timeout
+      ? 'Server is waking up (cold start takes ~30s on the free tier). Wait a moment and try again.'
+      : res?._network
+        ? `Cannot reach the backend (${res.message || 'network error'}). Is the backend URL reachable? Try opening the API health page directly.`
+        : (res?.error || fallback);
+
+  const sendCode = async (isResend = false) => {
+    setLoading(true);
+    setError('');
+    const res = await api.signupRequestCode(email, password, fullName);
+    setLoading(false);
+    if (res?.success) {
+      setCodeSent(true);
+      setDevCode(res.debugCode || '');
+      setResendIn(30);
+      if (!isResend) setStep(2);
+    } else {
+      setError(apiError(res, 'Could not send verification code.'));
+    }
+  };
+
+  const handleStep1 = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName || !email || !password) {
       setError('Please fill in all required fields.');
@@ -34,23 +62,20 @@ export function Signup() {
       setError('Password must be at least 10 characters.');
       return;
     }
-    setError('');
-    setStep(2);
+    await sendCode(false);
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!businessName) {
-      setError('Please enter your business name.');
+    if (!/^\d{6}$/.test(otp.trim())) {
+      setError('Enter the 6-digit code from your email.');
       return;
     }
-
     setLoading(true);
     setError('');
-
-    // Real signup: first-ever user becomes workspace owner (registration
-    // closes afterwards — further accounts come from an owner).
-    const res = await api.signup(email, password, fullName);
+    // Account is created server-side on successful verification (first-ever
+    // user becomes workspace owner; afterwards registration is closed).
+    const res = await api.signupVerify(email, otp.trim());
     setLoading(false);
     if (res?.user) {
       const userData = {
@@ -59,14 +84,31 @@ export function Signup() {
       localStorage.setItem('orbit_user', JSON.stringify(userData));
       localStorage.setItem('orbit_authenticated', 'true');
       localStorage.setItem('orbit_memberships', JSON.stringify(res.memberships || []));
-      navigate('/onboarding');
+      setStep(3);
     } else {
-      setError(res?._timeout
-        ? 'Server is waking up (cold start takes ~30s on the free tier). Wait a moment and try again.'
-        : res?._network
-          ? `Cannot reach the backend (${res.message || 'network error'}). Is the backend URL reachable? Try opening the API health page directly.`
-          : (res?.error || 'Sign up failed.'));
+      setError(apiError(res, 'Verification failed.'));
     }
+  };
+
+  // Resend cooldown countdown
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const t = setTimeout(() => setResendIn((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendIn]);
+
+  const handleSignup = (e: React.FormEvent) => {
+    // Account already exists (created at OTP verification) — business details
+    // ride into onboarding state and sync from the onboarding flow.
+    e.preventDefault();
+    if (!businessName) {
+      setError('Please enter your business name.');
+      return;
+    }
+    setError('');
+    const userData = { name: fullName, email, phone, businessName, industry, country, avatar: '' };
+    localStorage.setItem('orbit_user', JSON.stringify(userData));
+    navigate('/onboarding');
   };
 
   return (
@@ -118,6 +160,7 @@ export function Signup() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18, textAlign: 'left' }}>
             {[
               { label: 'Create your account', done: step >= 2 },
+              { label: 'Verify your email', done: step >= 3 },
               { label: 'Set up your business profile', done: false },
               { label: 'Connect your channels & launch', done: false }
             ].map((item, idx) => (
@@ -161,23 +204,25 @@ export function Signup() {
 
           <div style={{ marginBottom: 28 }}>
             <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--midnight-ink)', letterSpacing: '-0.02em' }}>
-              {step === 1 ? 'Create your account' : 'Set up your business'}
+              {step === 1 ? 'Create your account' : step === 2 ? 'Verify your email' : 'Set up your business'}
             </h2>
             <p style={{ fontSize: 13.5, color: 'var(--stone-gray)', marginTop: 6 }}>
-              {step === 1 ? 'Enter your personal details to get started.' : 'Tell us about your business so ORBIT can adapt.'}
+              {step === 1
+                ? 'Enter your personal details to get started.'
+                : step === 2
+                  ? `We sent a 6-digit code to ${email || 'your email'}. It expires in 10 minutes.`
+                  : 'Tell us about your business so ORBIT can adapt.'}
             </p>
           </div>
 
           {/* Step indicator pills */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-            <div style={{
-              flex: 1, height: 4, borderRadius: 2,
-              background: 'var(--signal-orange)'
-            }} />
-            <div style={{
-              flex: 1, height: 4, borderRadius: 2,
-              background: step === 2 ? 'var(--signal-orange)' : 'var(--border)'
-            }} />
+            {[1, 2, 3].map((s) => (
+              <div key={s} style={{
+                flex: 1, height: 4, borderRadius: 2,
+                background: step >= s ? 'var(--signal-orange)' : 'var(--border)'
+              }} />
+            ))}
           </div>
 
           {error && (
@@ -248,7 +293,7 @@ export function Signup() {
 
               <div>
                 <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>
-                  Password * (min 6 characters)
+                  Password * (min 10 characters)
                 </label>
                 <div style={{ position: 'relative' }}>
                   <Lock size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--stone-gray)' }} />
@@ -285,8 +330,76 @@ export function Signup() {
             </form>
           )}
 
-          {/* STEP 2: Business Info */}
+          {/* STEP 2: Email OTP */}
           {step === 2 && (
+            <form onSubmit={handleVerifyOtp} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>
+                  6-Digit Verification Code *
+                </label>
+                <input
+                  className="input"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  placeholder="••••••"
+                  value={otp}
+                  onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  style={{ height: 52, fontSize: 22, letterSpacing: 8, textAlign: 'center', fontWeight: 800 }}
+                  required
+                />
+              </div>
+
+              {devCode && (
+                <div style={{
+                  padding: '12px 16px', borderRadius: 8, background: 'var(--surface-0)',
+                  border: '1px dashed var(--stone-gray)', fontSize: 12.5, color: 'var(--ink-600)'
+                }}>
+                  Dev mode — no email configured. Your code is: <strong style={{ letterSpacing: 2 }}>{devCode}</strong>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn btn-primary btn-lg"
+                style={{
+                  width: '100%', height: 48, fontSize: 15, background: 'var(--signal-orange)',
+                  boxShadow: '0 4px 14px rgba(255, 90, 54, 0.25)',
+                  opacity: loading ? 0.7 : 1
+                }}
+              >
+                {loading ? (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span className="animate-spin" style={{ width: 16, height: 16, border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block' }} />
+                    Verifying...
+                  </span>
+                ) : (
+                  <>Verify & Create Account <ArrowRight size={18} /></>
+                )}
+              </button>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => { setStep(1); setError(''); }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: 'var(--stone-gray)', fontWeight: 600 }}
+                >
+                  ← Change email
+                </button>
+                <button
+                  type="button"
+                  disabled={loading || resendIn > 0}
+                  onClick={() => sendCode(true)}
+                  style={{ background: 'none', border: 'none', cursor: resendIn > 0 ? 'default' : 'pointer', fontSize: 13, color: resendIn > 0 ? 'var(--stone-gray)' : 'var(--signal-orange)', fontWeight: 700 }}
+                >
+                  {resendIn > 0 ? `Resend in ${resendIn}s` : 'Resend code'}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* STEP 3: Business Info */}
+          {step === 3 && (
             <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
                 <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>
@@ -360,18 +473,11 @@ export function Signup() {
                 </select>
               </div>
 
+              {/* Account is final after OTP verification — no back navigation
+                  (editing details here would desync from the created account). */}
               <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
                 <button
-                  type="button"
-                  onClick={() => { setStep(1); setError(''); }}
-                  className="btn btn-outline"
-                  style={{ flex: 1, height: 48, fontSize: 14 }}
-                >
-                  ← Back
-                </button>
-                <button
                   type="submit"
-                  disabled={loading}
                   className="btn btn-primary btn-lg"
                   style={{
                     flex: 2, height: 48, fontSize: 15, background: 'var(--signal-orange)',
@@ -382,10 +488,10 @@ export function Signup() {
                   {loading ? (
                     <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span className="animate-spin" style={{ width: 16, height: 16, border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block' }} />
-                      Creating account...
+                      Saving...
                     </span>
                   ) : (
-                    <>Create Account & Start <ArrowRight size={18} /></>
+                    <>Continue to Onboarding <ArrowRight size={18} /></>
                   )}
                 </button>
               </div>

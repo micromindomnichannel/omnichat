@@ -41,7 +41,11 @@ async function authJson(url: string, body?: any) {
 
 export const api = {
   // Auth (session cookie; null only when unreachable)
-  signup: (email: string, password: string, displayName?: string) => authJson('/auth/signup', { email, password, displayName }),
+  // Signup is email-OTP gated: request-code -> verify (creates account+session).
+  signupRequestCode: (email: string, password: string, displayName?: string) =>
+    authJson('/auth/signup/request-code', { email, password, displayName }),
+  signupVerify: (email: string, code: string) =>
+    authJson('/auth/signup/verify', { email, code }),
   login: (email: string, password: string) => authJson('/auth/login', { email, password }),
   logout: () => authJson('/auth/logout'),
   me: () => fetchJson('/auth/me'),
