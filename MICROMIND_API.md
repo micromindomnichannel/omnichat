@@ -42,8 +42,12 @@ Chatflow Configuration → Security (`src/using-aimicromind/api.md:124-128`,
 - `prediction` → reachable, flow found, **500**: `OpenRouter API Key not found.
   Please provide your OpenRouter API key in the credential.` → add/fix the
   `openRouterApi` credential on this flow in MicroMind, then re-run.
-- `management-crud` → SKIP/401 without `MICROMIND_API_KEY`; re-run with key
-  to complete `create→get→update→delete` before building auto-provisioning.
+- `management-crud` → **PASS** (`create→get→update→delete`, verified live
+  2026-09-19 via provisioner login `POST /api/v1/login` → JWT).
+  Notes: `flowData` must be `{"nodes":[],"edges":[]}`-shaped (`'{}'` 500s
+  with `nodes is not iterable`); `server/micromind/{client,provisioner}.js`
+  read env lazily so local `.env` works despite dotenv loading after hoisted
+  imports in `server/index.js`.
 
 ## Tenant rules (ORBIT side)
 
@@ -53,7 +57,6 @@ Chatflow Configuration → Security (`src/using-aimicromind/api.md:124-128`,
   runtime; tool contract (`send_messenger_message {recipientPsid, messageText}`) untouched.
 
 ## Vertical slice status (Messenger + Instagram, auth skipped)
-
 - Migration `server/migrations/001_multitenant_channels.sql` (auto-runs on boot
   via `server/migrate.js`, `npm run db:migrate`): workspaces, workspace_settings,
   credentials (encrypted), channel_accounts, micromind_flows, oauth_states,
@@ -141,3 +144,38 @@ ORBIT holds no management token and will never pretend to delete server-side.
 (`MICROMIND_ANALYST_FLOW_ID` + `MICROMIND_ANALYST_API_KEY`) → legacy
 messenger-flow fallback → local template fallback. Callers pass
 `pool + workspaceId` to `askAnalyst()`.
+
+## Track 2 — bypass-killer changes (2026-09-19, uncommitted)
+
+Live triage (via Codex-relayed Meta MCP) proved both production subscriptions
+point at MicroMind (`core.aimicromind.com/...`), so ORBIT received zero events,
+and the MicroMind-direct replies died on placeholder page tokens. Fixes:
+
+- **App-level verify tokens** (`server/channels/routes.js`): connect no longer
+  appends a random suffix — Meta holds ONE token per app, so the token is the
+  stable `defaultVerifyToken` (`orbit_messenger_2026` /
+  `orbit_instagram_verify`). Per-event routing stays via
+  `entry.id → channel_accounts.external_account_id`. Explicit body
+  `verifyToken` still overrides.
+- **Setup-guide rewrite** (`orbitSetupGuide()` + provision-time stamp in
+  `buildTenantFlowData`, shipped `messenger.json`/`instagram.json` patched):
+  clones and reference files now instruct Meta → `{ORBIT_BACKEND_URL}/
+  webhooks/{messenger,instagram}` with the app-level token, and forbid tokens
+  inside flows. Backend URL resolves from `ORBIT_BACKEND_URL` →
+  `RAILWAY_PUBLIC_DOMAIN` → `https://YOUR-ORBIT-BACKEND` placeholder.
+  (`scripts/patch-template-guides.mjs` kept for future re-stamps.)
+- **Send-tool stripping extended** (`STRIP_SEND_TOOLS`): messenger
+  (`facebookMessengerTool`) + instagram (`instagramMessenger`) join telegram —
+  verified against template `tools` arrays (`{{..._0.data.instance}}` refs).
+  Clone check: `tools=[]`, verify token injected, guide + business ctx present
+  (both channels, `scripts/verify-clone` ad-hoc run).
+- **Reply-shape hardening** (`extractReplyText()` in `server/webhooks/routes.js`):
+  `string | text | json.{answer,text,output} | answer`; unknown shapes log keys
+  and fall back to the generic acknowledgement.
+- **Probe re-run:** all 5 checks PASS after the changes (no regressions).
+- **DB gate cleared 2026-09-20:** `pg_hba` whitelist applied, `test_db.cjs`
+  connects; `npm run db:migrate` applied pending `009/010/011`; triage reads:
+  `webhook_events` = 0 rows, `channel_accounts` = 0 rows, `micromind_flows` =
+  0 rows, one `default` workspace — data-layer proof Meta never delivered to
+  ORBIT and all connections were manual-in-MicroMind. Server boots,
+  `/api/health` → `online`, DB `connected:true` (PG 18.6).

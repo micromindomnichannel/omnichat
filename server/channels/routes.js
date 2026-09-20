@@ -121,9 +121,12 @@ export function channelsRouter(pool) {
     } catch (e) {
       return res.status(e.status || 402).json({ code: e.code || 'upgrade_required', error: e.message });
     }
-    const finalVerify = verifyToken || (CHANNELS[channel].defaultVerifyToken
-      ? `${CHANNELS[channel].defaultVerifyToken}_${crypto.randomBytes(3).toString('hex')}`
-      : null);
+    // App-level verify token (single Meta app serves all tenants: Meta holds ONE
+    // callback URL + ONE verify token per app, so the token must be stable and
+    // shared, never per-account random. Tenant routing happens per-event via
+    // entry.id -> channel_accounts.external_account_id. An explicit verifyToken
+    // in the body still wins (operator override / migration scenarios).
+    const finalVerify = verifyToken || CHANNELS[channel].defaultVerifyToken || null;
     const extraMeta = {};
     if (channel === 'whatsapp' && phoneNumberId) extraMeta.phone_number_id = phoneNumberId;
     let webhookSecret = null;

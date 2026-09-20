@@ -5,9 +5,13 @@
 // MICROMIND_API_KEY token, then to unauthenticated (open instances).
 import { config as clientConfig } from './client.js';
 
-const EMAIL = process.env.MICROMIND_PROVISIONER_EMAIL || '';
-const PASSWORD = process.env.MICROMIND_PROVISIONER_PASSWORD || '';
-const STATIC_KEY = process.env.MICROMIND_API_KEY || '';
+// NOTE: read env lazily (inside functions, not at module top level) because
+// server/index.js calls dotenv.config() AFTER static imports are hoisted and
+// evaluated. Module-level `process.env.X` captures would freeze empty values
+// in local dev where vars come only from the .env file.
+const getEmail = () => process.env.MICROMIND_PROVISIONER_EMAIL || '';
+const getPassword = () => process.env.MICROMIND_PROVISIONER_PASSWORD || '';
+const getStaticKey = () => process.env.MICROMIND_API_KEY || '';
 
 let cached = null; // { token, expMs }
 let inflight = null;
@@ -25,7 +29,7 @@ async function doLogin() {
   const res = await fetch(`${clientConfig.baseUrl}/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: EMAIL, password: PASSWORD }),
+    body: JSON.stringify({ email: getEmail(), password: getPassword() }),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok || !data.token) {
@@ -39,7 +43,7 @@ async function doLogin() {
 
 // Single-flight login: concurrent 401s trigger exactly one re-login.
 export async function getProvisionerToken({ force = false } = {}) {
-  if (!EMAIL || !PASSWORD) return null;
+  if (!getEmail() || !getPassword()) return null;
   if (!force && cached && cached.expMs - 60_000 > Date.now()) return cached.token;
   if (!inflight) {
     inflight = doLogin().finally(() => { inflight = null; });
@@ -57,12 +61,15 @@ export async function getManagementHeaders() {
   const h = { 'Content-Type': 'application/json' };
   const token = await getProvisionerToken().catch(() => null);
   if (token) h.Authorization = `Bearer ${token}`;
-  else if (STATIC_KEY) h.Authorization = `Bearer ${STATIC_KEY}`;
+  else {
+    const staticKey = getStaticKey();
+    if (staticKey) h.Authorization = `Bearer ${staticKey}`;
+  }
   return h;
 }
 
 export function authMode() {
-  if (EMAIL && PASSWORD) return 'provisioner';
-  if (STATIC_KEY) return 'static';
+  if (getEmail() && getPassword()) return 'provisioner';
+  if (getStaticKey()) return 'static';
   return 'none';
 }

@@ -6,10 +6,10 @@
 // ORBIT): enforced flows 401 without it; open flows ignore the header.
 import { getManagementHeaders, refreshProvisioner } from './provisioner.js';
 
-const BASE_URL = (process.env.MICROMIND_BASE_URL || 'https://core.aimicromind.com/api/v1').replace(/\/$/, '');
+const getBaseUrl = () => (process.env.MICROMIND_BASE_URL || 'https://core.aimicromind.com/api/v1').replace(/\/$/, '');
 
 async function rawRequest(method, path, headers, body) {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(`${getBaseUrl()}${path}`, {
     method,
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -84,6 +84,6 @@ export async function predict(chatflowId, { question, sessionId, vars, history, 
 }
 
 export const config = {
-  get baseUrl() { return BASE_URL; },
+  get baseUrl() { return getBaseUrl(); },
   hasApiKey: () => Boolean(process.env.MICROMIND_API_KEY),
 };

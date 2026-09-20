@@ -211,7 +211,8 @@ async function handleNormalized(pool, provider, account, { senderId, text, mid }
         language: ws.language || undefined,
       },
     });
-    const reply = String(out?.text || out?.json?.answer || '').slice(0, 1900) || 'Thanks for reaching out! An agent will follow up shortly.';
+    const reply = extractReplyText(out, provider)
+      || 'Thanks for reaching out! An agent will follow up shortly.';
     await pool.query(
       "INSERT INTO messages (id, workspace_id, conversation_id, sender, content, timestamp, agent_name, source) VALUES ($1,$2,$3,'ai',$4,$5,'ORBIT AI','ai')",
       [rid('m'), workspaceId, conv.id, reply, new Date().toISOString()]
@@ -234,8 +235,20 @@ async function handleNormalized(pool, provider, account, { senderId, text, mid }
   }
 }
 
-async function sendProviderReply(provider, account, cred, secret, senderId, text) {
-  if (provider === 'messenger' || provider === 'instagram') {
+// Prediction output shapes vary by flow type (plain {text}, agent runs with
+// usedTools/agentReasoning, {json:{answer}}). Extract the customer-facing
+// text across all known shapes; return '' only when nothing usable exists so
+// the caller falls back to the generic acknowledgement (and the keys get
+// logged for template debugging, never the customer text).
+function extractReplyText(out, provider) {
+  if (!out) return '';
+  if (typeof out === 'string') return out.slice(0, 1900);
+  const text = String(out.text || out.json?.answer || out.json?.text || out.json?.output || out.answer || '').trim();
+  if (!text) console.warn(`[webhook:${provider}] unpredicted reply shape, keys=${Object.keys(out).join(',')}`);
+  return text.slice(0, 1900);
+}
+
+async function sendProviderReply(provider, account, cred, secret, senderId, text) {  if (provider === 'messenger' || provider === 'instagram') {
     return sendTextMessage({ pageAccessToken: secret, recipientId: senderId, text });
   }
   if (provider === 'whatsapp') {

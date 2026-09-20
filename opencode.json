@@ -1,0 +1,10 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "meta_social_technologies": {
+      "type": "remote",
+      "url": "https://mcp.facebook.com/devtools",
+      "enabled": true
+    }
+  }
+}

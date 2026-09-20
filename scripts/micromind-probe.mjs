@@ -1,8 +1,13 @@
 // P0 MicroMind verification probe. Usage:
 //   node scripts/micromind-probe.mjs
-//   MICROMIND_API_KEY=xxx node scripts/micromind-probe.mjs  (adds management CRUD checks)
-// Reads MICROMIND_BASE_URL / MICROMIND_API_KEY from env (.env NOT required).
-import { getChatflow, createChatflow, updateChatflow, deleteChatflow, predict, config } from '../server/micromind/client.js';
+//   (adds management CRUD checks when MICROMIND_PROVISIONER_EMAIL/PASSWORD
+//   or MICROMIND_API_KEY is set — reads .env automatically)
+// Reads MICROMIND_BASE_URL / MICROMIND_API_KEY from env.
+import dotenv from 'dotenv';
+dotenv.config();
+const { getChatflow, createChatflow, updateChatflow, deleteChatflow, predict, config } =
+  await import('../server/micromind/client.js');
+const { authMode } = await import('../server/micromind/provisioner.js');
 
 const REFERENCE_FLOW_ID = process.env.MICROMIND_MESSENGER_FLOW_ID || 'f4a7c66d-dc4c-4f0b-b12d-4b6ca91fe0c8';
 const results = [];
@@ -17,10 +22,10 @@ try {
   fail('prediction', e.message);
 }
 
-// 2. Management CRUD — requires MICROMIND_API_KEY (Bearer JWT).
-if (config.hasApiKey()) {
+// 2. Management CRUD — requires provisioner login or MICROMIND_API_KEY.
+if (authMode() !== 'none') {
   try {
-    const created = await createChatflow({ name: 'ORBIT P0 probe - DELETE ME', flowData: '{}', deployed: false, type: 'CHATFLOW' });
+    const created = await createChatflow({ name: 'ORBIT P0 probe - DELETE ME', flowData: JSON.stringify({ nodes: [], edges: [] }), deployed: false, type: 'CHATFLOW' });
     ok('createFlow', `id=${created.id}`);
     const got = await getChatflow(created.id);
     ok('getFlow', `name=${got.name}`);
@@ -32,7 +37,7 @@ if (config.hasApiKey()) {
     fail('management-crud', e.message);
   }
 } else {
-  results.push({ name: 'management-crud', status: 'SKIP', detail: 'no MICROMIND_API_KEY; prediction-only run' });
+  results.push({ name: 'management-crud', status: 'SKIP', detail: 'no provisioner creds or MICROMIND_API_KEY; prediction-only run' });
   try {
     await getChatflow(REFERENCE_FLOW_ID);
     ok('getFlow-unauth', 'management GET reachable without key');

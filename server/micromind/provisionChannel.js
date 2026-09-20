@@ -12,11 +12,11 @@
 // itself via provider APIs (Graph, WhatsApp Cloud, Bot API) using the tenant
 // secret from the ORBIT vault, with reply text taken from prediction output.
 // Cloned flows must therefore never hold tenant channel secrets and must never
-// execute channel send-tools — otherwise customers get double messages and
-// tenant tokens leak into MicroMind. buildTenantFlowData enforces this by
-// stripping send-tool nodes from agent tool lists (telegram only today;
-// messenger/instagram templates are left byte-identical to avoid changing
-// currently-working flows).
+// execute channel send-tools — otherwise customers get double messages (flow
+// sends + backend sends) and tenant tokens leak into MicroMind.
+// buildTenantFlowData enforces this by stripping send-tool nodes from agent
+// tool lists (STRIP_SEND_TOOLS) and by rewriting MicroMind-pointing setup
+// guides to the ORBIT-owned webhook (orbitSetupGuide).
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -71,10 +71,14 @@ export const CHANNELS = {
 };
 
 // Tool node names whose instances must be REMOVED from agent tool lists in
-// clones (backend owns all sending; see header). Keyed by channel; channels
-// absent here keep template tools byte-identical.
+// clones (backend owns all sending; see header). messenger/instagram send
+// tools are stripped too: with a real page token in the flow, prediction-time
+// tool execution would double-send (flow sends + backend sends); with the
+// placeholder token it just burns a failing tool call on every turn.
 const STRIP_SEND_TOOLS = {
   telegram: ['telegramTool', 'telegramBot'],
+  messenger: ['facebookMessengerTool'],
+  instagram: ['instagramMessenger'],
 };
 
 function templatePending(channel) {
@@ -145,6 +149,54 @@ export function templateStatusFor(channel) {
   return loadManifest()[channel]?.status || (CHANNELS[channel]?.placeholder ? 'manual' : 'verified');
 }
 
+// Backend base URL for setup guides baked into clones. Explicit env wins;
+// Railway injects RAILWAY_PUBLIC_DOMAIN; otherwise a placeholder the operator
+// replaces when registering the Meta callback URL.
+export function orbitBackendPublicUrl() {
+  if (process.env.ORBIT_BACKEND_URL) return process.env.ORBIT_BACKEND_URL.replace(/\/$/, '');
+  if (process.env.RAILWAY_PUBLIC_DOMAIN) return `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`;
+  return 'https://YOUR-ORBIT-BACKEND';
+}
+
+// ORBIT-owned setup guide, stamped into clones at provision time (and kept in
+// the shipped template files as the reference). Replaces the stock
+// MicroMind-pointing instructions that steered every tenant into the bypass:
+// Meta → MicroMind direct, empty ORBIT inbox, placeholder-token send failures.
+export function orbitSetupGuide(channel, backendUrl = orbitBackendPublicUrl()) {
+  const cfg = CHANNELS[channel] || {};
+  const path = channel === 'instagram' ? 'instagram' : channel === 'whatsapp' ? 'whatsapp' : 'messenger';
+  const verify = cfg.defaultVerifyToken || '(see ORBIT channel settings)';
+  const title = channel === 'instagram'
+    ? '## 📸 Instagram Setup — ORBIT-managed'
+    : channel === 'whatsapp'
+      ? '## 🟢 WhatsApp Setup — ORBIT-managed'
+      : '## 💬 Facebook Messenger Setup — ORBIT-managed';
+  const portal = channel === 'instagram' ? 'Messenger / Instagram' : channel === 'whatsapp' ? 'WhatsApp' : 'Messenger';
+  const talk = channel === 'instagram' ? 'an Instagram DM to your page' : channel === 'whatsapp' ? 'a WhatsApp message to your number' : 'a Facebook message to your page';
+  return `${title}
+
+> Do NOT point Meta webhooks at MicroMind. ORBIT owns the whole loop:
+> Meta → ORBIT backend → AI prediction → ORBIT sends the reply.
+> A MicroMind webhook URL here bypasses ORBIT (empty inbox, no tenant isolation).
+
+### Step 1: Connect in ORBIT (tokens live in ORBIT, never in this flow)
+1. In ORBIT go to Settings → Channels → ${channel} → Connect.
+2. Paste the channel token there. ORBIT encrypts it in its vault and auto-provisions a dedicated flow + prediction key for this business.
+3. Leave token fields in THIS flow EMPTY (or the placeholder). Clones must never hold tenant secrets — the backend sends every reply itself.
+
+### Step 2: Meta Webhook Callback URL (ONE per app, shared by all tenants)
+1. Callback URL: \`${backendUrl}/webhooks/${path}\`
+2. In Meta Developer Portal → ${portal} → Webhooks → Add Callback URL.
+3. Paste the URL and enter Verify Token \`${verify}\` (app-level, shared by all tenants on this app).
+4. Verify and Save ✅.
+5. Subscribe to \`messages\` and \`messaging_postbacks\`.
+ORBIT routes each event to the right business by Page/account ID — no per-tenant callback is ever needed.
+
+### Step 3: Activate & Test Live
+1. Toggle the workflow to ACTIVE in the canvas header!
+2. Send ${talk} — the AI reply arrives via ORBIT and shows in the ORBIT inbox.`;
+}
+
 export function buildTenantFlowData(channel, template, { verifyToken, businessName, aiTone, language, phoneNumberId } = {}) {
   const flow = JSON.parse(JSON.stringify(template));
   const strip = STRIP_SEND_TOOLS[channel] || [];
@@ -173,6 +225,17 @@ export function buildTenantFlowData(channel, template, { verifyToken, businessNa
       inputs.tools = inputs.tools.filter(
         (t) => !strip.some((toolName) => String(t).includes(toolName))
       );
+    }
+    // Bypass-killer: rewrite any MicroMind-pointing setup hint baked into the
+    // template (trigger-node docs) to the ORBIT-owned guide. Covers shipped
+    // files AND operator-uploaded DB templates, present and future.
+    for (const params of [node?.data?.inputParams]) {
+      if (!Array.isArray(params)) continue;
+      for (const p of params) {
+        if (p?.hint && typeof p.hint.value === 'string' && p.hint.value.includes('core.aimicromind.com/webhook')) {
+          p.hint.value = orbitSetupGuide(channel);
+        }
+      }
     }
     if (node.data.name === 'chatPromptTemplate' && (businessName || aiTone || language)) {
       const ctx = [
