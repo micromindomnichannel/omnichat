@@ -148,7 +148,55 @@ Symptom: probe green, but connected Page/IG never answered and ORBIT inbox staye
 15. Schedule `GRAPH_VERSION` bump (`v19.0` vs platform `v26.0`).
 16. Full probe + live-message round as acceptance gate.
 
-## 5. Standing contacts / secrets map (where things live)
+## 5. Teammate onboarding (do this first, ~30 min)
+
+Assumes: Node 20+, git access to this repo, the `.env` file shared securely
+(never committed — ask alisa), IP whitelisted on the DB (`pg_hba`).
+
+**Step 1 — Read (10 min).**
+Read this file §1–§2. Skim `MICROMIND_API.md` (endpoint contract + tenant
+rules). Do not change anything yet.
+
+**Step 2 — Install + verify MicroMind link (5 min).**
+```
+npm install
+npm run probe:micromind
+```
+Expect 5/5 PASS (`prediction`, `createFlow`, `getFlow`, `updateFlow`,
+`deleteFlow`). If `prediction` FAILs with 500 OpenRouter key: the
+`orbit` credential in MicroMind needs attention (see §2). If management
+checks SKIP/401: `.env` provisioner credentials are missing or wrong.
+
+**Step 3 — Verify database (5 min).**
+```
+node test_db.cjs
+```
+Expect: connect to `omnichannel`, 28 public tables, migrations `001`–`011`.
+If connection fails with `pg_hba`: your public IP
+(`curl ifconfig.me`) must be whitelisted on `148.251.171.147` first.
+If migrations below `011`: run `npm run db:migrate`.
+
+**Step 4 — Boot both servers (5 min).**
+```
+node server/index.js        # terminal 1 → expect /api/health online
+npm run dev                 # terminal 2 → http://localhost:3000/ → 200
+```
+Health check: `curl http://localhost:5000/api/health` must show
+`"status":"online"` and `"connected":true`. Handshake check:
+`GET /webhooks/messenger?hub.mode=subscribe&hub.verify_token=orbit_messenger_2026&hub.challenge=x`
+must echo `x`. Stop both servers when done (do not leave dev servers running).
+
+**Step 5 — Pick up work.**
+Re-read §4 above and take the next open item. Rules of the road:
+- One dedicated flow per `workspace × channel_account`; never hand-edit a
+  tenant flow in MicroMind GUI (re-provision instead).
+- Tenant secrets live ONLY in the `credentials` vault — never in flows, logs,
+  or chat.
+- Run `npm run probe:micromind` after any `server/micromind/` change.
+- Commit messages: `feat:` / `fix:` prefix, concise, matching repo style.
+- Never commit `.env`, tokens, keys, or Page credentials.
+
+## 6. Standing contacts / secrets map (where things live)
 
 - MicroMind ops login: `.env` (`MICROMIND_PROVISIONER_*`, gitignored).
 - Tenant channel tokens: `credentials` table (AES via `CRED_KEY`).
