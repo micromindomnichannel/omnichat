@@ -22,10 +22,11 @@ export function Privacy() {
         <p style={{ color: 'var(--ink-400)', fontSize: 14, marginBottom: 32 }}>ORBIT — AI omnichannel messaging for merchants. Last updated: September 25, 2026.</p>
 
         <Section title="1. Who we are">
-          ORBIT ("we", "our") provides an AI customer-messaging service for merchants.
+          ORBIT ("we", "our") is a product of AI MicroMind LLC and provides an AI
+          customer-messaging service for merchants.
           Merchants connect their own Facebook Pages and Instagram business accounts;
           ORBIT relays customer conversations to the merchant's AI assistant and sends replies.
-          Data controller: ORBIT AI. Contact: <Contact />.
+          Data controller: AI MicroMind LLC (ORBIT AI portfolio). Contact: <Contact />.
         </Section>
 
         <Section title="2. What data we collect and why (purpose)">
@@ -98,9 +99,8 @@ function List({ items }: { items: string[] }) {
   );
 }
 
-// TODO (owner): replace with the real DPO address filled in Meta Basic Settings.
-// The address here, the DPO field, the screencast narration, and the App Review
-// answers must all name the SAME contact.
+// Contact of record: must match the Meta DPO field, the screencast narration,
+// and the App Review data-handling answers (all four name the SAME contact).
 function Contact() {
-  return <a href="mailto:privacy@orbit.example" style={{ color: 'var(--accent, #6d5cff)' }}>privacy@orbit.example</a>;
+  return <a href="mailto:info@aimicromind.com" style={{ color: 'var(--accent, #6d5cff)' }}>info@aimicromind.com</a>;
 }
