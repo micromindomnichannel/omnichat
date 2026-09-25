@@ -5,11 +5,11 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "http://148.251.171.147:5000/api/:path*"
+      "destination": "https://omnichat-production-65a3.up.railway.app/api/:path*"
     },
     {
       "source": "/webhooks/:path*",
-      "destination": "http://148.251.171.147:5000/webhooks/:path*"
+      "destination": "https://omnichat-production-65a3.up.railway.app/webhooks/:path*"
     },
     {
       "source": "/(.*)",

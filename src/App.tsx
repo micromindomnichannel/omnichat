@@ -27,6 +27,8 @@ import { Analytics } from './pages/Analytics';
 import { Settings } from './pages/Settings';
 import { Admin } from './pages/Admin';
 import { Demo } from './pages/Demo';
+import { Privacy } from './pages/Privacy';
+import { Terms } from './pages/Terms';
 import { Scheduler } from './pages/Scheduler';
 import { Toast } from './components/shared/Toast';
 import { api } from './services/api';
@@ -75,6 +77,8 @@ function App() {
   const isOnboarding = location.pathname === '/onboarding';
   const isVerticalSelect = location.pathname === '/select-vertical';
   const isDemo = location.pathname === '/demo';
+  const isPrivacy = location.pathname === '/privacy';
+  const isTerms = location.pathname === '/terms';
   const session = useSession();
 
   // Public routes (no auth needed)
@@ -98,6 +102,15 @@ function App() {
 
   if (isDemo) {
     return <Demo />;
+  }
+
+  // Public legal pages (no auth — Meta reviewers and logged-out users must reach them).
+  if (isPrivacy) {
+    return <Privacy />;
+  }
+
+  if (isTerms) {
+    return <Terms />;
   }
 
   if (session === 'checking') {
