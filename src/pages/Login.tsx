@@ -36,7 +36,11 @@ export function Login() {
       }));
       localStorage.setItem('orbit_authenticated', 'true');
       localStorage.setItem('orbit_memberships', JSON.stringify(res.memberships || []));
-      navigate('/overview');
+      // Hard navigation (not client-side navigate): App's session guard resolves
+      // once on mount from the server cookie. A client-side transition would keep
+      // the stale 'out' state and bounce straight back to /login. Reloading
+      // re-runs the guard with the fresh session cookie.
+      window.location.assign('/overview');
     } else {
       setError(res?._timeout
         ? 'Server is waking up (cold start takes ~30s on the free tier). Wait a moment and try again.'

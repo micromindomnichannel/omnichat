@@ -108,7 +108,10 @@ export function Signup() {
     setError('');
     const userData = { name: fullName, email, phone, businessName, industry, country, avatar: '' };
     localStorage.setItem('orbit_user', JSON.stringify(userData));
-    navigate('/onboarding');
+    // Hard navigation (not client-side navigate): the account + session cookie
+    // were created at OTP verification, but App's session guard resolved once on
+    // mount. Reload so the guard re-runs with the fresh cookie (see Login.tsx).
+    window.location.assign('/onboarding');
   };
 
   return (
