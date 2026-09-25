@@ -194,3 +194,14 @@ and the MicroMind-direct replies died on placeholder page tokens. Fixes:
   pipeline reached the model correctly; the OpenRouter balance is empty.
   **Action: top up OpenRouter credit, then re-run sim.** All `sim_*` rows
   deleted afterwards (tables back to zero); temp scripts removed.
+- **Production single-DB + deploy 2026-09-25:** Railway backend
+  (`omnichat-production-65a3.up.railway.app`, commit `29674c5`) switched from
+  Railway Postgres to Supabase (`DATABASE_URL` + `PGSSLMODE` + new
+  `ORBIT_BACKEND_URL` via Railway MCP; health `online`, PG 17.6,
+  `connected:true`). Vercel (`orbit-xi-one-60.vercel.app`) serves `/privacy`
+  + `/terms` (200). Meta handshakes verified live against Railway for both
+  messenger (`orbit_messenger_2026`) and instagram (`orbit_instagram_verify`)
+  tokens — portal verification will pass. `vercel.json` rewrites retargeted
+  VPS → Railway. Still open: Vercel `VITE_API_URL` dashboard value (frontend
+  falls back to `localhost:5000/api` without it), OpenRouter credit top-up,
+  real DPO contact.
