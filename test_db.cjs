@@ -4,8 +4,11 @@ require('dotenv').config();
 const { Client } = require('pg');
 
 function clientFor(database) {
+  // Managed providers (Supabase/Neon/Railway) terminate TLS with certs Node
+  // can't verify — same policy as server/db.js: no-verify when SSL is wanted.
+  const ssl = process.env.PGSSLMODE === 'require' ? { rejectUnauthorized: false } : undefined;
   if (process.env.DATABASE_URL) {
-    return new Client({ connectionString: process.env.DATABASE_URL, connectionTimeoutMillis: 10000 });
+    return new Client({ connectionString: process.env.DATABASE_URL, connectionTimeoutMillis: 10000, ssl });
   }
   return new Client({
     host: process.env.DB_HOST || '148.251.171.147',
@@ -13,7 +16,8 @@ function clientFor(database) {
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'admin',
     database,
-    connectionTimeoutMillis: 10000
+    connectionTimeoutMillis: 10000,
+    ssl
   });
 }
 

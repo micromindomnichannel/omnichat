@@ -179,3 +179,18 @@ and the MicroMind-direct replies died on placeholder page tokens. Fixes:
   0 rows, one `default` workspace — data-layer proof Meta never delivered to
   ORBIT and all connections were manual-in-MicroMind. Server boots,
   `/api/health` → `online`, DB `connected:true` (PG 18.6).
+- **Supabase cutover 2026-09-25 (replaces VPS Postgres):** project
+  `hakpywamwyyquhdzneyn` (eu-west-1). Schema built via Supabase MCP migrant:
+  base + `001`–`011` (plain SQL, no extensions — fully compatible), 30 tables,
+  seeds (`default` workspace/settings, `business_settings` id=1). Advisors:
+  only default RLS-policy noise (irrelevant — backend is `postgres` role, no
+  PostgREST). `.env` → Session-pooler URI; ledger synced via `npm run
+  db:migrate` (idempotent re-run). Backend health on Supabase: `online`,
+  PG 17.6, `connected:true`.
+- **Tier-1 simulation 2026-09-25 (Supabase, simulated-only):** fake Page token +
+  open reference flow, fabricated Meta POST → `EVENT_RECEIVED`. PASS:
+  journaled `processed`, account routing, customer/conversation/message rows.
+  FAIL (external): `predict()` → MicroMind 500/402 `Insufficient credits` —
+  pipeline reached the model correctly; the OpenRouter balance is empty.
+  **Action: top up OpenRouter credit, then re-run sim.** All `sim_*` rows
+  deleted afterwards (tables back to zero); temp scripts removed.
