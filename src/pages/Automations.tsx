@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useStore } from '../state/store';
 import { useVertical } from '../state/verticalContext';
 import { StatusBadge } from '../components/shared/StatusBadge';
-import { Power, ArrowDown, Lock } from 'lucide-react';
+import { PageHeader, Card, SectionTitle, EmptyState } from '../components/dash/kit';
+import { Power, ArrowDown, Lock, Zap } from 'lucide-react';
 
 export function Automations() {
   const { state, dispatch } = useStore();
@@ -12,12 +13,24 @@ export function Automations() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <h2 className="page-title">Automations</h2>
-      </div>
+      <PageHeader
+        eyebrow="AI Workflows"
+        title="Automations"
+        sub="Follow-ups, confirmations, and win-backs running on autopilot."
+        live
+      />
+      {automations.length === 0 ? (
+        <Card>
+          <EmptyState
+            icon={<Zap size={24} color="var(--signal-orange)" />}
+            title="No automations for this vertical"
+            copy="Switch verticals or enable a workflow to start saving hours every week."
+          />
+        </Card>
+      ) : (
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
         {automations.map(auto => (
-          <div key={auto.id} className="card" style={{ padding: 20, opacity: auto.active ? 1 : 0.6, transition: 'opacity 0.2s ease' }}>
+          <Card key={auto.id} style={{ padding: 20, opacity: auto.active ? 1 : 0.6, transition: 'opacity 0.2s ease' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
               <h3 style={{ fontSize: 14, fontWeight: 650, color: 'var(--ink-900)' }}>{auto.name}</h3>
               <button onClick={() => dispatch({ type: 'TOGGLE_AUTOMATION', id: auto.id })}
@@ -40,20 +53,21 @@ export function Automations() {
                 ))}
               </div>
             )}
-          </div>
+          </Card>
         ))}
       </div>
+      )}
       <div style={{ marginTop: 32, paddingTop: 32, borderTop: '1px solid var(--border)' }}>
-        <h3 style={{ fontSize: 12, fontWeight: 650, color: 'var(--ink-400)', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Coming Soon</h3>
+        <SectionTitle>Coming Soon</SectionTitle>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
           {['Broadcast Campaigns', 'Advanced COD Intelligence', 'No-show Prediction'].map(name => (
-            <div key={name} className="card" style={{ padding: 20, opacity: 0.5 }}>
+            <Card key={name} style={{ padding: 20, opacity: 0.5 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <Lock size={14} color="var(--ink-400)" />
                 <h3 style={{ fontSize: 14, fontWeight: 650, color: 'var(--ink-600)' }}>{name}</h3>
               </div>
               <span style={{ padding: '2px 8px', borderRadius: 4, background: 'var(--surface-0)', fontSize: 10, fontWeight: 600, color: 'var(--ink-400)', textTransform: 'uppercase' }}>Coming Soon</span>
-            </div>
+            </Card>
           ))}
         </div>
       </div>

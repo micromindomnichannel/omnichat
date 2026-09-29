@@ -5,7 +5,8 @@ import { Table } from '../components/shared/Table';
 import { StatusBadge } from '../components/shared/StatusBadge';
 import { Drawer } from '../components/shared/Drawer';
 import { OrderDrawer } from '../components/commerce/OrderDrawer';
-import { Search, Plus } from 'lucide-react';
+import { PageHeader, Card, EmptyState } from '../components/dash/kit';
+import { Search, Plus, ShoppingBag } from 'lucide-react';
 
 export function Orders() {
   const { state } = useStore();
@@ -16,17 +17,32 @@ export function Orders() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <PageHeader
+        eyebrow="Commerce"
+        title="Orders"
+        sub="Track every sale, status change, and customer checkout."
+        actions={
+          <button onClick={() => setShowDrawer(true)} className="btn btn-primary" style={{ background: 'var(--signal-orange)', border: 'none', color: '#fff', height: 40, padding: '0 18px', borderRadius: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}><Plus size={16} /> New Order</button>
+        }
+      />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ position: 'relative' }}>
           <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-400)' }} />
           <input type="text" placeholder="Search orders..." value={search} onChange={e => setSearch(e.target.value)}
             style={{ width: 280, height: 36, padding: '0 10px 0 30px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 13, background: 'var(--surface-1)', outline: 'none' }} />
         </div>
-        <button onClick={() => setShowDrawer(true)} className="btn btn-primary" style={{ background: accentColor }}><Plus size={16} /> New Order</button>
       </div>
-      <div className="card">
+      <Card style={{ padding: 0, overflow: 'hidden' }}>
         <Table columns={[{ key: 'id', label: 'Order ID' }, { key: 'customer', label: 'Customer' }, { key: 'product', label: 'Product' }, { key: 'total', label: 'Total' }, { key: 'status', label: 'Status' }, { key: 'date', label: 'Date' }]}
           data={filtered}
+          emptyState={
+            <EmptyState
+              icon={<ShoppingBag size={24} color="var(--signal-orange)" />}
+              title="No orders yet"
+              copy="New checkouts from every channel land here automatically."
+              action={<button onClick={() => setShowDrawer(true)} style={{ background: 'var(--signal-orange)', border: 'none', color: '#fff', height: 40, padding: '0 18px', borderRadius: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}><Plus size={16} /> New Order</button>}
+            />
+          }
           renderRow={(order) => {
             const customer = state.customers.find(c => c.id === order.customerId);
             return (
@@ -40,7 +56,7 @@ export function Orders() {
               </tr>
             );
           }} />
-      </div>
+      </Card>
       <Drawer isOpen={showDrawer} onClose={() => setShowDrawer(false)} title="New Order">
         <OrderDrawer customerId="" onClose={() => setShowDrawer(false)} />
       </Drawer>

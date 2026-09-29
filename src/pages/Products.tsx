@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useStore } from '../state/store';
 import { useVertical } from '../state/verticalContext';
-import { StatCard } from '../components/shared/StatCard';
 import { Modal } from '../components/shared/Modal';
 import { Product } from '../state/mockData';
 import { ImageUploader } from '../components/shared/ImageUploader';
+import { PageHeader, Card, Stat, EmptyState } from '../components/dash/kit';
 import {
   Package, Plus, Search, Edit2, Trash2, AlertTriangle, CheckCircle, RefreshCw, Layers
 } from 'lucide-react';
@@ -109,40 +109,31 @@ export function Products() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {/* Header Row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-        <div>
-          <div className="orbit-badge" style={{ marginBottom: 6 }}>
-            <Package size={13} color="var(--signal-orange)" />
-            <span>Store Inventory Engine</span>
-          </div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--midnight-ink)' }}>
-            Products & Store Inventory
-          </h1>
-          <p style={{ fontSize: 13, color: 'var(--stone-gray)', marginTop: 2 }}>
-            Manage inventory stock levels, prices, and SKUs. Checked automatically during AI customer checkouts.
-          </p>
-        </div>
-
-        <button
-          onClick={handleOpenAdd}
-          className="btn btn-primary"
-          style={{ background: 'var(--signal-orange)', height: 42, padding: '0 20px' }}
-        >
-          <Plus size={18} /> Add New Product
-        </button>
-      </div>
+      <PageHeader
+        eyebrow="Catalog"
+        title="Products & Store Inventory"
+        sub="Manage inventory stock levels, prices, and SKUs. Checked automatically during AI customer checkouts."
+        actions={
+          <button
+            onClick={handleOpenAdd}
+            className="btn btn-primary"
+            style={{ background: 'var(--signal-orange)', border: 'none', color: '#fff', height: 42, padding: '0 20px', borderRadius: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+          >
+            <Plus size={18} /> Add New Product
+          </button>
+        }
+      />
 
       {/* Stats Summary */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-        <StatCard label="Total Items in Catalog" value={totalProducts} />
-        <StatCard label="Total Inventory Value" value={`${totalValue.toLocaleString()} EGP`} />
-        <StatCard label="Low Stock Warning (≤5)" value={lowStockCount} trend={lowStockCount > 0 ? -1 : 0} />
-        <StatCard label="Out of Stock Items" value={outOfStockCount} trend={outOfStockCount > 0 ? -10 : 0} />
+        <Stat label="Total Items in Catalog" value={totalProducts} />
+        <Stat label="Total Inventory Value" value={`${totalValue.toLocaleString()} EGP`} />
+        <Stat label="Low Stock Warning (≤5)" value={lowStockCount} delta={lowStockCount > 0 ? 'Needs restock' : undefined} tone={lowStockCount > 0 ? 'down' : 'neutral'} />
+        <Stat label="Out of Stock Items" value={outOfStockCount} delta={outOfStockCount > 0 ? 'Action needed' : undefined} tone={outOfStockCount > 0 ? 'down' : 'neutral'} />
       </div>
 
       {/* Controls Bar */}
-      <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+      <Card style={{ padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div style={{ position: 'relative', width: 320 }}>
           <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--stone-gray)' }} />
           <input
@@ -173,19 +164,27 @@ export function Products() {
             </button>
           ))}
         </div>
-      </div>
+      </Card>
 
       {/* Products Table */}
-      <div className="card" style={{ overflow: 'hidden' }}>
+      <Card style={{ padding: 0, overflow: 'hidden' }}>
+        {filteredProducts.length === 0 ? (
+          <EmptyState
+            icon={<Package size={24} color="var(--signal-orange)" />}
+            title="No products found"
+            copy="Add your first product so the AI can sell it across every channel."
+            action={<button onClick={handleOpenAdd} style={{ background: 'var(--signal-orange)', border: 'none', color: '#fff', height: 40, padding: '0 18px', borderRadius: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}><Plus size={16} /> Add New Product</button>}
+          />
+        ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
             <tr style={{ background: 'var(--surface-0)', borderBottom: '1px solid var(--border)' }}>
-              <th style={{ padding: '14px 18px', fontSize: 11, fontWeight: 700, color: 'var(--stone-gray)', textTransform: 'uppercase' }}>Product</th>
-              <th style={{ padding: '14px 18px', fontSize: 11, fontWeight: 700, color: 'var(--stone-gray)', textTransform: 'uppercase' }}>SKU</th>
-              <th style={{ padding: '14px 18px', fontSize: 11, fontWeight: 700, color: 'var(--stone-gray)', textTransform: 'uppercase' }}>Price (EGP)</th>
-              <th style={{ padding: '14px 18px', fontSize: 11, fontWeight: 700, color: 'var(--stone-gray)', textTransform: 'uppercase' }}>Stock Quantity</th>
-              <th style={{ padding: '14px 18px', fontSize: 11, fontWeight: 700, color: 'var(--stone-gray)', textTransform: 'uppercase' }}>Status</th>
-              <th style={{ padding: '14px 18px', fontSize: 11, fontWeight: 700, color: 'var(--stone-gray)', textTransform: 'uppercase', textAlign: 'right' }}>Admin Actions</th>
+              <th style={{ padding: '14px 18px', fontSize: 12, fontWeight: 700, color: 'var(--stone-gray)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Product</th>
+              <th style={{ padding: '14px 18px', fontSize: 12, fontWeight: 700, color: 'var(--stone-gray)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>SKU</th>
+              <th style={{ padding: '14px 18px', fontSize: 12, fontWeight: 700, color: 'var(--stone-gray)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Price (EGP)</th>
+              <th style={{ padding: '14px 18px', fontSize: 12, fontWeight: 700, color: 'var(--stone-gray)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Stock Quantity</th>
+              <th style={{ padding: '14px 18px', fontSize: 12, fontWeight: 700, color: 'var(--stone-gray)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Status</th>
+              <th style={{ padding: '14px 18px', fontSize: 12, fontWeight: 700, color: 'var(--stone-gray)', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'right' }}>Admin Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -245,7 +244,8 @@ export function Products() {
             ))}
           </tbody>
         </table>
-      </div>
+        )}
+      </Card>
 
       {/* Product Add/Edit Modal */}
       {showAddModal && (

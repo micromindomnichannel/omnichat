@@ -3,7 +3,8 @@ import { useStore } from '../state/store';
 import { useVertical } from '../state/verticalContext';
 import { Tabs } from '../components/shared/Tabs';
 import { Modal } from '../components/shared/Modal';
-import { Search, Plus, Trash2, FileText, Image, Link, Check, Sparkles } from 'lucide-react';
+import { PageHeader, Card, SectionTitle, EmptyState } from '../components/dash/kit';
+import { Search, Plus, Trash2, FileText, Image, Link, Check, Sparkles, BookOpen } from 'lucide-react';
 import { api } from '../services/api';
 
 export function Knowledge() {
@@ -83,7 +84,18 @@ export function Knowledge() {
   const sourceIcons: Record<string, React.ElementType> = { PDF: FileText, DOCX: FileText, Image, Text: FileText, URL: Link };
 
   return (
-    <div style={{ display: 'flex', gap: 24, height: 'calc(100vh - 140px)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <PageHeader
+        eyebrow="AI Knowledge"
+        title="Knowledge Base"
+        sub="FAQs, policies, and sources your AI answers from."
+        actions={
+          <button onClick={() => setShowAddFAQ(true)} className="btn btn-primary" style={{ background: 'var(--signal-orange)', border: 'none', color: '#fff', height: 40, padding: '0 18px', borderRadius: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+            <Plus size={16} /> Add {activeTab === 'FAQs' ? 'FAQ' : activeTab === 'Policies' ? 'Policy' : 'Item'}
+          </button>
+        }
+      />
+    <div style={{ display: 'flex', gap: 24, minHeight: 'calc(100vh - 280px)' }}>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Tabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
@@ -95,9 +107,6 @@ export function Knowledge() {
                 onChange={(e) => { handleFile(e.target.files?.[0], activeTab === 'FAQs' ? 'faq' : activeTab === 'Policies' ? 'policy' : 'note'); e.target.value = ''; }}
               />
             </label>
-            <button onClick={() => setShowAddFAQ(true)} className="btn btn-primary" style={{ background: accentColor }}>
-              <Plus size={16} /> Add {activeTab === 'FAQs' ? 'FAQ' : activeTab === 'Policies' ? 'Policy' : 'Item'}
-            </button>
           </div>
         </div>
 
@@ -114,7 +123,7 @@ export function Knowledge() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, overflow: 'auto' }}>
           {/* Ask the knowledge base (MicroMind analyst, local-match fallback) */}
-          <div className="card" style={{ padding: 16, borderColor: 'var(--signal-orange)' }}>
+          <Card style={{ padding: 16, borderColor: 'var(--signal-orange)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
               <Sparkles size={14} color="var(--signal-orange)" />
               <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--midnight-ink)' }}>Preview AI answer</span>
@@ -137,9 +146,19 @@ export function Knowledge() {
                 </span>
               </div>
             )}
-          </div>
-          {filteredFAQs.map(faq => (
-            <div key={faq.id} className="card" style={{ padding: 16 }}>
+          </Card>
+          {filteredFAQs.length === 0 ? (
+            <Card>
+              <EmptyState
+                icon={<BookOpen size={24} color="var(--signal-orange)" />}
+                title="No answers yet"
+                copy="Add FAQs so your AI can answer customers instantly, even while you sleep."
+                action={<button onClick={() => setShowAddFAQ(true)} style={{ background: 'var(--signal-orange)', border: 'none', color: '#fff', height: 40, padding: '0 18px', borderRadius: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}><Plus size={16} /> Add FAQ</button>}
+              />
+            </Card>
+          ) : (
+          filteredFAQs.map(faq => (
+            <Card key={faq.id} style={{ padding: 16 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                 <div>
                   <h4 style={{ fontSize: 14, fontWeight: 650, color: 'var(--ink-900)', marginBottom: 4 }}>{faq.question}</h4>
@@ -158,20 +177,24 @@ export function Knowledge() {
                   <Trash2 size={14} color="var(--ink-400)" />
                 </button>
               </div>
-            </div>
-          ))}
+            </Card>
+          ))
+          )}
         </div>
       </div>
 
       {/* Sources Rail */}
       <div style={{ width: 280, minWidth: 280 }} className="hide-below-900">
-        <div className="card" style={{ padding: 20, height: '100%' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <h3 style={{ fontSize: 14, fontWeight: 650, color: 'var(--ink-900)' }}>Sources</h3>
-            <button onClick={() => setShowAddSource(true)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-              <Plus size={16} color={accentColor} />
-            </button>
-          </div>
+        <Card style={{ padding: 20, height: '100%' }}>
+          <SectionTitle
+            action={
+              <button onClick={() => setShowAddSource(true)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                <Plus size={16} color={accentColor} />
+              </button>
+            }
+          >
+            Sources
+          </SectionTitle>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {state.sources.map(source => {
               const Icon = sourceIcons[source.type] || FileText;
@@ -198,7 +221,7 @@ export function Knowledge() {
               );
             })}
           </div>
-        </div>
+        </Card>
       </div>
 
       <Modal isOpen={showAddFAQ} onClose={() => setShowAddFAQ(false)} title="Add FAQ" size="sm">
@@ -223,6 +246,7 @@ export function Knowledge() {
           <button onClick={handleAddSource} className="btn btn-primary" style={{ width: '100%', background: accentColor }}>Add Source</button>
         </div>
       </Modal>
+    </div>
     </div>
   );
 }

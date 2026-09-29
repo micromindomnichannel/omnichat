@@ -2,16 +2,8 @@
 // Backend: GET /api/v1/admin/*. Null-safe when the DB is down (dbUp flag).
 import React, { useEffect, useState } from 'react';
 import { ShieldAlert } from 'lucide-react';
+import { PageHeader, Card, SectionTitle, Stat } from '../components/dash/kit';
 import { api } from '../services/api';
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div style={{ padding: 16, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface-1)', marginBottom: 16 }}>
-      <h3 style={{ fontSize: 14, fontWeight: 800, margin: '0 0 12px', color: 'var(--midnight-ink)' }}>{title}</h3>
-      {children}
-    </div>
-  );
-}
 
 function Table({ cols, rows }: { cols: string[]; rows: any[][] }) {
   if (!rows.length) return <div style={{ fontSize: 12, color: 'var(--stone-gray)' }}>No data.</div>;
@@ -50,15 +42,32 @@ export function Admin() {
 
   if (!overview) return <div style={{ padding: 8, fontSize: 13, color: 'var(--stone-gray)' }}>Loading admin… (backend unreachable?)</div>;
 
+  const sumN = (rows: any[] | null | undefined) =>
+    (rows || []).reduce((s, r) => s + Number(r?.n ?? 0), 0);
+  const workspaceCount = overview.workspaces?.length ?? '—';
+  const channelTotal = overview.channels ? sumN(overview.channels) : (channels?.length ?? '—');
+  const flowTotal = overview.flows ? sumN(overview.flows) : (flows?.length ?? '—');
+  const messages24h = overview.messages24h ? sumN(overview.messages24h) : '—';
+  const errors24h = overview.errors24h ?? '—';
+
   return (
     <div style={{ maxWidth: 1000 }}>
-      <h2 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 18, fontWeight: 800, margin: '0 0 4px' }}>
-        <ShieldAlert size={20} /> Admin
-      </h2>
-      <p style={{ fontSize: 12, color: 'var(--stone-gray)', margin: '0 0 16px' }}>
-        Internal only — DB {overview.dbUp ? '🟢 up' : '🔴 down'}. Put behind SSO before any production pilot.
-      </p>
-      <Section title="MicroMind control plane">
+      <PageHeader
+        eyebrow="Operations"
+        title="Admin"
+        sub={`Internal only — DB ${overview.dbUp ? 'up' : 'down'}. Put behind SSO before any production pilot.`}
+        live={!!overview.dbUp}
+        actions={<span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--ink-600)' }}><ShieldAlert size={16} /> Internal</span>}
+      />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 16 }}>
+        <Stat label="Workspaces" value={workspaceCount} />
+        <Stat label="Channels" value={channelTotal} />
+        <Stat label="Flows" value={flowTotal} />
+        <Stat label="Messages (24h)" value={messages24h} tone="neutral" />
+        <Stat label="Errors (24h)" value={errors24h} tone={Number(errors24h) > 0 ? 'down' : 'neutral'} />
+      </div>
+      <Card style={{ marginBottom: 16 }}>
+        <SectionTitle>MicroMind control plane</SectionTitle>
         {!mm ? <div style={{ fontSize: 12, color: 'var(--stone-gray)' }}>No data.</div> : (
           <Table
             cols={['Aspect', 'Value']}
@@ -70,14 +79,16 @@ export function Admin() {
             ]}
           />
         )}
-      </Section>
-      <Section title="Channels">
+      </Card>
+      <Card style={{ marginBottom: 16 }}>
+        <SectionTitle>Channels</SectionTitle>
         <Table
           cols={['Channel', 'Name', 'Status', 'Flow', 'Folder', 'Key', 'Last test', 'Convs', 'Last webhook', 'Last sync']}
           rows={channels.map((c: any) => [c.channel, c.display_name || c.username, c.status, c.micromind_flow_id || '—', c.folder_status || '—', c.key_provisioned ? 'linked' : '—', c.last_test || 'never', c.conversations, c.last_webhook, c.last_sync])}
         />
-      </Section>
-      <Section title="MicroMind flows">
+      </Card>
+      <Card style={{ marginBottom: 16 }}>
+        <SectionTitle>MicroMind flows</SectionTitle>
         <Table
           cols={['Purpose', 'Label', 'Flow id', 'Source', 'Key', 'Last test', 'Status', 'Updated']}
           rows={flows.map((f: any) => [
@@ -91,19 +102,21 @@ export function Admin() {
             f.updated_at,
           ])}
         />
-      </Section>
-      <Section title="Errors (24h)">
+      </Card>
+      <Card style={{ marginBottom: 16 }}>
+        <SectionTitle>Errors (24h)</SectionTitle>
         <Table
           cols={['Provider', 'Event', 'Status', 'At']}
           rows={(errors.webhooks || []).map((w: any) => [w.provider, w.external_event_id, w.status, w.created_at])}
         />
-      </Section>
-      <Section title="Usage (30d)">
+      </Card>
+      <Card style={{ marginBottom: 16 }}>
+        <SectionTitle>Usage (30d)</SectionTitle>
         <Table
           cols={['Provider', 'Day', 'Events', 'Processed']}
           rows={usage.map((u: any) => [u.provider, String(u.day).slice(0, 10), u.events, u.processed])}
         />
-      </Section>
+      </Card>
     </div>
   );
 }

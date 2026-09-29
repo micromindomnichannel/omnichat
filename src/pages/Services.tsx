@@ -4,7 +4,8 @@ import { useVertical } from '../state/verticalContext';
 import { ServiceTable } from '../components/appointments/ServiceTable';
 import { Modal } from '../components/shared/Modal';
 import { ImageUploader } from '../components/shared/ImageUploader';
-import { Search, Plus, LayoutGrid, List, Clock, Image as ImageIcon } from 'lucide-react';
+import { PageHeader, Card, EmptyState } from '../components/dash/kit';
+import { Search, Plus, LayoutGrid, List, Clock, Image as ImageIcon, Briefcase } from 'lucide-react';
 
 export function Services() {
   const { state, dispatch, showToast } = useStore();
@@ -51,6 +52,16 @@ export function Services() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <PageHeader
+        eyebrow="Catalog"
+        title="Services"
+        sub="Services, durations, and pricing the AI books for you."
+        actions={
+          <button onClick={() => setShowAddModal(true)} className="btn btn-primary" style={{ background: 'var(--signal-orange)', border: 'none', color: '#fff', height: 40, padding: '0 18px', borderRadius: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+            <Plus size={16} /> Add New Service
+          </button>
+        }
+      />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <div style={{ position: 'relative' }}>
@@ -68,16 +79,21 @@ export function Services() {
             <button onClick={() => setView('table')} style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border)', background: view === 'table' ? 'var(--signal-orange)' : 'transparent', color: view === 'table' ? 'white' : 'var(--ink-600)', cursor: 'pointer' }}><List size={16} /></button>
           </div>
         </div>
-
-        <button onClick={() => setShowAddModal(true)} className="btn btn-primary" style={{ background: 'var(--signal-orange)' }}>
-          <Plus size={16} /> Add New Service
-        </button>
       </div>
 
-      {view === 'grid' ? (
+      {filtered.length === 0 ? (
+        <Card>
+          <EmptyState
+            icon={<Briefcase size={24} color="var(--signal-orange)" />}
+            title="No services found"
+            copy="Add a service so customers can book it through chat."
+            action={<button onClick={() => setShowAddModal(true)} style={{ background: 'var(--signal-orange)', border: 'none', color: '#fff', height: 40, padding: '0 18px', borderRadius: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}><Plus size={16} /> Add New Service</button>}
+          />
+        </Card>
+      ) : view === 'grid' ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
           {filtered.map(service => (
-            <div key={service.id} className="card" style={{ padding: 0, overflow: 'hidden', borderRadius: 12 }}>
+            <Card key={service.id} style={{ padding: 0, overflow: 'hidden', borderRadius: 12 }}>
               <div style={{ height: 140, overflow: 'hidden', position: 'relative', background: 'var(--surface-0)' }}>
                 <img
                   src={service.image || 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=500&auto=format&fit=crop'}
@@ -98,11 +114,11 @@ export function Services() {
                   </span>
                 </div>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       ) : (
-        <div className="card"><ServiceTable onServiceClick={() => {}} /></div>
+        <Card style={{ padding: 0, overflow: 'hidden' }}><ServiceTable onServiceClick={() => {}} /></Card>
       )}
 
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Add Service & Pre-loaded Photo" size="sm">

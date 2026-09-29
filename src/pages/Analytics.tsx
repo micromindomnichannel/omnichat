@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../state/store';
-import { StatCard } from '../components/shared/StatCard';
 import { EmptyState } from '../components/shared/EmptyState';
+import { PageHeader, Card, SectionTitle, Stat } from '../components/dash/kit';
 import { bucketMessagesByDay, countByChannel } from '../services/normalize';
 import {
   BarChart3, TrendingUp, Users, MessageSquare, DollarSign, Clock, Instagram, Facebook, MessageCircle, Music, Globe, FileText, Sparkles, Send, CheckCircle2, Download
@@ -104,32 +104,23 @@ Strategic notes (from live data):
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-        <div>
-          <div className="orbit-badge" style={{ marginBottom: 6 }}>
-            <BarChart3 size={13} color="var(--signal-orange)" />
-            <span>Deep Multi-Platform Analytics (Database Synced)</span>
-          </div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--midnight-ink)' }}>
-            Analytics & Executive Business Reports
-          </h1>
-          <p style={{ fontSize: 13, color: 'var(--stone-gray)', marginTop: 2 }}>
-            Deep analysis dynamically calculated from live PostgreSQL database records.
-          </p>
-        </div>
-
-        <button
-          onClick={handleGenerateReport}
-          className="btn btn-primary"
-          style={{ background: 'var(--midnight-ink)', height: 42, padding: '0 20px' }}
-        >
-          <Sparkles size={18} color="var(--signal-orange)" /> Generate Executive Report
-        </button>
-      </div>
+      <PageHeader
+        eyebrow="Intelligence"
+        title="Analytics & Executive Business Reports"
+        sub="Deep analysis dynamically calculated from live PostgreSQL database records."
+        actions={
+          <button
+            onClick={handleGenerateReport}
+            className="btn btn-primary"
+            style={{ background: 'var(--midnight-ink)', height: 42, padding: '0 20px' }}
+          >
+            <Sparkles size={18} color="var(--signal-orange)" /> Generate Executive Report
+          </button>
+        }
+      />
 
       {/* Platform Selector Tabs */}
-      <div className="card" style={{ padding: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      <Card style={{ padding: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <button
           onClick={() => setPlatform('all')}
           className={'btn ' + (platform === 'all' ? 'btn-primary' : 'btn-outline')}
@@ -165,34 +156,35 @@ Strategic notes (from live data):
         >
           <Music size={15} /> TikTok
         </button>
-      </div>
+      </Card>
 
       {/* Metric Cards Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
-        <StatCard
+        <Stat
           label="Total Revenue (Live DB)"
           value={`${currentStats.revenue} EGP`}
+          tone="up"
         />
-        <StatCard
+        <Stat
           label="Total Inquiries"
           value={currentStats.inquiries.toLocaleString()}
         />
-        <StatCard
+        <Stat
           label="Completed Orders"
           value={currentStats.orders.toString()}
+          tone="up"
         />
-        <StatCard
+        <Stat
           label="AI Resolution Rate"
           value={currentStats.aiResolution}
+          tone={aiResolutionPct === null ? 'neutral' : 'up'}
         />
       </div>
 
       {/* Charts Section */}
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
-        <div className="card" style={{ padding: 20 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--midnight-ink)' }}>
-            Inquiry Volume (Last 7 Days)
-          </h3>
+        <Card style={{ padding: 20 }}>
+          <SectionTitle>Inquiry Volume (Last 7 Days)</SectionTitle>
           <div style={{ height: 280 }}>
             {volumeEmpty ? (
               <EmptyState
@@ -211,12 +203,10 @@ Strategic notes (from live data):
             </ResponsiveContainer>
             )}
           </div>
-        </div>
+        </Card>
 
-        <div className="card" style={{ padding: 20 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--midnight-ink)' }}>
-            Conversations Share by Channel
-          </h3>
+        <Card style={{ padding: 20 }}>
+          <SectionTitle>Conversations Share by Channel</SectionTitle>
           <div style={{ height: 200 }}>
             {shareByChannel.length === 0 ? (
               <EmptyState
@@ -236,14 +226,14 @@ Strategic notes (from live data):
             </ResponsiveContainer>
             )}
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Generated Executive Report Box */}
       {reportGenerated && (
-        <div className="card animate-slide-up" style={{ padding: 24, borderLeft: '4px solid var(--signal-orange)' }}>
+        <Card style={{ padding: 24, borderLeft: '4px solid var(--signal-orange)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--midnight-ink)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--midnight-ink)', display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
               <FileText size={18} color="var(--signal-orange)" />
               Executive Business Summary (Live DB)
             </h3>
@@ -253,11 +243,11 @@ Strategic notes (from live data):
           </div>
           <pre style={{
             background: 'var(--surface-0)', padding: 16, borderRadius: 8, fontSize: 13,
-            lineHeight: 1.6, fontFamily: 'monospace', whiteSpace: 'pre-wrap', color: 'var(--midnight-ink)'
+            lineHeight: 1.6, fontFamily: 'monospace', whiteSpace: 'pre-wrap', color: 'var(--midnight-ink)', margin: 0
           }}>
             {reportText}
           </pre>
-        </div>
+        </Card>
       )}
     </div>
   );

@@ -3,6 +3,7 @@ import {
   Calendar, Clock, Plus, Trash2, CheckCircle2, Instagram, Facebook, MessageCircle, Music, Send, Image, Sparkles
 } from 'lucide-react';
 import { OrbitLogo } from '../components/shared/OrbitLogo';
+import { PageHeader, Card, EmptyState } from '../components/dash/kit';
 
 interface ScheduledPost {
   id: string;
@@ -95,34 +96,35 @@ export function Scheduler() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {/* Header Row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-        <div>
-          <div className="orbit-badge" style={{ marginBottom: 6 }}>
-            <Calendar size={13} color="var(--signal-orange)" />
-            <span>Cross-Platform Content Scheduler</span>
-          </div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--midnight-ink)' }}>
-            Scheduled Content & Social Broadcasts
-          </h1>
-          <p style={{ fontSize: 13, color: 'var(--stone-gray)', marginTop: 2 }}>
-            Plan, schedule, and auto-broadcast marketing updates simultaneously across Instagram, WhatsApp, Facebook & TikTok.
-          </p>
-        </div>
-
-        <button
-          onClick={() => setShowModal(true)}
-          className="btn btn-primary"
-          style={{ background: 'var(--signal-orange)', height: 42, padding: '0 20px' }}
-        >
-          <Plus size={18} /> Schedule New Content
-        </button>
-      </div>
+      <PageHeader
+        eyebrow="Schedule"
+        title="Scheduled Content & Social Broadcasts"
+        sub="Plan, schedule, and auto-broadcast marketing updates simultaneously across Instagram, WhatsApp, Facebook & TikTok."
+        actions={
+          <button
+            onClick={() => setShowModal(true)}
+            className="btn btn-primary"
+            style={{ background: 'var(--signal-orange)', border: 'none', color: '#fff', height: 42, padding: '0 20px', borderRadius: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+          >
+            <Plus size={18} /> Schedule New Content
+          </button>
+        }
+      />
 
       {/* Post Grid */}
+      {posts.length === 0 ? (
+        <Card>
+          <EmptyState
+            icon={<Calendar size={24} color="var(--signal-orange)" />}
+            title="Nothing scheduled"
+            copy="Plan your next broadcast and it will appear here across every channel."
+            action={<button onClick={() => setShowModal(true)} style={{ background: 'var(--signal-orange)', border: 'none', color: '#fff', height: 40, padding: '0 18px', borderRadius: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}><Plus size={16} /> Schedule New Content</button>}
+          />
+        </Card>
+      ) : (
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 20 }}>
         {posts.map(post => (
-          <div key={post.id} className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRadius: 14 }}>
+          <Card key={post.id} style={{ padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRadius: 14 }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <span className="orbit-badge" style={{
@@ -176,9 +178,10 @@ export function Scheduler() {
                 <Trash2 size={16} color="var(--burnt-coral)" />
               </button>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
+      )}
 
       {/* Schedule Modal */}
       {showModal && (

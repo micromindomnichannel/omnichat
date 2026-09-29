@@ -5,7 +5,8 @@ import { useVertical } from '../state/verticalContext';
 import { Table } from '../components/shared/Table';
 import { StatusBadge } from '../components/shared/StatusBadge';
 import { ChannelIcon } from '../components/shared/ChannelIcon';
-import { Search } from 'lucide-react';
+import { PageHeader, Card, EmptyState } from '../components/dash/kit';
+import { Search, Users } from 'lucide-react';
 
 export function Customers() {
   const { state } = useStore();
@@ -22,6 +23,11 @@ export function Customers() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <PageHeader
+        eyebrow="CRM"
+        title="Customers"
+        sub="Every conversation, order, and appointment tied to one customer record."
+      />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <div style={{ position: 'relative' }}>
@@ -39,9 +45,16 @@ export function Customers() {
           </div>
         </div>
       </div>
-      <div className="card">
+      <Card style={{ padding: 0, overflow: 'hidden' }}>
         <Table columns={[{ key: 'name', label: 'Customer' }, { key: 'channels', label: 'Channels' }, { key: 'status', label: 'Status' }, { key: 'lastInteraction', label: 'Last Interaction' }, { key: 'count', label: isCommerce ? 'Orders' : 'Appointments' }, { key: 'total', label: 'Total Value' }, { key: 'tags', label: 'Tags' }]}
           data={filtered}
+          emptyState={
+            <EmptyState
+              icon={<Users size={24} color="var(--signal-orange)" />}
+              title="No customers yet"
+              copy="Customers appear here as soon as they message you or place their first order."
+            />
+          }
           renderRow={(customer) => (
             <tr key={customer.id} style={{ borderBottom: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => navigate(`/customers?id=${customer.id}`)}
               onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-0)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
@@ -68,7 +81,7 @@ export function Customers() {
               </td>
             </tr>
           )} />
-      </div>
+      </Card>
     </div>
   );
 }

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { OrbitLogo } from '../components/shared/OrbitLogo';
 import { ChannelsPanel } from '../components/settings/ChannelsPanel';
+import { PageHeader, Card, SectionTitle, ChannelDot } from '../components/dash/kit';
 import { api } from '../services/api';
 import { clearSessionCache } from '../services/session';
 
@@ -91,256 +92,291 @@ export function Settings() {
     switch (activeTab) {
       case 'Business Profile':
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 520 }}>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>Business Name</label>
-              <input className="input" value={state.businessName} onChange={e => dispatch({ type: 'UPDATE_BUSINESS', field: 'businessName', value: e.target.value })} />
-            </div>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>Brand Logo & Avatar</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div style={{ width: 64, height: 64, borderRadius: '50%', border: '2px dashed var(--stone-gray)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-0)' }}>
-                  <Upload size={20} color="var(--stone-gray)" />
-                </div>
-                <button className="btn btn-outline btn-sm">Upload New Logo</button>
+          <Card>
+            <SectionTitle>Business profile</SectionTitle>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 520 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>Business Name</label>
+                <input className="input" value={state.businessName} onChange={e => dispatch({ type: 'UPDATE_BUSINESS', field: 'businessName', value: e.target.value })} />
               </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>Brand Logo & Avatar</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <div style={{ width: 64, height: 64, borderRadius: '50%', border: '2px dashed var(--stone-gray)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-0)' }}>
+                    <Upload size={20} color="var(--stone-gray)" />
+                  </div>
+                  <button className="btn btn-outline btn-sm">Upload New Logo</button>
+                </div>
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>Industry & Category</label>
+                <select className="input" value={state.industry} onChange={e => dispatch({ type: 'UPDATE_BUSINESS', field: 'industry', value: e.target.value })}>
+                  <option>Fashion & Apparel</option>
+                  <option>Retail & E-Commerce</option>
+                  <option>Electronics & Tech</option>
+                  <option>Dental & Clinic Healthcare</option>
+                  <option>Beauty & Cosmetics</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>Business Overview</label>
+                <textarea className="input" rows={3} value={state.businessDescription} onChange={e => dispatch({ type: 'UPDATE_BUSINESS', field: 'businessDescription', value: e.target.value })} />
+              </div>
+              <button className="btn btn-primary" style={{ alignSelf: 'flex-start', background: 'var(--signal-orange)' }}>Save Profile Settings</button>
             </div>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>Industry & Category</label>
-              <select className="input" value={state.industry} onChange={e => dispatch({ type: 'UPDATE_BUSINESS', field: 'industry', value: e.target.value })}>
-                <option>Fashion & Apparel</option>
-                <option>Retail & E-Commerce</option>
-                <option>Electronics & Tech</option>
-                <option>Dental & Clinic Healthcare</option>
-                <option>Beauty & Cosmetics</option>
-              </select>
-            </div>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>Business Overview</label>
-              <textarea className="input" rows={3} value={state.businessDescription} onChange={e => dispatch({ type: 'UPDATE_BUSINESS', field: 'businessDescription', value: e.target.value })} />
-            </div>
-            <button className="btn btn-primary" style={{ alignSelf: 'flex-start', background: 'var(--signal-orange)' }}>Save Profile Settings</button>
-          </div>
+          </Card>
         );
 
       case 'Channels':
         return (
-          <ChannelsPanel
-            showToast={showToast}
-            local={state.channelsConnected}
-            onToggleLocal={handleToggleChannel}
-          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <Card>
+              <SectionTitle>Managed channels</SectionTitle>
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 16 }}>
+                <ChannelDot channel="messenger" label="Messenger" />
+                <ChannelDot channel="instagram" label="Instagram" />
+                <ChannelDot channel="whatsapp" label="WhatsApp" />
+                <ChannelDot channel="telegram" label="Telegram" />
+                <ChannelDot channel="gmail" label="Gmail" />
+              </div>
+              <ChannelsPanel
+                showToast={showToast}
+                local={state.channelsConnected}
+                onToggleLocal={handleToggleChannel}
+              />
+            </Card>
+            <Card>
+              <SectionTitle>Local preview channels</SectionTitle>
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                <ChannelDot channel="tiktok" label="TikTok" />
+                <ChannelDot channel="website" label="Website" />
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--stone-gray)', margin: '8px 0 0' }}>Local-only toggles live inside the panel above when the backend is unreachable.</p>
+            </Card>
+          </div>
         );
 
       case 'Plan & Usage':
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 520 }}>
-            {!plan ? (
-              <div style={{ fontSize: 13, color: 'var(--stone-gray)' }}>Plan data unavailable — backend unreachable.</div>
-            ) : (
-              <>
-                <div style={{ padding: 16, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface-1)' }}>
-                  <span style={{ fontSize: 12, color: 'var(--stone-gray)', display: 'block' }}>Current plan</span>
-                  <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--midnight-ink)', textTransform: 'capitalize' }}>{plan.plan?.name || 'Pro'}</span>
-                  <span style={{ fontSize: 12, color: 'var(--stone-gray)', display: 'block', marginTop: 4 }}>
-                    Up to {plan.plan?.channels >= 9007199254740991 ? 'unlimited' : plan.plan?.channels} active channels · {plan.plan?.teamSeats} team seats
-                  </span>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <Card>
+            <SectionTitle>Plan & usage</SectionTitle>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 520 }}>
+              {!plan ? (
+                <div style={{ fontSize: 13, color: 'var(--stone-gray)' }}>Plan data unavailable — backend unreachable.</div>
+              ) : (
+                <>
                   <div style={{ padding: 16, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface-1)' }}>
-                    <span style={{ fontSize: 20, fontWeight: 800 }}>{plan.usage?.channelsActive ?? '—'}</span>
-                    <span style={{ fontSize: 12, color: 'var(--stone-gray)', display: 'block' }}>Active channels{(plan.usage?.channelsErrored || 0) > 0 ? ` (+${plan.usage.channelsErrored} errored)` : ''}</span>
+                    <span style={{ fontSize: 12, color: 'var(--stone-gray)', display: 'block' }}>Current plan</span>
+                    <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--midnight-ink)', textTransform: 'capitalize' }}>{plan.plan?.name || 'Pro'}</span>
+                    <span style={{ fontSize: 12, color: 'var(--stone-gray)', display: 'block', marginTop: 4 }}>
+                      Up to {plan.plan?.channels >= 9007199254740991 ? 'unlimited' : plan.plan?.channels} active channels · {plan.plan?.teamSeats} team seats
+                    </span>
                   </div>
-                  <div style={{ padding: 16, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface-1)' }}>
-                    <span style={{ fontSize: 20, fontWeight: 800 }}>{plan.usage?.processed30d ?? '—'}</span>
-                    <span style={{ fontSize: 12, color: 'var(--stone-gray)', display: 'block' }}>Messages handled (30d)</span>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div style={{ padding: 16, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface-1)' }}>
+                      <span style={{ fontSize: 20, fontWeight: 800 }}>{plan.usage?.channelsActive ?? '—'}</span>
+                      <span style={{ fontSize: 12, color: 'var(--stone-gray)', display: 'block' }}>Active channels{(plan.usage?.channelsErrored || 0) > 0 ? ` (+${plan.usage.channelsErrored} errored)` : ''}</span>
+                    </div>
+                    <div style={{ padding: 16, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface-1)' }}>
+                      <span style={{ fontSize: 20, fontWeight: 800 }}>{plan.usage?.processed30d ?? '—'}</span>
+                      <span style={{ fontSize: 12, color: 'var(--stone-gray)', display: 'block' }}>Messages handled (30d)</span>
+                    </div>
                   </div>
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--stone-gray)' }}>{plan.billing?.note || ''}</div>
-              </>
-            )}
-          </div>
+                  <div style={{ fontSize: 12, color: 'var(--stone-gray)' }}>{plan.billing?.note || ''}</div>
+                </>
+              )}
+            </div>
+          </Card>
         );
 
       case 'AI Settings':
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 520 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface-1)' }}>
+          <Card>
+            <SectionTitle>AI copilot</SectionTitle>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 520 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface-1)' }}>
+                <div>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--midnight-ink)', display: 'block' }}>ORBIT AI Copilot Engine</span>
+                  <span style={{ fontSize: 11.5, color: 'var(--stone-gray)' }}>Automatically reply to customer signals</span>
+                </div>
+                <button
+                  onClick={() => dispatch({ type: 'UPDATE_AI_SETTINGS', field: 'aiEnabled', value: !state.aiEnabled })}
+                  style={{
+                    width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
+                    background: state.aiEnabled ? 'var(--signal-orange)' : 'var(--border)',
+                    position: 'relative', transition: 'background 0.2s ease'
+                  }}
+                >
+                  <div style={{
+                    width: 20, height: 20, borderRadius: '50%', background: 'white',
+                    position: 'absolute', top: 2, left: state.aiEnabled ? 22 : 2,
+                    transition: 'left 0.2s ease'
+                  }} />
+                </button>
+              </div>
+
               <div>
-                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--midnight-ink)', display: 'block' }}>ORBIT AI Copilot Engine</span>
-                <span style={{ fontSize: 11.5, color: 'var(--stone-gray)' }}>Automatically reply to customer signals</span>
-              </div>
-              <button
-                onClick={() => dispatch({ type: 'UPDATE_AI_SETTINGS', field: 'aiEnabled', value: !state.aiEnabled })}
-                style={{
-                  width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
-                  background: state.aiEnabled ? 'var(--signal-orange)' : 'var(--border)',
-                  position: 'relative', transition: 'background 0.2s ease'
-                }}
-              >
-                <div style={{
-                  width: 20, height: 20, borderRadius: '50%', background: 'white',
-                  position: 'absolute', top: 2, left: state.aiEnabled ? 22 : 2,
-                  transition: 'left 0.2s ease'
-                }} />
-              </button>
-            </div>
-
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>Brand Communication Tone</label>
-              <div style={{ display: 'flex', gap: 6 }}>
-                {['Friendly', 'Professional', 'Casual'].map(tone => (
-                  <button
-                    key={tone}
-                    onClick={() => dispatch({ type: 'UPDATE_AI_SETTINGS', field: 'aiTone', value: tone })}
-                    style={{
-                      flex: 1, padding: '8px 0', borderRadius: 6, border: '1px solid var(--border)',
-                      fontSize: 13, fontWeight: 650, cursor: 'pointer',
-                      background: state.aiTone === tone ? 'var(--signal-orange)' : 'transparent',
-                      color: state.aiTone === tone ? 'white' : 'var(--ink-600)'
-                    }}
-                  >
-                    {tone}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>Response Language Engine</label>
-              <div style={{ display: 'flex', gap: 6 }}>
-                {['Arabic', 'English', 'Both'].map(lang => (
-                  <button
-                    key={lang}
-                    onClick={() => dispatch({ type: 'UPDATE_AI_SETTINGS', field: 'aiLanguage', value: lang })}
-                    style={{
-                      flex: 1, padding: '8px 0', borderRadius: 6, border: '1px solid var(--border)',
-                      fontSize: 13, fontWeight: 650, cursor: 'pointer',
-                      background: state.aiLanguage === lang ? 'var(--midnight-ink)' : 'transparent',
-                      color: state.aiLanguage === lang ? 'white' : 'var(--ink-600)'
-                    }}
-                  >
-                    {lang}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>Human Takeover Escalation Rules</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {state.aiHandoffRules.map(rule => (
-                  <div key={rule} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 6, background: 'var(--surface-0)', border: '1px solid var(--border)' }}>
-                    <span style={{ flex: 1, fontSize: 13, color: 'var(--midnight-ink)' }}>{rule}</span>
-                    <button onClick={() => handleRemoveRule(rule)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-                      <Trash2 size={15} color="var(--burnt-coral)" />
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>Brand Communication Tone</label>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {['Friendly', 'Professional', 'Casual'].map(tone => (
+                    <button
+                      key={tone}
+                      onClick={() => dispatch({ type: 'UPDATE_AI_SETTINGS', field: 'aiTone', value: tone })}
+                      style={{
+                        flex: 1, padding: '8px 0', borderRadius: 6, border: '1px solid var(--border)',
+                        fontSize: 13, fontWeight: 650, cursor: 'pointer',
+                        background: state.aiTone === tone ? 'var(--signal-orange)' : 'transparent',
+                        color: state.aiTone === tone ? 'white' : 'var(--ink-600)'
+                      }}
+                    >
+                      {tone}
                     </button>
-                  </div>
-                ))}
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input className="input" placeholder="Add custom handoff rule..." value={newRule} onChange={e => setNewRule(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAddRule()} />
-                  <button onClick={handleAddRule} className="btn btn-primary" style={{ background: 'var(--signal-orange)' }}><Plus size={16} /></button>
+                  ))}
                 </div>
               </div>
-            </div>
 
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)' }}>
-                  Auto-Action Confidence Threshold
-                </label>
-                <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--signal-orange)' }}>{state.aiConfidenceThreshold}%</span>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>Response Language Engine</label>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {['Arabic', 'English', 'Both'].map(lang => (
+                    <button
+                      key={lang}
+                      onClick={() => dispatch({ type: 'UPDATE_AI_SETTINGS', field: 'aiLanguage', value: lang })}
+                      style={{
+                        flex: 1, padding: '8px 0', borderRadius: 6, border: '1px solid var(--border)',
+                        fontSize: 13, fontWeight: 650, cursor: 'pointer',
+                        background: state.aiLanguage === lang ? 'var(--midnight-ink)' : 'transparent',
+                        color: state.aiLanguage === lang ? 'white' : 'var(--ink-600)'
+                      }}
+                    >
+                      {lang}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <input
-                type="range"
-                min={50}
-                max={95}
-                value={state.aiConfidenceThreshold}
-                onChange={e => dispatch({ type: 'UPDATE_AI_SETTINGS', field: 'aiConfidenceThreshold', value: Number(e.target.value) })}
-                style={{ width: '100%' }}
-              />
-              <p className="faint" style={{ fontSize: 11, marginTop: 4 }}>Inquiries below {state.aiConfidenceThreshold}% confidence automatically request human agent takeover.</p>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>Human Takeover Escalation Rules</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {state.aiHandoffRules.map(rule => (
+                    <div key={rule} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 6, background: 'var(--surface-0)', border: '1px solid var(--border)' }}>
+                      <span style={{ flex: 1, fontSize: 13, color: 'var(--midnight-ink)' }}>{rule}</span>
+                      <button onClick={() => handleRemoveRule(rule)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                        <Trash2 size={15} color="var(--burnt-coral)" />
+                      </button>
+                    </div>
+                  ))}
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input className="input" placeholder="Add custom handoff rule..." value={newRule} onChange={e => setNewRule(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAddRule()} />
+                    <button onClick={handleAddRule} className="btn btn-primary" style={{ background: 'var(--signal-orange)' }}><Plus size={16} /></button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)' }}>
+                    Auto-Action Confidence Threshold
+                  </label>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--signal-orange)' }}>{state.aiConfidenceThreshold}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={50}
+                  max={95}
+                  value={state.aiConfidenceThreshold}
+                  onChange={e => dispatch({ type: 'UPDATE_AI_SETTINGS', field: 'aiConfidenceThreshold', value: Number(e.target.value) })}
+                  style={{ width: '100%' }}
+                />
+                <p className="faint" style={{ fontSize: 11, marginTop: 4 }}>Inquiries below {state.aiConfidenceThreshold}% confidence automatically request human agent takeover.</p>
+              </div>
             </div>
-          </div>
+          </Card>
         );
 
       case 'Working Hours':
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 520 }}>
-            {state.workingHours.map(wh => (
-              <div key={wh.day} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 14, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <button
-                    onClick={() => dispatch({ type: 'UPDATE_WORKING_HOURS', day: wh.day, field: 'open', value: !wh.open })}
-                    style={{
-                      width: 40, height: 22, borderRadius: 11, border: 'none', cursor: 'pointer',
-                      background: wh.open ? 'var(--signal-orange)' : 'var(--border)', position: 'relative'
-                    }}
-                  >
-                    <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: wh.open ? 20 : 2, transition: 'left 0.2s' }} />
-                  </button>
-                  <span style={{ width: 90, fontSize: 13.5, fontWeight: 700, color: 'var(--midnight-ink)' }}>{wh.day}</span>
-                </div>
-                {wh.open ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <input
-                      type="time"
-                      value={wh.start}
-                      onChange={e => dispatch({ type: 'UPDATE_WORKING_HOURS', day: wh.day, field: 'start', value: e.target.value })}
-                      style={{ width: 90, height: 32, borderRadius: 6, border: '1px solid var(--border)', fontSize: 12.5, padding: '0 8px' }}
-                    />
-                    <span style={{ color: 'var(--stone-gray)', fontSize: 12 }}>to</span>
-                    <input
-                      type="time"
-                      value={wh.end}
-                      onChange={e => dispatch({ type: 'UPDATE_WORKING_HOURS', day: wh.day, field: 'end', value: e.target.value })}
-                      style={{ width: 90, height: 32, borderRadius: 6, border: '1px solid var(--border)', fontSize: 12.5, padding: '0 8px' }}
-                    />
+          <Card>
+            <SectionTitle>Working hours</SectionTitle>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 520 }}>
+              {state.workingHours.map(wh => (
+                <div key={wh.day} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 14, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <button
+                      onClick={() => dispatch({ type: 'UPDATE_WORKING_HOURS', day: wh.day, field: 'open', value: !wh.open })}
+                      style={{
+                        width: 40, height: 22, borderRadius: 11, border: 'none', cursor: 'pointer',
+                        background: wh.open ? 'var(--signal-orange)' : 'var(--border)', position: 'relative'
+                      }}
+                    >
+                      <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: wh.open ? 20 : 2, transition: 'left 0.2s' }} />
+                    </button>
+                    <span style={{ width: 90, fontSize: 13.5, fontWeight: 700, color: 'var(--midnight-ink)' }}>{wh.day}</span>
                   </div>
-                ) : (
-                  <span className="orbit-badge" style={{ fontSize: 11 }}>Closed</span>
-                )}
-              </div>
-            ))}
-          </div>
+                  {wh.open ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <input
+                        type="time"
+                        value={wh.start}
+                        onChange={e => dispatch({ type: 'UPDATE_WORKING_HOURS', day: wh.day, field: 'start', value: e.target.value })}
+                        style={{ width: 90, height: 32, borderRadius: 6, border: '1px solid var(--border)', fontSize: 12.5, padding: '0 8px' }}
+                      />
+                      <span style={{ color: 'var(--stone-gray)', fontSize: 12 }}>to</span>
+                      <input
+                        type="time"
+                        value={wh.end}
+                        onChange={e => dispatch({ type: 'UPDATE_WORKING_HOURS', day: wh.day, field: 'end', value: e.target.value })}
+                        style={{ width: 90, height: 32, borderRadius: 6, border: '1px solid var(--border)', fontSize: 12.5, padding: '0 8px' }}
+                      />
+                    </div>
+                  ) : (
+                    <span className="orbit-badge" style={{ fontSize: 11 }}>Closed</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </Card>
         );
 
       case 'Notifications':
         return (
-          <div style={{ maxWidth: 540 }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                  <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 11, fontWeight: 700, color: 'var(--stone-gray)', textTransform: 'uppercase' }}>Event Trigger</th>
-                  <th style={{ textAlign: 'center', padding: '12px 16px', fontSize: 11, fontWeight: 700, color: 'var(--stone-gray)', textTransform: 'uppercase' }}>Email Alert</th>
-                  <th style={{ textAlign: 'center', padding: '12px 16px', fontSize: 11, fontWeight: 700, color: 'var(--stone-gray)', textTransform: 'uppercase' }}>In-App Popup</th>
-                </tr>
-              </thead>
-              <tbody>
-                {state.notificationSettings.map(ns => (
-                  <tr key={ns.event} style={{ borderBottom: '1px solid var(--border)' }}>
-                    <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--midnight-ink)' }}>{ns.event}</td>
-                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                      <input
-                        type="checkbox"
-                        checked={ns.email}
-                        onChange={e => dispatch({ type: 'UPDATE_NOTIFICATION', event: ns.event, channel: 'email', value: e.target.checked })}
-                        style={{ cursor: 'pointer' }}
-                      />
-                    </td>
-                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                      <input
-                        type="checkbox"
-                        checked={ns.inApp}
-                        onChange={e => dispatch({ type: 'UPDATE_NOTIFICATION', event: ns.event, channel: 'inApp', value: e.target.checked })}
-                        style={{ cursor: 'pointer' }}
-                      />
-                    </td>
+          <Card>
+            <SectionTitle>Notification preferences</SectionTitle>
+            <div style={{ maxWidth: 540 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                    <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 11, fontWeight: 700, color: 'var(--stone-gray)', textTransform: 'uppercase' }}>Event Trigger</th>
+                    <th style={{ textAlign: 'center', padding: '12px 16px', fontSize: 11, fontWeight: 700, color: 'var(--stone-gray)', textTransform: 'uppercase' }}>Email Alert</th>
+                    <th style={{ textAlign: 'center', padding: '12px 16px', fontSize: 11, fontWeight: 700, color: 'var(--stone-gray)', textTransform: 'uppercase' }}>In-App Popup</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {state.notificationSettings.map(ns => (
+                    <tr key={ns.event} style={{ borderBottom: '1px solid var(--border)' }}>
+                      <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--midnight-ink)' }}>{ns.event}</td>
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                        <input
+                          type="checkbox"
+                          checked={ns.email}
+                          onChange={e => dispatch({ type: 'UPDATE_NOTIFICATION', event: ns.event, channel: 'email', value: e.target.checked })}
+                          style={{ cursor: 'pointer' }}
+                        />
+                      </td>
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                        <input
+                          type="checkbox"
+                          checked={ns.inApp}
+                          onChange={e => dispatch({ type: 'UPDATE_NOTIFICATION', event: ns.event, channel: 'inApp', value: e.target.checked })}
+                          style={{ cursor: 'pointer' }}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
         );
 
       case 'Team Members':
@@ -351,7 +387,10 @@ export function Settings() {
                 <UserPlus size={16} /> Invite New Member
               </button>
             </div>
-            <div className="card">
+            <Card style={{ padding: 0, overflow: 'hidden' }}>
+              <div style={{ padding: '20px 20px 0' }}>
+                <SectionTitle>Team directory</SectionTitle>
+              </div>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border)' }}>
@@ -376,7 +415,7 @@ export function Settings() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </Card>
           </div>
         );
 
@@ -386,61 +425,67 @@ export function Settings() {
   };
 
   return (
-    <div style={{ display: 'flex', gap: 24, height: 'calc(100vh - 140px)' }}>
-      <div style={{ width: 210, minWidth: 210 }}>
-        <div className="card" style={{ padding: 8 }}>
-          {settingsTabs.map(tab => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+      <PageHeader
+        eyebrow="Workspace"
+        title="Settings"
+        sub="Business profile, channels, plan, AI, hours, notifications, and team — synced with the live backend."
+      />
+      <div style={{ display: 'flex', gap: 24 }}>
+        <div style={{ width: 210, minWidth: 210 }}>
+          <Card style={{ padding: 8 }}>
+            {settingsTabs.map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  width: '100%', padding: '10px 12px', borderRadius: 6, border: 'none',
+                  background: activeTab === tab ? 'var(--signal-orange-subtle)' : 'transparent',
+                  color: activeTab === tab ? 'var(--signal-orange)' : 'var(--ink-600)',
+                  fontSize: 13, fontWeight: activeTab === tab ? 700 : 500, cursor: 'pointer', textAlign: 'left',
+                  marginBottom: 2, transition: 'all 0.15s ease'
+                }}
+              >
+                {tab}
+              </button>
+            ))}
+          </Card>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', minWidth: 0 }}>
+          <SectionTitle>{activeTab}</SectionTitle>
+          {renderPanel()}
+          {/* Logout Section */}
+          <Card style={{ padding: 20, marginTop: 24, borderLeft: '4px solid var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <h4 style={{ fontSize: 15, fontWeight: 700, color: 'var(--midnight-ink)', margin: 0 }}>Sign Out of ORBIT</h4>
+              <p style={{ fontSize: 12.5, color: 'var(--stone-gray)', marginTop: 2, marginBottom: 0 }}>You will be redirected to the login page.</p>
+            </div>
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              style={{
-                width: '100%', padding: '10px 12px', borderRadius: 6, border: 'none',
-                background: activeTab === tab ? 'var(--signal-orange-subtle)' : 'transparent',
-                color: activeTab === tab ? 'var(--signal-orange)' : 'var(--ink-600)',
-                fontSize: 13, fontWeight: activeTab === tab ? 700 : 500, cursor: 'pointer', textAlign: 'left',
-                marginBottom: 2, transition: 'all 0.15s ease'
+              onClick={async () => {
+                await api.logout(); // destroys the server session; cache cleared regardless
+                clearSessionCache();
+                navigate('/login');
               }}
+              className="btn btn-outline"
+              style={{ color: 'var(--danger)', borderColor: 'var(--danger)', gap: 8 }}
             >
-              {tab}
+              <LogOut size={16} /> Sign Out
             </button>
-          ))}
+          </Card>
         </div>
-      </div>
-      <div style={{ flex: 1, overflowY: 'auto' }}>
-        <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--midnight-ink)', marginBottom: 20 }}>{activeTab}</h2>
-        {renderPanel()}
-      </div>
 
-      <Modal isOpen={showInvite} onClose={() => setShowInvite(false)} title="Invite Team Member" size="sm">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <input className="input" placeholder="Email address" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
-          <input className="input" type="password" placeholder="Temporary password (min 10 chars)" value={invitePassword} onChange={e => setInvitePassword(e.target.value)} />
-          <select className="input" value={inviteRole} onChange={e => setInviteRole(e.target.value)}>
-            <option value="admin">Admin</option>
-            <option value="agent">Agent</option>
-          </select>
-          <p style={{ fontSize: 11.5, color: 'var(--stone-gray)' }}>Owner-only. The account is created immediately and can sign in.</p>
-          <button onClick={handleInvite} className="btn btn-primary" style={{ width: '100%', background: 'var(--signal-orange)' }}>Create Account</button>
-        </div>
-      </Modal>
-
-      {/* Logout Section */}
-      <div className="card" style={{ padding: 20, marginTop: 24, borderLeft: '4px solid var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <h4 style={{ fontSize: 15, fontWeight: 700, color: 'var(--midnight-ink)' }}>Sign Out of ORBIT</h4>
-          <p style={{ fontSize: 12.5, color: 'var(--stone-gray)', marginTop: 2 }}>You will be redirected to the login page.</p>
-        </div>
-        <button
-          onClick={async () => {
-            await api.logout(); // destroys the server session; cache cleared regardless
-            clearSessionCache();
-            navigate('/login');
-          }}
-          className="btn btn-outline"
-          style={{ color: 'var(--danger)', borderColor: 'var(--danger)', gap: 8 }}
-        >
-          <LogOut size={16} /> Sign Out
-        </button>
+        <Modal isOpen={showInvite} onClose={() => setShowInvite(false)} title="Invite Team Member" size="sm">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <input className="input" placeholder="Email address" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
+            <input className="input" type="password" placeholder="Temporary password (min 10 chars)" value={invitePassword} onChange={e => setInvitePassword(e.target.value)} />
+            <select className="input" value={inviteRole} onChange={e => setInviteRole(e.target.value)}>
+              <option value="admin">Admin</option>
+              <option value="agent">Agent</option>
+            </select>
+            <p style={{ fontSize: 11.5, color: 'var(--stone-gray)' }}>Owner-only. The account is created immediately and can sign in.</p>
+            <button onClick={handleInvite} className="btn btn-primary" style={{ width: '100%', background: 'var(--signal-orange)' }}>Create Account</button>
+          </div>
+        </Modal>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useStore } from '../../state/store';
 import { Search, Bell, ChevronDown, LogOut, User, Home, ExternalLink } from 'lucide-react';
 import { OrbitLogo } from '../../components/shared/OrbitLogo';
+import { LiveDot } from '../../components/dash/kit';
 
 const pageTitles: Record<string, string> = {
   '/landing': 'ORBIT Landing Page',
@@ -17,6 +18,8 @@ const pageTitles: Record<string, string> = {
   '/knowledge': 'Knowledge Base',
   '/analytics': 'Analytics & Reports',
   '/settings': 'Platform Settings',
+  '/scheduler': 'Content Scheduler',
+  '/admin': 'Operations Admin',
   '/demo': 'Interactive Demo Mode'
 };
 
@@ -48,7 +51,7 @@ export function TopBar() {
         </h1>
 
         <div className="orbit-badge hide-below-900">
-          <span>ORBIT Engine Live</span>
+          <LiveDot label="Engine Live" />
         </div>
       </div>
 

@@ -6,7 +6,8 @@ import { StatusBadge } from '../components/shared/StatusBadge';
 import { Drawer } from '../components/shared/Drawer';
 import { DayCalendar } from '../components/appointments/DayCalendar';
 import { BookingDrawer } from '../components/appointments/BookingDrawer';
-import { Search, Plus, LayoutGrid, List } from 'lucide-react';
+import { PageHeader, Card, EmptyState } from '../components/dash/kit';
+import { Search, Plus, LayoutGrid, List, CalendarCheck } from 'lucide-react';
 
 export function Appointments() {
   const { state } = useStore();
@@ -18,6 +19,14 @@ export function Appointments() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <PageHeader
+        eyebrow="Schedule"
+        title="Appointments"
+        sub="Bookings, confirmations, and reminders in one daily view."
+        actions={
+          <button onClick={() => setShowDrawer(true)} className="btn btn-primary" style={{ background: 'var(--signal-orange)', border: 'none', color: '#fff', height: 40, padding: '0 18px', borderRadius: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}><Plus size={16} /> New Appointment</button>
+        }
+      />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <div style={{ position: 'relative' }}>
@@ -30,12 +39,19 @@ export function Appointments() {
             <button onClick={() => setView('list')} style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border)', background: view === 'list' ? accentColor : 'transparent', color: view === 'list' ? 'white' : 'var(--ink-600)', cursor: 'pointer' }}><List size={16} /></button>
           </div>
         </div>
-        <button onClick={() => setShowDrawer(true)} className="btn btn-primary" style={{ background: accentColor }}><Plus size={16} /> New Appointment</button>
       </div>
-      {view === 'calendar' ? <DayCalendar /> : (
-        <div className="card">
+      {view === 'calendar' ? <Card style={{ padding: 0, overflow: 'hidden' }}><DayCalendar /></Card> : (
+        <Card style={{ padding: 0, overflow: 'hidden' }}>
           <Table columns={[{ key: 'id', label: 'ID' }, { key: 'patient', label: 'Patient' }, { key: 'service', label: 'Service' }, { key: 'datetime', label: 'Date & Time' }, { key: 'status', label: 'Status' }]}
             data={filtered}
+            emptyState={
+              <EmptyState
+                icon={<CalendarCheck size={24} color="var(--signal-orange)" />}
+                title="No appointments found"
+                copy="New bookings appear here the moment customers confirm."
+                action={<button onClick={() => setShowDrawer(true)} style={{ background: 'var(--signal-orange)', border: 'none', color: '#fff', height: 40, padding: '0 18px', borderRadius: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}><Plus size={16} /> New Appointment</button>}
+              />
+            }
             renderRow={(appt) => {
               const customer = state.customers.find(c => c.id === appt.customerId);
               return (
@@ -48,7 +64,7 @@ export function Appointments() {
                 </tr>
               );
             }} />
-        </div>
+        </Card>
       )}
       <Drawer isOpen={showDrawer} onClose={() => setShowDrawer(false)} title="New Appointment">
         <BookingDrawer customerId="" onClose={() => setShowDrawer(false)} />

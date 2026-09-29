@@ -2,17 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVertical } from '../state/verticalContext';
 import { useStore } from '../state/store';
-import { StatCard } from '../components/shared/StatCard';
-import { StatusBadge } from '../components/shared/StatusBadge';
-import { OrbitLogo } from '../components/shared/OrbitLogo';
-import { EmptyState } from '../components/shared/EmptyState';
+import { PageHeader, Card, SectionTitle, Stat, EmptyState as KitEmptyState } from '../components/dash/kit';
 import { bucketMessagesByDay } from '../services/normalize';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import {
-  MessageSquare, TrendingUp, CheckCircle, AlertTriangle, Bot, ArrowRight,
-  ShoppingBag, Calendar, Play, Zap, Layers, Sparkles, BarChart3
+  MessageSquare, CheckCircle, AlertTriangle, ArrowRight,
+  ShoppingBag, BarChart3
 } from 'lucide-react';
 
 export function Overview() {
@@ -60,63 +57,55 @@ export function Overview() {
   const chartEmpty = chartData.every(d => d.conversations === 0);
 
   const recentConversations = conversations.slice(0, 5);
+  void vertical;
+  void accentColor;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {/* Welcome Banner */}
-      <div className="card" style={{
-        padding: 24, background: 'linear-gradient(135deg, var(--midnight-ink) 0%, #2A2A2A 100%)',
-        color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16
-      }}>
-        <div>
-          <div className="orbit-badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', marginBottom: 8, borderColor: 'rgba(255,255,255,0.2)' }}>
-            <Sparkles size={13} color="var(--signal-orange)" />
-            <span>ORBIT Live PostgreSQL Synchronized Dashboard</span>
-          </div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: 'white', marginBottom: 4 }}>
-            Welcome back, {state.currentUser.name}!
-          </h1>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>
-            Here is your live business performance synced directly with host <span style={{ color: 'var(--signal-orange)', fontWeight: 700 }}>148.251.171.147</span>.
-          </p>
-        </div>
-
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button onClick={() => navigate('/inbox')} className="btn btn-primary" style={{ background: 'var(--signal-orange)' }}>
-            <MessageSquare size={16} /> Open Inbox ({conversations.length})
-          </button>
-          <button onClick={() => navigate('/analytics')} className="btn btn-outline" style={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)', background: 'transparent' }}>
-            <BarChart3 size={16} /> Executive Report
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Command Center"
+        title={`Welcome back, ${state.currentUser.name}!`}
+        sub="Here is your live business performance synced directly with host 148.251.171.147."
+        live
+        actions={
+          <>
+            <button onClick={() => navigate('/inbox')} className="btn btn-primary" style={{ background: 'var(--signal-orange)' }}>
+              <MessageSquare size={16} /> Open Inbox ({conversations.length})
+            </button>
+            <button onClick={() => navigate('/analytics')} className="btn btn-outline" style={{ color: 'var(--midnight-ink)', borderColor: 'var(--border)', background: 'var(--surface-1)' }}>
+              <BarChart3 size={16} /> Executive Report
+            </button>
+          </>
+        }
+      />
 
       {/* Primary KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
         {stats.map((s, idx) => (
-          <StatCard key={idx} label={s.label} value={s.value} trend={s.trend} />
+          <Stat key={idx} label={s.label} value={s.value} tone="neutral" />
         ))}
       </div>
 
       {/* Chart & Low Stock Alerts */}
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
-        <div className="card" style={{ padding: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--midnight-ink)' }}>
-              Inquiry Traffic & AI Automation
-            </h3>
-            <div style={{ display: 'flex', gap: 4 }}>
-              <button onClick={() => setChartPeriod('7d')} className={'btn btn-sm ' + (chartPeriod === '7d' ? 'btn-primary' : 'btn-outline')} style={{ background: chartPeriod === '7d' ? 'var(--signal-orange)' : 'white' }}>7 Days</button>
-              <button onClick={() => setChartPeriod('30d')} className={'btn btn-sm ' + (chartPeriod === '30d' ? 'btn-primary' : 'btn-outline')} style={{ background: chartPeriod === '30d' ? 'var(--signal-orange)' : 'white' }}>30 Days</button>
-            </div>
-          </div>
+        <Card style={{ padding: 20 }}>
+          <SectionTitle
+            action={
+              <div style={{ display: 'flex', gap: 4 }}>
+                <button onClick={() => setChartPeriod('7d')} className={'btn btn-sm ' + (chartPeriod === '7d' ? 'btn-primary' : 'btn-outline')} style={{ background: chartPeriod === '7d' ? 'var(--signal-orange)' : 'white' }}>7 Days</button>
+                <button onClick={() => setChartPeriod('30d')} className={'btn btn-sm ' + (chartPeriod === '30d' ? 'btn-primary' : 'btn-outline')} style={{ background: chartPeriod === '30d' ? 'var(--signal-orange)' : 'white' }}>30 Days</button>
+              </div>
+            }
+          >
+            Inquiry Traffic & AI Automation
+          </SectionTitle>
 
           <div style={{ height: 260 }}>
             {chartEmpty ? (
-              <EmptyState
-                icon={<BarChart3 size={24} />}
+              <KitEmptyState
+                icon={<BarChart3 size={24} color="var(--signal-orange)" />}
                 title="No activity yet"
-                description="Message activity will appear here once customers start conversations."
+                copy="Message activity will appear here once customers start conversations."
               />
             ) : (
             <ResponsiveContainer width="100%" height="100%">
@@ -131,14 +120,16 @@ export function Overview() {
             </ResponsiveContainer>
             )}
           </div>
-        </div>
+        </Card>
 
         {/* Live Inventory & Activity Box */}
-        <div className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--midnight-ink)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <ShoppingBag size={18} color="var(--signal-orange)" />
-            Live DB Inventory Alerts
-          </h3>
+        <Card style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <SectionTitle>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              <ShoppingBag size={18} color="var(--signal-orange)" />
+              Live DB Inventory Alerts
+            </span>
+          </SectionTitle>
 
           <div style={{ padding: 14, borderRadius: 10, background: lowStockCount > 0 ? 'var(--warning-bg)' : 'var(--success-bg)', border: `1px solid ${lowStockCount > 0 ? 'var(--warning)' : 'var(--success)'}` }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: lowStockCount > 0 ? 'var(--warning-dark)' : 'var(--success-dark)', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -153,17 +144,20 @@ export function Overview() {
           <button onClick={() => navigate('/products')} className="btn btn-outline" style={{ width: '100%', fontSize: 12, height: 36 }}>
             Manage Store Inventory ({products.length} items)
           </button>
-        </div>
+        </Card>
       </div>
 
       {/* Recent Activity Table */}
-      <div className="card" style={{ padding: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--midnight-ink)' }}>Recent Customer Threads (PostgreSQL)</h3>
-          <button onClick={() => navigate('/inbox')} className="btn btn-ghost btn-sm" style={{ color: 'var(--signal-orange)', gap: 4 }}>
-            View All ({conversations.length}) <ArrowRight size={14} />
-          </button>
-        </div>
+      <Card style={{ padding: 20 }}>
+        <SectionTitle
+          action={
+            <button onClick={() => navigate('/inbox')} className="btn btn-ghost btn-sm" style={{ color: 'var(--signal-orange)', gap: 4 }}>
+              View All ({conversations.length}) <ArrowRight size={14} />
+            </button>
+          }
+        >
+          Recent Customer Threads (PostgreSQL)
+        </SectionTitle>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
           <thead>
@@ -195,7 +189,7 @@ export function Overview() {
             ))}
           </tbody>
         </table>
-      </div>
+      </Card>
     </div>
   );
 }
