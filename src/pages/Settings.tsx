@@ -32,6 +32,8 @@ export function Settings() {
   const [members, setMembers] = useState<any[] | null>(null);
   const [plan, setPlan] = useState<any>(null);
   const [newRule, setNewRule] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
 
   const isDirty = false; // Simplified for prototype
 
@@ -470,6 +472,40 @@ export function Settings() {
               style={{ color: 'var(--danger)', borderColor: 'var(--danger)', gap: 8 }}
             >
               <LogOut size={16} /> Sign Out
+            </button>
+          </Card>
+          {/* Delete Account (danger zone): two-step confirm, then the backend
+              destroys sessions + user (workspace data stays by design). Hard
+              navigation so the session guard re-verifies logged-out state. */}
+          <Card style={{ padding: 20, marginTop: 16, borderLeft: '4px solid var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            <div>
+              <h4 style={{ fontSize: 15, fontWeight: 700, color: 'var(--midnight-ink)', margin: 0 }}>Delete My Account</h4>
+              <p style={{ fontSize: 12.5, color: 'var(--stone-gray)', marginTop: 2, marginBottom: 0 }}>
+                Permanently removes your login and sessions. Workspace, channels, and business data stay intact for remaining members.
+              </p>
+            </div>
+            <button
+              disabled={deleteBusy}
+              onClick={async () => {
+                if (!confirmDelete) {
+                  setConfirmDelete(true);
+                  return;
+                }
+                setDeleteBusy(true);
+                const res = await api.deleteAccount();
+                setDeleteBusy(false);
+                if (res?.success) {
+                  clearSessionCache();
+                  window.location.assign('/login');
+                } else {
+                  showToast(res?._network ? 'Backend unreachable — try again' : (res?.error || 'Delete failed'), 'danger');
+                  setConfirmDelete(false);
+                }
+              }}
+              className="btn btn-outline"
+              style={{ color: 'var(--danger)', borderColor: 'var(--danger)', gap: 8 }}
+            >
+              <Trash2 size={16} /> {deleteBusy ? 'Deleting…' : confirmDelete ? 'Click again to confirm' : 'Delete Account'}
             </button>
           </Card>
         </div>

@@ -34,15 +34,9 @@ export function ImageUploader({ value, onChange, label = 'Product Photo' }: Imag
       if (!base64Data) return;
 
       try {
-        // Send base64 to server upload endpoint
-        const res = await fetch('http://localhost:5000/api/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageBase64: base64Data })
-        });
-
-        const data = await res.json();
-        if (data.url) {
+        // Backend-relative upload (works on localhost, Railway, Vercel rewrites).
+        const data = await api.uploadImage(base64Data);
+        if (data?.url) {
           onChange(data.url);
         } else {
           onChange(base64Data);

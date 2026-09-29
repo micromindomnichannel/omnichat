@@ -22,10 +22,10 @@ async function fetchJson(url: string, options?: RequestInit) {
 // CORS/proxy/AV interception) return {_network:true} with the browser message
 // so the UI can show the precise cause instead of guessing. Hangs (cold-start
 // wake-ups) abort at 45s and return {_timeout:true} instead of spinning forever.
-async function authJson(url: string, body?: any) {
+async function authJson(url: string, body?: any, method = 'POST') {
   try {
     const res = await fetch(`${API_BASE}${url}`, {
-      method: 'POST',
+      method,
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: body ? JSON.stringify(body) : undefined,
@@ -136,6 +136,13 @@ export const api = {
   // Password reset (authJson surfaces server messages; null when unreachable)
   forgotPassword: (email: string) => authJson('/auth/forgot', { email }),
   resetPassword: (token: string, password: string) => authJson('/auth/reset', { token, password }),
+
+  // Self-service account deletion (destroys sessions + user; workspace data stays).
+  deleteAccount: () => authJson('/auth/account', undefined, 'DELETE'),
+
+  // Image upload (backend-relative: works on localhost, Railway, and Vercel rewrites).
+  uploadImage: (imageBase64: string) =>
+    fetchJson('/upload', { method: 'POST', body: JSON.stringify({ imageBase64 }) }),
 
   // Admin (internal)
   adminOverview: () => fetchJson('/v1/admin/overview'),

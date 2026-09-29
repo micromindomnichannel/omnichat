@@ -175,8 +175,27 @@ export function authRouter(pool) {
     }
   });
 
-  r.post('/api/auth/reset', rateLimit({ windowMs: 60_000, max: 10 }), async (req, res) => {
-    const { token, password } = req.body || {};
+  // Self-service account deletion. Removes the user, all their sessions,
+  // memberships, and reset artifacts. Workspace/business/channel data is
+  // SHARED tenant property and is deliberately left intact (an ownerless
+  // workspace keeps running for remaining members; last-human-out cleanup is
+  // an explicit admin action, not a side effect). Returns 401 without session.
+  r.delete('/api/auth/account', async (req, res) => {
+    try {
+      const user = await getSessionUser(pool, parseCookies(req)[COOKIE_NAME]);
+      if (!user) return res.status(401).json({ error: 'unauthorized' });
+      await pool.query('DELETE FROM sessions WHERE user_id=$1', [user.id]);
+      await pool.query('DELETE FROM workspace_members WHERE user_id=$1', [user.id]);
+      await pool.query('DELETE FROM password_resets WHERE user_id=$1', [user.id]);
+      await pool.query('DELETE FROM users WHERE id=$1', [user.id]);
+      res.setHeader('Set-Cookie', clearSessionCookie());
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  r.post('/api/auth/reset', rateLimit({ windowMs: 60_000, max: 10 }), async (req, res) => {    const { token, password } = req.body || {};
     if (!token || !password || String(password).length < 10) {
       return res.status(400).json({ error: 'token + 10-char password required' });
     }
