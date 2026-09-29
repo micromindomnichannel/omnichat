@@ -96,7 +96,7 @@ export function authRouter(pool) {
       await pool.query('UPDATE signup_otps SET used_at=CURRENT_TIMESTAMP WHERE id=$1', [row.id]);
       await pool.query('DELETE FROM signup_otps WHERE email=$1 AND id<>$2', [email, row.id]);
       const { token, expires } = await createSession(pool, id);
-      res.setHeader('Set-Cookie', sessionCookie(token, expires));
+      res.setHeader('Set-Cookie', sessionCookie(token));
       res.json({ user: { id, email }, memberships: [{ workspace_id: 'default', role: 'owner' }] });
     } catch (err) {
       if (String(err.message).includes('duplicate')) return res.status(409).json({ error: 'email taken' });
@@ -122,7 +122,7 @@ export function authRouter(pool) {
       }
       const { token, expires } = await createSession(pool, user.id);
       const mem = await pool.query('SELECT workspace_id, role FROM workspace_members WHERE user_id=$1', [user.id]);
-      res.setHeader('Set-Cookie', sessionCookie(token, expires));
+      res.setHeader('Set-Cookie', sessionCookie(token));
       res.json({ user: { id: user.id, email: user.email, display_name: user.display_name }, memberships: mem.rows });
     } catch (err) {
       res.status(500).json({ error: err.message });

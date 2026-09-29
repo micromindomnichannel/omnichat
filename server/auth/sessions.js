@@ -2,9 +2,14 @@
 // stored (a DB read never yields a usable session). httpOnly + SameSite cookies
 // keep XSS from stealing sessions. Set COOKIE_SAMESITE=None (+HTTPS) when the
 // frontend is cross-site (e.g. Vercel app + VPS API).
+//
+// NO stay-logged-in by design: the cookie carries NO Max-Age/Expires (a true
+// browser-session cookie — closing the browser ends the session), and the
+// server row carries a short absolute TTL (SESSION_TTL_HOURS, default 12).
+// Every visit after a browser restart (or past TTL) must sign in again.
 import crypto from 'crypto';
 
-const SESSION_DAYS = 7;
+const SESSION_TTL_HOURS = Math.max(1, parseInt(process.env.SESSION_TTL_HOURS || '12', 10) || 12);
 export const COOKIE_NAME = 'orbit_session';
 const rid = (p) => `${p}_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
 
@@ -14,7 +19,7 @@ function hashToken(token) {
 
 export async function createSession(pool, userId) {
   const token = crypto.randomBytes(32).toString('hex');
-  const expires = new Date(Date.now() + SESSION_DAYS * 86400_000);
+  const expires = new Date(Date.now() + SESSION_TTL_HOURS * 3600_000);
   await pool.query('INSERT INTO sessions (id, user_id, token_hash, expires_at) VALUES ($1,$2,$3,$4)',
     [rid('ses'), userId, hashToken(token), expires]);
   return { token, expires };
@@ -47,15 +52,15 @@ export function parseCookies(req) {
   return out;
 }
 
-export function sessionCookie(token, expires) {
+export function sessionCookie(token) {
   const secure = process.env.NODE_ENV === 'production' || process.env.COOKIE_SECURE === '1';
   const sameSite = process.env.COOKIE_SAMESITE || (secure ? 'None' : 'Lax');
+  // Deliberately NO Max-Age/Expires: browser-session cookie, gone on close.
   return [
     `${COOKIE_NAME}=${token}`,
     'Path=/',
     'HttpOnly',
     `SameSite=${sameSite}`,
-    `Max-Age=${SESSION_DAYS * 86400}`,
     secure ? 'Secure' : '',
   ].filter(Boolean).join('; ');
 }
