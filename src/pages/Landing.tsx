@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { OrbitLogo } from '../components/shared/OrbitLogo';
+import { GridPulse } from '../components/shared/GridPulse';
 import {
   MessageSquare, ShoppingBag, Calendar, Bot, Zap, Shield, ArrowRight, CheckCircle2,
   Sparkles, Layers, Users, ChevronRight, Check, BarChart3
@@ -100,7 +101,9 @@ export function Landing() {
         textAlign: 'center',
         position: 'relative'
       }}>
-        {/* Subtle Brand Background Pattern */}
+        {/* Interactive hairline grid: lights up in brand spectrum on pointer pass, then fades. */}
+        <GridPulse variant="light" />
+        {/* Soft brand wash beneath the grid (kept subtle so hairlines stay visible) */}
         <div style={{
           position: 'absolute',
           top: -40,
