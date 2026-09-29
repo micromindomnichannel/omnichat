@@ -93,7 +93,12 @@ app.post('/api/upload', (req, res) => {
     const filePath = path.join(uploadsDir, safeName);
 
     fs.writeFileSync(filePath, buffer);
-    const fileUrl = `http://localhost:5000/uploads/${safeName}`;
+    // Public URL: explicit backend URL wins (production); else derive from the
+    // request host (local dev). Never hardcode localhost — Meta must fetch
+    // these bytes for Instagram publishing, and browsers need them for display.
+    const base = (process.env.ORBIT_BACKEND_URL || '').replace(/\/$/, '') ||
+      `${req.protocol}://${req.get('host')}`;
+    const fileUrl = `${base}/uploads/${safeName}`;
 
     res.json({ success: true, url: fileUrl, base64: imageBase64 });
   } catch (err) {

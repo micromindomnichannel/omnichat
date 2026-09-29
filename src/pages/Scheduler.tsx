@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Calendar, Clock, Plus, Trash2, CheckCircle2, Instagram, Facebook, MessageCircle, Music, Send, Image, Sparkles
 } from 'lucide-react';
 import { OrbitLogo } from '../components/shared/OrbitLogo';
 import { PageHeader, Card, EmptyState } from '../components/dash/kit';
+import { api } from '../services/api';
 
 interface ScheduledPost {
   id: string;
@@ -13,36 +14,56 @@ interface ScheduledPost {
   platforms: string[];
   scheduledTime: string;
   status: 'scheduled' | 'published' | 'failed';
+  resultMsg?: string;
+}
+
+// Live-data mapping: backend rows are snake_case; missing backend (offline)
+// yields the empty state, never mock rows.
+function mapRow(r: any): ScheduledPost {
+  return {
+    id: String(r.id),
+    title: r.title || 'Untitled',
+    contentText: r.content_text || '',
+    mediaUrl: r.media_url || undefined,
+    platforms: Array.isArray(r.platforms) ? r.platforms : [],
+    scheduledTime: typeof r.scheduled_time === 'string' ? r.scheduled_time.slice(0, 16) : String(r.scheduled_time || ''),
+    status: r.status === 'published' ? 'published' : r.status === 'failed' ? 'failed' : 'scheduled',
+  };
 }
 
 export function Scheduler() {
-  const [posts, setPosts] = useState<ScheduledPost[]>([
-    {
-      id: 'sch_1',
-      title: 'Summer Collection Launch Promo',
-      contentText: '✨ Summer vibes are here! Explore our new Black Leather Bag & Summer Silk Dress collection with 15% OFF for 48 hours only! Link in bio to order on WhatsApp. 🛍️',
-      mediaUrl: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&auto=format&fit=crop',
-      platforms: ['instagram', 'facebook', 'whatsapp'],
-      scheduledTime: '2026-08-31 14:00',
-      status: 'scheduled'
-    },
-    {
-      id: 'sch_2',
-      title: 'Clinic Free Dental Consultation Announcement',
-      contentText: '🦷 Book your Dental Cleaning session this Thursday and get a FREE checkup consultation! Slots are limited. Reply to this message to reserve your slot now.',
-      platforms: ['whatsapp', 'facebook'],
-      scheduledTime: '2026-09-01 10:30',
-      status: 'scheduled'
-    },
-    {
-      id: 'sch_3',
-      title: 'TikTok Flash Deal Video Teaser',
-      contentText: '🔥 FLASH SALE: 20% OFF on all Leather Handbags! Watch how we style them. Order directly via TikTok DM.',
-      platforms: ['tiktok', 'instagram'],
-      scheduledTime: '2026-08-29 18:00',
-      status: 'published'
+  const [posts, setPosts] = useState<ScheduledPost[]>([]);
+  const [publishBusy, setPublishBusy] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    api.getSchedules().then((rows: any) => {
+      if (cancelled) return;
+      setPosts(Array.isArray(rows) ? rows.map(mapRow) : []);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  const handlePublish = async (id: string) => {
+    setPublishBusy(id);
+    const res = await api.publishSchedule('default', id);
+    setPublishBusy(null);
+    if (res && (res.status === 'published' || res.status === 'failed')) {
+      setPosts((ps) => ps.map((p) => {
+        if (p.id !== id) return p;
+        const fails = Object.entries(res.results || {})
+          .filter(([, v]: any) => !v?.ok)
+          .map(([k, v]: any) => `${k}: ${v?.error || 'failed'}`);
+        return {
+          ...p,
+          status: res.status,
+          resultMsg: res.status === 'published'
+            ? (fails.length ? `Live with warnings — ${fails.join('; ')}` : 'Live on all target platforms.')
+            : `Failed — ${fails.join('; ') || 'see backend logs'}`,
+        };
+      }));
     }
-  ]);
+  };
 
   const [showModal, setShowModal] = useState(false);
   const [title, setTitle] = useState('');
@@ -61,21 +82,18 @@ export function Scheduler() {
     }
   };
 
-  const handleCreatePost = (e: React.FormEvent) => {
+  const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !contentText || !scheduledTime) return;
 
-    const newPost: ScheduledPost = {
-      id: `sch_${Date.now()}`,
-      title,
-      contentText,
-      mediaUrl: mediaUrl || undefined,
-      platforms: selectedPlatforms,
-      scheduledTime,
-      status: 'scheduled'
-    };
-
-    setPosts([newPost, ...posts]);
+    const saved = await api.addSchedule({
+      title, content_text: contentText,
+      media_url: mediaUrl || null, platforms: selectedPlatforms,
+      scheduled_time: scheduledTime,
+    });
+    if (saved?.id) {
+      setPosts([mapRow(saved), ...posts]);
+    }
     setShowModal(false);
     setTitle('');
     setContentText('');
@@ -83,8 +101,9 @@ export function Scheduler() {
     setScheduledTime('');
   };
 
-  const handleDeletePost = (id: string) => {
+  const handleDeletePost = async (id: string) => {
     setPosts(posts.filter(p => p.id !== id));
+    await api.deleteSchedule(id);
   };
 
   const platformIcons: Record<string, { icon: React.ElementType; color: string; name: string }> = {
@@ -129,11 +148,11 @@ export function Scheduler() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <span className="orbit-badge" style={{
                   fontSize: 11,
-                  background: post.status === 'published' ? 'rgba(82, 216, 164, 0.15)' : 'var(--signal-orange-subtle)',
-                  color: post.status === 'published' ? '#0F8357' : 'var(--signal-orange)',
-                  borderColor: post.status === 'published' ? 'rgba(82, 216, 164, 0.3)' : 'rgba(255, 90, 54, 0.2)'
+                  background: post.status === 'published' ? 'rgba(82, 216, 164, 0.15)' : post.status === 'failed' ? 'var(--danger-bg)' : 'var(--signal-orange-subtle)',
+                  color: post.status === 'published' ? '#0F8357' : post.status === 'failed' ? 'var(--danger)' : 'var(--signal-orange)',
+                  borderColor: post.status === 'published' ? 'rgba(82, 216, 164, 0.3)' : post.status === 'failed' ? 'var(--danger)' : 'rgba(255, 90, 54, 0.2)'
                 }}>
-                  {post.status === 'published' ? '● Published' : '⏱️ Scheduled'}
+                  {post.status === 'published' ? '● Published' : post.status === 'failed' ? '● Failed' : '⏱️ Scheduled'}
                 </span>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -171,13 +190,30 @@ export function Scheduler() {
                 <span>{post.scheduledTime}</span>
               </div>
 
-              <button
-                onClick={() => handleDeletePost(post.id)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
-              >
-                <Trash2 size={16} color="var(--burnt-coral)" />
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {post.status !== 'published' && (
+                  <button
+                    onClick={() => handlePublish(post.id)}
+                    disabled={publishBusy === post.id}
+                    className="btn btn-primary btn-sm"
+                    style={{ height: 30, padding: '0 14px', fontSize: 12, background: 'var(--signal-orange)', opacity: publishBusy === post.id ? 0.7 : 1 }}
+                  >
+                    <Send size={13} /> {publishBusy === post.id ? 'Publishing…' : 'Publish now'}
+                  </button>
+                )}
+                <button
+                  onClick={() => handleDeletePost(post.id)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
+                >
+                  <Trash2 size={16} color="var(--burnt-coral)" />
+                </button>
+              </div>
             </div>
+            {post.resultMsg && (
+              <p style={{ fontSize: 12, color: post.status === 'published' ? '#0F8357' : 'var(--danger)', marginTop: 8, marginBottom: 0 }}>
+                {post.resultMsg}
+              </p>
+            )}
           </Card>
         ))}
       </div>

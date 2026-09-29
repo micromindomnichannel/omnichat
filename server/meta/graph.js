@@ -40,4 +40,49 @@ export async function sendImageMessage({ pageAccessToken, recipientId, imageUrl 
   });
 }
 
-export { GRAPH_VERSION };
+// ---- Page publishing (Scheduler "publish now"; merges ORBIT Posts duties
+// into the main app). Requires a Page token carrying pages_manage_posts,
+// minted under the production Meta app — tokens from other apps cannot post
+// with this app's grants.
+async function graphGet(pageAccessToken, path) {
+  const res = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}${path}`, {
+    headers: { Authorization: `Bearer ${pageAccessToken}` },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data.error) {
+    const err = new Error(`Meta Graph ${path} -> ${data?.error?.message || `Graph ${res.status}`}`);
+    err.code = data?.error?.code;
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
+export async function publishPagePost({ pageAccessToken, pageId, message, link }) {
+  if (!pageAccessToken) throw new Error('publishPagePost: missing page access token');
+  if (!pageId) throw new Error('publishPagePost: pageId required');
+  if (!message && !link) throw new Error('publishPagePost: message or link required');
+  const body = {};
+  if (message) body.message = String(message).slice(0, 5000);
+  if (link) body.link = link;
+  return graphPost(pageAccessToken, `/${pageId}/feed`, body); // -> { id: "<page>_<post>" }
+}
+
+// Instagram content publishing is two-step and REQUIRES a publicly reachable
+// image_url (Meta fetches the bytes; localhost/ephemeral URLs fail here).
+export async function publishInstagramMedia({ pageAccessToken, igId, imageUrl, caption }) {
+  if (!pageAccessToken) throw new Error('publishInstagramMedia: missing page access token');
+  if (!igId) throw new Error('publishInstagramMedia: IG business id required');
+  if (!imageUrl) throw new Error('publishInstagramMedia: public imageUrl required');
+  if (!/^https:\/\//i.test(imageUrl)) {
+    throw new Error('publishInstagramMedia: imageUrl must be public https (Meta fetches it)');
+  }
+  const container = await graphPost(pageAccessToken, `/${igId}/media`, {
+    image_url: imageUrl,
+    ...(caption ? { caption: String(caption).slice(0, 2200) } : {}),
+  });
+  if (!container?.id) throw new Error('publishInstagramMedia: container creation returned no id');
+  return graphPost(pageAccessToken, `/${igId}/media_publish`, { creation_id: container.id }); // -> { id: mediaId }
+}
+
+export { GRAPH_VERSION, graphGet };

@@ -2,11 +2,12 @@
 // resolved from membership — never trusted from the client.
 import express from 'express';
 import crypto from 'crypto';
-import { encryptSecret } from '../credentials/crypto.js';
+import { encryptSecret, decryptSecret } from '../credentials/crypto.js';
 import { CHANNELS, provisionTenantChannelFlow, templateVersionForAsync } from '../micromind/provisionChannel.js';
 import { testFlowLink, recordLinkTest } from '../micromind/linktest.js';
 import { assertCanConnectChannel } from '../billing/plans.js';
 import { requireAuth, requireWorkspace, workspaceFor } from '../auth/middleware.js';
+import { publishPagePost, publishInstagramMedia } from '../meta/graph.js';
 
 const FULL = ['messenger', 'instagram']; // verified template + auto-provision
 const BYOF = ['whatsapp', 'telegram', 'gmail']; // wiring done, template pending -> micromindFlowId required
@@ -238,6 +239,79 @@ export function channelsRouter(pool) {
         // Returned ONCE: configure as the Telegram setWebhook secret_token. Never stored elsewhere.
         ...(webhookSecret ? { webhookSecret, webhookUrlHint: 'POST /webhooks/telegram' } : {}),
       });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Publish-now: deliver a scheduled post to Meta now (merges ORBIT Posts
+  // duties into the production app). Uses the workspace's vaulted Page token
+  // (messenger account preferred, instagram fallback) — tokens must carry
+  // pages_manage_posts under the production app. Per-platform outcomes land in
+  // content_schedules.result; row goes published if ANY platform succeeded.
+  // whatsapp/tiktok have no Meta publish API here and are recorded skipped.
+  r.post('/api/v1/workspaces/:workspaceId/schedules/:id/publish', requireWorkspace, async (req, res) => {
+    const workspaceId = req.workspaceId;
+    try {
+      const row = (await pool.query(
+        'SELECT * FROM content_schedules WHERE id=$1 AND workspace_id=$2',
+        [req.params.id, workspaceId])).rows[0];
+      if (!row) return res.status(404).json({ error: 'schedule not found' });
+      if (row.status === 'published') return res.status(409).json({ code: 'already_published', error: 'already published' });
+      const accs = (await pool.query(
+        "SELECT * FROM channel_accounts WHERE workspace_id=$1 AND channel IN ('messenger','instagram') AND status='active' AND credential_id IS NOT NULL ORDER BY CASE channel WHEN 'messenger' THEN 0 ELSE 1 END",
+        [workspaceId])).rows;
+      if (!accs.length) {
+        return res.status(409).json({ code: 'no_channel', error: 'connect a Messenger or Instagram channel first (its Page token publishes)' });
+      }
+      const results = {};
+      for (const platform of row.platforms || []) {
+        if (platform === 'facebook' || platform === 'messenger') {
+          const acc = accs.find((a) => a.channel === 'messenger') || accs[0];
+          try {
+            const cred = (await pool.query('SELECT encrypted_secret FROM credentials WHERE id=$1', [acc.credential_id])).rows[0];
+            const out = await publishPagePost({
+              pageAccessToken: decryptSecret(cred.encrypted_secret),
+              pageId: acc.external_account_id,
+              message: row.content_text,
+              link: row.media_url && !row.media_url.startsWith('data:') ? row.media_url : undefined,
+            });
+            results.facebook = { ok: true, postId: out?.id || null };
+          } catch (e) {
+            results.facebook = { ok: false, error: String(e.message).slice(0, 200) };
+          }
+        } else if (platform === 'instagram') {
+          const acc = accs.find((a) => a.channel === 'instagram');
+          if (!acc) {
+            results.instagram = { ok: false, error: 'no instagram channel connected' };
+          } else if (!row.media_url || !/^https:\/\//i.test(row.media_url)) {
+            results.instagram = { ok: false, error: 'instagram requires a public https image_url' };
+          } else {
+            try {
+              const cred = (await pool.query('SELECT encrypted_secret FROM credentials WHERE id=$1', [acc.credential_id])).rows[0];
+              const out = await publishInstagramMedia({
+                pageAccessToken: decryptSecret(cred.encrypted_secret),
+                igId: acc.external_account_id,
+                imageUrl: row.media_url,
+                caption: row.content_text,
+              });
+              results.instagram = { ok: true, mediaId: out?.id || null };
+            } catch (e) {
+              results.instagram = { ok: false, error: String(e.message).slice(0, 200) };
+            }
+          }
+        } else {
+          results[platform] = { ok: false, error: 'skipped: no publish API for this platform' };
+        }
+      }
+      const anyOk = Object.values(results).some((r) => r.ok);
+      const status = anyOk ? 'published' : 'failed';
+      await pool.query(
+        'UPDATE content_schedules SET status=$1, result=$2, published_at=CASE WHEN $1=$3 THEN CURRENT_TIMESTAMP ELSE published_at END WHERE id=$4',
+        [status, JSON.stringify(results), 'published', row.id]
+      );
+      await audit(pool, workspaceId, 'schedule.publish', `${row.id}`, { status }, req.user.email);
+      res.json({ id: row.id, status, results });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

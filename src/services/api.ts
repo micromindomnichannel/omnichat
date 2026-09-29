@@ -96,6 +96,9 @@ export const api = {
   getSchedules: () => fetchJson('/schedules'),
   addSchedule: (schedule: any) => fetchJson('/schedules', { method: 'POST', body: JSON.stringify(schedule) }),
   deleteSchedule: (id: string) => fetchJson(`/schedules/${id}`, { method: 'DELETE' }),
+  // Publish-now: deliver a scheduled post via the workspace's Page token.
+  publishSchedule: (workspaceId = 'default', id: string) =>
+    fetchJson(`/v1/workspaces/${workspaceId}/schedules/${id}/publish`, { method: 'POST' }),
 
   // Executive Reports
   getReports: () => fetchJson('/reports'),
