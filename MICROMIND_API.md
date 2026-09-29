@@ -222,3 +222,16 @@ and the MicroMind-direct replies died on placeholder page tokens. Fixes:
   URL) or the raw Groq key to mint via `POST /credentials`. Until then v2
   clones provision but cannot predict (superseedes the OpenRouter-402 block
   for all new profiles).
+- **Credential-binding verdict 2026-09-25 (BLOCKED, evidence-backed):**
+  API-side model-credential binding is impossible in this fork. Proven:
+  string/object `inputs.credential` on CREATE and UPDATE, fresh-minted AND
+  known-good (`trst`) credential ids — all predict → 500 Groq-key-not-found.
+  Working GUI flows carry NO credential keys in flowData (binding lives
+  outside flowData; no link endpoint in swagger; GET-record shows no link
+  field). Injection code stays in `buildTenantFlowData` (inert without env)
+  for the day binding is discovered. Test credentials deleted.
+  UNBLOCKS (either): (1) capture the GUI save request in browser devtools
+  while attaching a credential (reveals the real endpoint+payload — 5 min,
+  owner action); (2) MicroMind ops sets server `GROQ_API_KEY` env (all flows
+  resolve, zero code). Key hygiene: the pasted `gsk_` transited chat — rotate
+  it in Groq console regardless.
