@@ -204,6 +204,17 @@ and the MicroMind-direct replies died on placeholder page tokens. Fixes:
   VPS → Railway. Still open: Vercel `VITE_API_URL` dashboard value (frontend
   falls back to `localhost:5000/api` without it), OpenRouter credit top-up,
   real DPO contact.
+- **Meta app → flow ownership (verified live 2026-09-25/29):**
+  `test_ranim_Mess` (1522030056346232) → Messenger →
+  `Dood - Messenger` (`afb6fb2b-…`, deployed, trigger token `core`, Page token
+  inside) and → Instagram → `dood - insta` (`85db053c-…`, deployed, `core`,
+  token inside; app presumed `test_ranim_Mess`, owner to confirm). `Orbit`
+  holds a field-less page subscription (delivers nothing). `ORBIT Posts`
+  holds nothing. AMENDED Step-0 rollback: Messenger slot restores `afb6fb2b…`
+  (not `f4a7c66d…`); IG slot restores `85db053c…` + fields
+  `messages,message_reads,message_reactions,message_edits`. Cutover changes
+  URL AND token (`core` → `orbit_messenger_2026` / `orbit_instagram_verify`;
+  both handshakes pre-verified green on Railway).
 - **v2 templates adopted 2026-09-25 (Dood references):** `messenger.json` /
   `instagram.json` REPLACED with the owner's working exports; v1 OpenRouter
   builds archived as `*.v1-openrouter.json`; manifest → `v2`. New shape:
@@ -234,9 +245,7 @@ and the MicroMind-direct replies died on placeholder page tokens. Fixes:
   while attaching a credential (reveals the real endpoint+payload — 5 min,
   owner action); (2) MicroMind ops sets server `GROQ_API_KEY` env (all flows
   resolve, zero code). Key hygiene: the pasted `gsk_` transited chat — rotate
-  it in Groq console regardless.
-- **RESOLVED 2026-09-25 via GUI capture:** binding = `node.data.credential`
-  (node level; `inputs` carries no credential key in this fork). Provisioner
+  it in Groq console regardless.- **RESOLVED 2026-09-25 via GUI capture:** binding = `node.data.credential`  (node level; `inputs` carries no credential key in this fork). Provisioner
   stamps the shared `groqApi` credential (`trst`, owner-side) into every v2
   clone → live predict `OK` on both channels. Zero-touch restored.
 - **Tenant-key mint fix (same day):** `POST /apikey` returns the FULL key list
