@@ -249,6 +249,21 @@ export function buildTenantFlowData(channel, template, { verifyToken, businessNa
         inputs.systemMessagePrompt = `${inputs.systemMessagePrompt}\n\n${ctx}`;
       }
     }
+    // v2 (Dood reference) contract: no chatPromptTemplate — the agent carries
+    // its own systemMessage. Inject the same business context there so tenant
+    // clones answer as the business, not as a generic assistant.
+    if (node.data.name === 'toolAgent' && (businessName || aiTone || language)) {
+      const ctx = [
+        businessName ? `You represent this business: ${businessName}.` : '',
+        language ? `Reply in: ${language}.` : '',
+        aiTone ? `Tone: ${aiTone}.` : '',
+      ]
+        .filter(Boolean)
+        .join(' ');
+      if (ctx && typeof inputs.systemMessage === 'string') {
+        inputs.systemMessage = `${inputs.systemMessage}\n\n${ctx}`;
+      }
+    }
     // Prediction-API contract: an empty human message starves the agent of the
     // question, so default it to {input} (matches whatsapp template pattern).
     if (node.data.name === 'chatPromptTemplate' && typeof inputs.humanMessagePrompt === 'string' && !inputs.humanMessagePrompt.trim()) {

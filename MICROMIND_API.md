@@ -194,8 +194,7 @@ and the MicroMind-direct replies died on placeholder page tokens. Fixes:
   pipeline reached the model correctly; the OpenRouter balance is empty.
   **Action: top up OpenRouter credit, then re-run sim.** All `sim_*` rows
   deleted afterwards (tables back to zero); temp scripts removed.
-- **Production single-DB + deploy 2026-09-25:** Railway backend
-  (`omnichat-production-65a3.up.railway.app`, commit `29674c5`) switched from
+- **Production single-DB + deploy 2026-09-25:** Railway backend  (`omnichat-production-65a3.up.railway.app`, commit `29674c5`) switched from
   Railway Postgres to Supabase (`DATABASE_URL` + `PGSSLMODE` + new
   `ORBIT_BACKEND_URL` via Railway MCP; health `online`, PG 17.6,
   `connected:true`). Vercel (`orbit-xi-one-60.vercel.app`) serves `/privacy`
@@ -205,3 +204,21 @@ and the MicroMind-direct replies died on placeholder page tokens. Fixes:
   VPS → Railway. Still open: Vercel `VITE_API_URL` dashboard value (frontend
   falls back to `localhost:5000/api` without it), OpenRouter credit top-up,
   real DPO contact.
+- **v2 templates adopted 2026-09-25 (Dood references):** `messenger.json` /
+  `instagram.json` REPLACED with the owner's working exports; v1 OpenRouter
+  builds archived as `*.v1-openrouter.json`; manifest → `v2`. New shape:
+  `toolAgent` (own systemMessage) + `groqChat` (gpt-oss-120b) + `bufferMemory`
+  (+ `calculator` on IG) — no prompt template, no send tools, triggers
+  present-but-unwired (prediction-driven, ideal for ORBIT).
+  `buildTenantFlowData` injects business ctx into `toolAgent.systemMessage`;
+  validator accepts agent+model+memory contracts. Dry-run clean (validator ok,
+  zero secrets, token/guide/ctx stamped); live provision+delete clean.
+- **v2 runtime blocker (OPEN):** API clones predict → 500 `Groq API key not
+  found`. The export carries NO credential ref (MicroMind strips credentials
+  on export); the GUI originals run off the owner's server-side `groqApi`
+  credential, invisible to clones. Fix: inject a provisionable `groqApi`
+  credential id into `groqChat.inputs.credential` at provision time. NEED from
+  owner: the credential id (MicroMind → Credentials → open groqApi → id from
+  URL) or the raw Groq key to mint via `POST /credentials`. Until then v2
+  clones provision but cannot predict (superseedes the OpenRouter-402 block
+  for all new profiles).

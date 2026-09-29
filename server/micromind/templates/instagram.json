@@ -1,201 +1,10 @@
 {
   "nodes": [
     {
-      "id": "chatOpenRouter_0",
-      "position": {
-        "x": -238.44877913901217,
-        "y": 612.253220454129
-      },
-      "type": "customNode",
-      "data": {
-        "id": "chatOpenRouter_0",
-        "label": "ChatOpenRouter",
-        "version": 2.1,
-        "name": "chatOpenRouter",
-        "type": "ChatOpenRouter",
-        "baseClasses": [
-          "ChatOpenRouter",
-          "ChatOpenAI",
-          "BaseChatOpenAI",
-          "BaseChatModel",
-          "BaseLanguageModel",
-          "Runnable"
-        ],
-        "category": "Chat Models",
-        "description": "Wrapper around Open Router Inference API. Supports all frontier models (GPT-5.6 Luna, DeepSeek R1/V3, Claude 4.6/3.7, Gemini 3.7/2.0, Llama 3.3, Qwen 2.5) and multimodal vision.",
-        "inputParams": [
-          {
-            "label": "Connect Credential",
-            "name": "credential",
-            "type": "credential",
-            "credentialNames": [
-              "openRouterApi"
-            ],
-            "optional": false,
-            "id": "chatOpenRouter_0-input-credential-credential"
-          },
-          {
-            "label": "Model Name",
-            "name": "modelName",
-            "type": "asyncOptions",
-            "loadMethod": "listModels",
-            "default": "openai/gpt-5.6-luna",
-            "description": "Select a model from the list or use Custom Model Name below",
-            "id": "chatOpenRouter_0-input-modelName-asyncOptions"
-          },
-          {
-            "label": "Custom Model Name",
-            "name": "customModelName",
-            "type": "string",
-            "placeholder": "openai/gpt-5.6-luna",
-            "description": "Custom model name to use on OpenRouter. If provided, it overrides the dropdown selection above.",
-            "additionalParams": true,
-            "optional": true,
-            "id": "chatOpenRouter_0-input-customModelName-string"
-          },
-          {
-            "label": "Temperature",
-            "name": "temperature",
-            "type": "number",
-            "step": 0.1,
-            "default": 0.7,
-            "optional": true,
-            "description": "Sampling temperature (0 to 2). Note: Reasoning models (o1, o3, DeepSeek R1, Luna) automatically omit temperature if not supported.",
-            "id": "chatOpenRouter_0-input-temperature-number"
-          },
-          {
-            "label": "Streaming",
-            "name": "streaming",
-            "type": "boolean",
-            "default": true,
-            "optional": true,
-            "additionalParams": true,
-            "id": "chatOpenRouter_0-input-streaming-boolean"
-          },
-          {
-            "label": "Max Tokens",
-            "name": "maxTokens",
-            "type": "number",
-            "step": 1,
-            "optional": true,
-            "additionalParams": true,
-            "id": "chatOpenRouter_0-input-maxTokens-number"
-          },
-          {
-            "label": "Top Probability",
-            "name": "topP",
-            "type": "number",
-            "step": 0.1,
-            "optional": true,
-            "additionalParams": true,
-            "id": "chatOpenRouter_0-input-topP-number"
-          },
-          {
-            "label": "Frequency Penalty",
-            "name": "frequencyPenalty",
-            "type": "number",
-            "step": 0.1,
-            "optional": true,
-            "additionalParams": true,
-            "id": "chatOpenRouter_0-input-frequencyPenalty-number"
-          },
-          {
-            "label": "Presence Penalty",
-            "name": "presencePenalty",
-            "type": "number",
-            "step": 0.1,
-            "optional": true,
-            "additionalParams": true,
-            "id": "chatOpenRouter_0-input-presencePenalty-number"
-          },
-          {
-            "label": "Timeout",
-            "name": "timeout",
-            "type": "number",
-            "step": 1,
-            "optional": true,
-            "additionalParams": true,
-            "id": "chatOpenRouter_0-input-timeout-number"
-          },
-          {
-            "label": "BasePath",
-            "name": "basepath",
-            "type": "string",
-            "optional": true,
-            "default": "https://openrouter.ai/api/v1",
-            "additionalParams": true,
-            "description": "API endpoint URL for OpenRouter",
-            "id": "chatOpenRouter_0-input-basepath-string"
-          },
-          {
-            "label": "BaseOptions",
-            "name": "baseOptions",
-            "type": "json",
-            "optional": true,
-            "additionalParams": true,
-            "description": "Additional headers (e.g., {\"HTTP-Referer\": \"https://yourapp.com\"})",
-            "id": "chatOpenRouter_0-input-baseOptions-json"
-          },
-          {
-            "label": "Allow Image Uploads",
-            "name": "allowImageUploads",
-            "type": "boolean",
-            "description": "Allow image input. Only applicable when using a vision-supported model on OpenRouter (e.g. Claude 3+, GPT-4o, GPT-5+, Gemini 2.0+, Pixtral, Llama 3.2 Vision). Refer to the <a href=\"https://docs.aimicromind.com/using-aimicromind/uploads#image\" target=\"_blank\">docs</a> for details.",
-            "default": false,
-            "optional": true,
-            "id": "chatOpenRouter_0-input-allowImageUploads-boolean"
-          }
-        ],
-        "inputAnchors": [
-          {
-            "label": "Cache",
-            "name": "cache",
-            "type": "BaseCache",
-            "optional": true,
-            "id": "chatOpenRouter_0-input-cache-BaseCache"
-          }
-        ],
-        "inputs": {
-          "cache": "",
-          "modelName": "openai/gpt-5.6-luna",
-          "customModelName": "",
-          "temperature": 0.9,
-          "streaming": true,
-          "maxTokens": "",
-          "topP": "",
-          "frequencyPenalty": "",
-          "presencePenalty": "",
-          "timeout": "",
-          "basepath": "https://openrouter.ai/api/v1",
-          "baseOptions": "",
-          "allowImageUploads": ""
-        },
-        "outputAnchors": [
-          {
-            "id": "chatOpenRouter_0-output-chatOpenRouter-ChatOpenRouter|ChatOpenAI|BaseChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable",
-            "name": "chatOpenRouter",
-            "label": "ChatOpenRouter",
-            "description": "Wrapper around Open Router Inference API. Supports all frontier models (GPT-5.6 Luna, DeepSeek R1/V3, Claude 4.6/3.7, Gemini 3.7/2.0, Llama 3.3, Qwen 2.5) and multimodal vision.",
-            "type": "ChatOpenRouter | ChatOpenAI | BaseChatOpenAI | BaseChatModel | BaseLanguageModel | Runnable"
-          }
-        ],
-        "outputs": {},
-        "selected": false
-      },
-      "width": 320,
-      "height": 789,
-      "selected": false,
-      "dragging": false,
-      "positionAbsolute": {
-        "x": -238.44877913901217,
-        "y": 612.253220454129
-      }
-    },
-    {
       "id": "toolAgent_0",
       "position": {
-        "x": 1200.3737729567863,
-        "y": 266.96491581211177
+        "x": 1493.8305084745764,
+        "y": 435.5067796610171
       },
       "type": "customNode",
       "data": {
@@ -283,12 +92,12 @@
         ],
         "inputs": {
           "tools": [
-            "{{instagramMessenger_0.data.instance}}"
+            "{{calculator_0.data.instance}}"
           ],
           "memory": "{{bufferMemory_0.data.instance}}",
-          "model": "{{chatOpenRouter_0.data.instance}}",
-          "chatPromptTemplate": "{{chatPromptTemplate_0.data.instance}}",
-          "systemMessage": "You are a helpful AI assistant.",
+          "model": "{{groqChat_0.data.instance}}",
+          "chatPromptTemplate": "",
+          "systemMessage": "Your name is orbit and can help us for managing pages of social media and has offers and can answer any question in math",
           "inputModeration": "",
           "maxIterations": "",
           "enableDetailedStreaming": ""
@@ -306,19 +115,19 @@
         "selected": false
       },
       "width": 320,
-      "height": 510,
+      "height": 503,
       "selected": false,
       "positionAbsolute": {
-        "x": 1200.3737729567863,
-        "y": 266.96491581211177
+        "x": 1493.8305084745764,
+        "y": 435.5067796610171
       },
       "dragging": false
     },
     {
       "id": "bufferMemory_0",
       "position": {
-        "x": -233.41655536388436,
-        "y": 211.1052155005583
+        "x": 323.4338983050848,
+        "y": 267.0796610169491
       },
       "type": "customNode",
       "data": {
@@ -372,117 +181,19 @@
         "selected": false
       },
       "width": 320,
-      "height": 342,
+      "height": 337,
       "selected": false,
       "positionAbsolute": {
-        "x": -233.41655536388436,
-        "y": 211.1052155005583
-      },
-      "dragging": false
-    },
-    {
-      "id": "chatPromptTemplate_0",
-      "position": {
-        "x": 503.56652573290705,
-        "y": 221.25940729055083
-      },
-      "type": "customNode",
-      "data": {
-        "id": "chatPromptTemplate_0",
-        "label": "Chat Prompt Template",
-        "version": 2,
-        "name": "chatPromptTemplate",
-        "type": "ChatPromptTemplate",
-        "baseClasses": [
-          "ChatPromptTemplate",
-          "BaseChatPromptTemplate",
-          "BasePromptTemplate",
-          "Runnable"
-        ],
-        "category": "Prompts",
-        "description": "Schema to represent a chat prompt",
-        "inputParams": [
-          {
-            "label": "System Message",
-            "name": "systemMessagePrompt",
-            "type": "string",
-            "rows": 4,
-            "placeholder": "You are a helpful assistant that translates {input_language} to {output_language}.",
-            "id": "chatPromptTemplate_0-input-systemMessagePrompt-string"
-          },
-          {
-            "label": "Human Message",
-            "name": "humanMessagePrompt",
-            "description": "This prompt will be added at the end of the messages as human message",
-            "type": "string",
-            "rows": 4,
-            "placeholder": "{text}",
-            "id": "chatPromptTemplate_0-input-humanMessagePrompt-string"
-          },
-          {
-            "label": "Format Prompt Values",
-            "name": "promptValues",
-            "type": "json",
-            "optional": true,
-            "acceptVariable": true,
-            "list": true,
-            "id": "chatPromptTemplate_0-input-promptValues-json"
-          },
-          {
-            "label": "Messages History",
-            "name": "messageHistory",
-            "description": "Add messages after System Message. This is useful when you want to provide few shot examples",
-            "type": "tabs",
-            "tabIdentifier": "selectedMessagesTab",
-            "additionalParams": true,
-            "default": "messageHistoryCode",
-            "tabs": [
-              {
-                "label": "Add Messages (Code)",
-                "name": "messageHistoryCode",
-                "type": "code",
-                "hideCodeExecute": true,
-                "codeExample": "const { AIMessage, HumanMessage, ToolMessage } = require('@langchain/core/messages');\n\nreturn [\n    new HumanMessage(\"What is 333382 🦜 1932?\"),\n    new AIMessage({\n        content: \"\",\n        tool_calls: [\n        {\n            id: \"12345\",\n            name: \"calulator\",\n            args: {\n                number1: 333382,\n                number2: 1932,\n                operation: \"divide\",\n            },\n        },\n        ],\n    }),\n    new ToolMessage({\n        tool_call_id: \"12345\",\n        content: \"The answer is 172.558.\",\n    }),\n    new AIMessage(\"The answer is 172.558.\"),\n]",
-                "optional": true,
-                "additionalParams": true
-              }
-            ],
-            "id": "chatPromptTemplate_0-input-messageHistory-tabs"
-          }
-        ],
-        "inputAnchors": [],
-        "inputs": {
-          "systemMessagePrompt": "You are a helpful AI assistant responding to Instagram Direct Messages.\n\nContext:\n- Instagram Sender IGSID: {senderIgsid}\n- User Message: {input}\n\nReply naturally and helpfully to the user's message.\n\nSTRICT RULE:\nYou MUST use the Instagram Messenger \"Send Text Message\" tool to send your final response.\n\nWhen calling the tool:\n- recipientPsid: {senderIgsid}\n- messageText: Your final reply to the user.\n\nDo not only return text.\nAlways send the final response using the Instagram Messenger tool.",
-          "humanMessagePrompt": "{input}",
-          "promptValues": "{\"senderIgsid\":\"{{instagramTrigger_0.data.instance.senderIgsid}}\",\"input\":\"{{instagramTrigger_0.data.instance.text}}\\n\"}",
-          "messageHistory": "messageHistoryCode"
-        },
-        "outputAnchors": [
-          {
-            "id": "chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable",
-            "name": "chatPromptTemplate",
-            "label": "ChatPromptTemplate",
-            "description": "Schema to represent a chat prompt",
-            "type": "ChatPromptTemplate | BaseChatPromptTemplate | BasePromptTemplate | Runnable"
-          }
-        ],
-        "outputs": {},
-        "selected": false
-      },
-      "width": 320,
-      "height": 878,
-      "selected": false,
-      "positionAbsolute": {
-        "x": 503.56652573290705,
-        "y": 221.25940729055083
+        "x": 323.4338983050848,
+        "y": 267.0796610169491
       },
       "dragging": false
     },
     {
       "id": "instagramTrigger_0",
       "position": {
-        "x": 120.17290678510511,
-        "y": 184.8156455263926
+        "x": -57.143264493127774,
+        "y": 179.56676484695964
       },
       "type": "customNode",
       "data": {
@@ -542,7 +253,7 @@
             "additionalParams": true,
             "hint": {
               "label": "Setup Guide",
-              "value": "## 📸 Instagram Setup — ORBIT-managed\n\n> Do NOT point Meta webhooks at MicroMind. ORBIT owns the whole loop:\n> Meta → ORBIT backend → AI prediction → ORBIT sends the reply.\n> A MicroMind webhook URL here bypasses ORBIT (empty inbox, no tenant isolation).\n\n### Step 1: Connect in ORBIT (tokens live in ORBIT, never in this flow)\n1. In ORBIT go to Settings → Channels → instagram → Connect.\n2. Paste the channel token there. ORBIT encrypts it in its vault and auto-provisions a dedicated flow + prediction key for this business.\n3. Leave token fields in THIS flow EMPTY (or the placeholder). Clones must never hold tenant secrets — the backend sends every reply itself.\n\n### Step 2: Meta Webhook Callback URL (ONE per app, shared by all tenants)\n1. Callback URL: `https://YOUR-ORBIT-BACKEND/webhooks/instagram`\n2. In Meta Developer Portal → Messenger / Instagram → Webhooks → Add Callback URL.\n3. Paste the URL and enter Verify Token `orbit_instagram_verify` (app-level, shared by all tenants on this app).\n4. Verify and Save ✅.\n5. Subscribe to `messages` and `messaging_postbacks`.\nORBIT routes each event to the right business by Page/account ID — no per-tenant callback is ever needed.\n\n### Step 3: Activate & Test Live\n1. Toggle the workflow to ACTIVE in the canvas header!\n2. Send an Instagram DM to your page — the AI reply arrives via ORBIT and shows in the ORBIT inbox."
+              "value": "\n## 📸 Instagram Direct Message (DM) Setup & Token Guide\n\n### Step 1: Get Page Access Token\n1. Go to [Meta Graph API Explorer](https://developers.facebook.com/tools/explorer/).\n2. Under **Meta App**, select your App (`MicroMind Connect` or `Ranim_core_Inst`).\n3. Under **User or Page**, select **Get Page Access Token** and pick your Facebook Page.\n4. Under **Permissions**, add `instagram_basic`, `instagram_manage_messages`, and `pages_messaging`.\n5. Click **Generate Access Token** and copy the token into the **Page Access Token** field below.\n\n### Step 2: Set Meta Webhook Callback URL\n1. Copy the Webhook URL from the top of this node (`https://core.aimicromind.com/webhook/{chatflowId}/instagram`).\n2. In Meta Developer Portal ➔ **Messenger / Instagram** ➔ **Webhooks** ➔ click **Add Callback URL**.\n3. Paste the Webhook URL and enter your **Verify Token** (e.g. `insta`).\n4. Click **Verify and Save** ✅.\n5. Subscribe to `messages` and `messaging_postbacks`.\n\n### Step 3: Activate & Test Live\n1. Toggle the workflow to **ACTIVE** in the canvas header!\n2. Send an Instagram DM to your page — AI will auto-reply in real-time!\n"
             },
             "description": "Open \"Additional Parameters\" to see the setup guide.",
             "id": "instagramTrigger_0-input-howToUse-string"
@@ -551,8 +262,8 @@
         "inputAnchors": [],
         "inputs": {
           "webhookName": "instagram",
-          "verifyToken": "orbit_instagram_verify",
-          "handshakeMode": "",
+          "verifyToken": "core",
+          "handshakeMode": false,
           "howToUse": ""
         },
         "outputAnchors": [
@@ -588,130 +299,176 @@
           }
         ],
         "outputs": {
-          "output": "fullData"
+          "output": "text"
         },
         "selected": false
       },
       "width": 320,
-      "height": 988,
+      "height": 978,
       "selected": false,
-      "dragging": false,
       "positionAbsolute": {
-        "x": 120.17290678510511,
-        "y": 184.8156455263926
-      }
+        "x": -57.143264493127774,
+        "y": 179.56676484695964
+      },
+      "dragging": false
     },
     {
-      "id": "instagramMessenger_0",
+      "id": "calculator_0",
       "position": {
-        "x": 855.5107950735967,
-        "y": 252.0115270323039
+        "x": 1043.2770973651805,
+        "y": 181.12549840137626
       },
       "type": "customNode",
       "data": {
-        "id": "instagramMessenger_0",
-        "label": "Instagram Messenger",
+        "id": "calculator_0",
+        "label": "Calculator",
         "version": 1,
-        "name": "instagramMessenger",
-        "type": "InstagramMessenger",
+        "name": "calculator",
+        "type": "Calculator",
         "baseClasses": [
-          "InstagramMessenger",
-          "Tool"
+          "Calculator",
+          "Tool",
+          "StructuredTool",
+          "Runnable"
         ],
-        "category": "Social Media",
-        "description": "Manage Instagram Direct Messages: read conversations, send text/image/audio/video DMs, and reply privately to comments via the Meta Graph API",
-        "inputParams": [
-          {
-            "label": "Connect Credential",
-            "name": "credential",
-            "type": "credential",
-            "credentialNames": [
-              "instagramMessengerToken"
-            ],
-            "id": "instagramMessenger_0-input-credential-credential"
-          },
-          {
-            "label": "Actions",
-            "name": "actions",
-            "type": "multiOptions",
-            "options": [
-              {
-                "label": "Get Conversations",
-                "name": "getConversations"
-              },
-              {
-                "label": "Get Conversation by User",
-                "name": "getConversationByUser"
-              },
-              {
-                "label": "Get Messages in Conversation",
-                "name": "getMessages"
-              },
-              {
-                "label": "Get Message Details",
-                "name": "getMessageDetails"
-              },
-              {
-                "label": "Send Text Message",
-                "name": "sendTextMessage"
-              },
-              {
-                "label": "Send Image Message",
-                "name": "sendImageMessage"
-              },
-              {
-                "label": "Send Audio Message",
-                "name": "sendAudioMessage"
-              },
-              {
-                "label": "Send Video Message",
-                "name": "sendVideoMessage"
-              },
-              {
-                "label": "Private Reply to Comment",
-                "name": "privateReplyToComment"
-              }
-            ],
-            "default": [
-              "getConversations",
-              "sendTextMessage"
-            ],
-            "id": "instagramMessenger_0-input-actions-multiOptions"
-          },
-          {
-            "label": "Default Message Limit",
-            "name": "limit",
-            "type": "number",
-            "description": "Default number of conversations to return",
-            "default": 20,
-            "additionalParams": true,
-            "optional": true,
-            "id": "instagramMessenger_0-input-limit-number"
-          }
-        ],
+        "category": "Tools",
+        "description": "Perform calculations on response",
+        "inputParams": [],
         "inputAnchors": [],
-        "inputs": {
-          "actions": "[\"sendTextMessage\",\"sendImageMessage\"]",
-          "limit": 20
-        },
+        "inputs": {},
         "outputAnchors": [
           {
-            "id": "instagramMessenger_0-output-instagramMessenger-InstagramMessenger|Tool",
-            "name": "instagramMessenger",
-            "label": "InstagramMessenger",
-            "description": "Manage Instagram Direct Messages: read conversations, send text/image/audio/video DMs, and reply privately to comments via the Meta Graph API",
-            "type": "InstagramMessenger | Tool"
+            "id": "calculator_0-output-calculator-Calculator|Tool|StructuredTool|Runnable",
+            "name": "calculator",
+            "label": "Calculator",
+            "description": "Perform calculations on response",
+            "type": "Calculator | Tool | StructuredTool | Runnable"
           }
         ],
         "outputs": {},
         "selected": false
       },
       "width": 320,
-      "height": 617,
+      "height": 203,
       "selected": false,
       "positionAbsolute": {
-        "x": 855.5107950735967,
-        "y": 252.0115270323039
+        "x": 1043.2770973651805,
+        "y": 181.12549840137626
+      },
+      "dragging": false
+    },
+    {
+      "id": "groqChat_0",
+      "position": {
+        "x": 691.0317575839448,
+        "y": 76.95965632024473
+      },
+      "type": "customNode",
+      "data": {
+        "id": "groqChat_0",
+        "label": "GroqChat",
+        "version": 4.1,
+        "name": "groqChat",
+        "type": "GroqChat",
+        "baseClasses": [
+          "GroqChat",
+          "BaseChatModel",
+          "BaseLanguageModel",
+          "Runnable"
+        ],
+        "category": "Chat Models",
+        "description": "Wrapper around Groq API with LPU Inference Engine (Llama 3.3, DeepSeek R1, Qwen 2.5, Mistral)",
+        "inputParams": [
+          {
+            "label": "Connect Credential",
+            "name": "credential",
+            "type": "credential",
+            "credentialNames": [
+              "groqApi"
+            ],
+            "optional": true,
+            "id": "groqChat_0-input-credential-credential"
+          },
+          {
+            "label": "Model Name",
+            "name": "modelName",
+            "type": "asyncOptions",
+            "loadMethod": "listModels",
+            "placeholder": "llama-3.3-70b-versatile",
+            "id": "groqChat_0-input-modelName-asyncOptions"
+          },
+          {
+            "label": "Custom Model Name",
+            "name": "customModelName",
+            "type": "string",
+            "placeholder": "llama-3.3-70b-versatile",
+            "description": "Custom model name to use on Groq. If provided, it overrides the dropdown selection above.",
+            "additionalParams": true,
+            "optional": true,
+            "id": "groqChat_0-input-customModelName-string"
+          },
+          {
+            "label": "Temperature",
+            "name": "temperature",
+            "type": "number",
+            "step": 0.1,
+            "default": 0.9,
+            "optional": true,
+            "id": "groqChat_0-input-temperature-number"
+          },
+          {
+            "label": "Streaming",
+            "name": "streaming",
+            "type": "boolean",
+            "default": true,
+            "optional": true,
+            "id": "groqChat_0-input-streaming-boolean"
+          },
+          {
+            "label": "Allow Image Uploads",
+            "name": "allowImageUploads",
+            "type": "boolean",
+            "description": "Allow image input. Only applicable for vision models (e.g. llama-3.2-90b-vision-preview, llama-3.2-11b-vision-preview). Refer to the <a href=\"https://docs.aimicromind.com/using-aimicromind/uploads#image\" target=\"_blank\">docs</a> for details.",
+            "default": false,
+            "optional": true,
+            "id": "groqChat_0-input-allowImageUploads-boolean"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Cache",
+            "name": "cache",
+            "type": "BaseCache",
+            "optional": true,
+            "id": "groqChat_0-input-cache-BaseCache"
+          }
+        ],
+        "inputs": {
+          "cache": "",
+          "modelName": "qwen-2.5-32b",
+          "customModelName": "openai/gpt-oss-120b",
+          "temperature": 0.9,
+          "streaming": true,
+          "allowImageUploads": ""
+        },
+        "outputAnchors": [
+          {
+            "id": "groqChat_0-output-groqChat-GroqChat|BaseChatModel|BaseLanguageModel|Runnable",
+            "name": "groqChat",
+            "label": "GroqChat",
+            "description": "Wrapper around Groq API with LPU Inference Engine (Llama 3.3, DeepSeek R1, Qwen 2.5, Mistral)",
+            "type": "GroqChat | BaseChatModel | BaseLanguageModel | Runnable"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 320,
+      "height": 887,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 691.0317575839448,
+        "y": 76.95965632024473
       },
       "dragging": false
     }
@@ -720,22 +477,7 @@
     {
       "type": "buttonedge",
       "style": {
-        "stroke": "#E0AA3E",
-        "strokeWidth": 2.5,
-        "opacity": 0.65,
-        "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
-      },
-      "animated": false,
-      "source": "chatOpenRouter_0",
-      "sourceHandle": "chatOpenRouter_0-output-chatOpenRouter-ChatOpenRouter|ChatOpenAI|BaseChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable",
-      "target": "toolAgent_0",
-      "targetHandle": "toolAgent_0-input-model-BaseChatModel",
-      "id": "chatOpenRouter_0-chatOpenRouter_0-output-chatOpenRouter-ChatOpenRouter|ChatOpenAI|BaseChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable-toolAgent_0-toolAgent_0-input-model-BaseChatModel"
-    },
-    {
-      "type": "buttonedge",
-      "style": {
-        "stroke": "#E0AA3E",
+        "stroke": "#b88a30",
         "strokeWidth": 2.5,
         "opacity": 0.65,
         "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
@@ -756,26 +498,11 @@
         "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
       },
       "animated": false,
-      "source": "instagramTrigger_0",
-      "sourceHandle": "instagramTrigger_0-output-fullData-json",
-      "target": "chatPromptTemplate_0",
-      "targetHandle": "chatPromptTemplate_0-input-promptValues-json",
-      "id": "instagramTrigger_0-instagramTrigger_0-output-fullData-json-chatPromptTemplate_0-chatPromptTemplate_0-input-promptValues-json"
-    },
-    {
-      "type": "buttonedge",
-      "style": {
-        "stroke": "#b88a30",
-        "strokeWidth": 2.5,
-        "opacity": 0.65,
-        "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
-      },
-      "animated": false,
-      "source": "instagramMessenger_0",
-      "sourceHandle": "instagramMessenger_0-output-instagramMessenger-InstagramMessenger|Tool",
+      "source": "calculator_0",
+      "sourceHandle": "calculator_0-output-calculator-Calculator|Tool|StructuredTool|Runnable",
       "target": "toolAgent_0",
       "targetHandle": "toolAgent_0-input-tools-Tool",
-      "id": "instagramMessenger_0-instagramMessenger_0-output-instagramMessenger-InstagramMessenger|Tool-toolAgent_0-toolAgent_0-input-tools-Tool"
+      "id": "calculator_0-calculator_0-output-calculator-Calculator|Tool|StructuredTool|Runnable-toolAgent_0-toolAgent_0-input-tools-Tool"
     },
     {
       "type": "buttonedge",
@@ -786,11 +513,11 @@
         "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
       },
       "animated": false,
-      "source": "chatPromptTemplate_0",
-      "sourceHandle": "chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable",
+      "source": "groqChat_0",
+      "sourceHandle": "groqChat_0-output-groqChat-GroqChat|BaseChatModel|BaseLanguageModel|Runnable",
       "target": "toolAgent_0",
-      "targetHandle": "toolAgent_0-input-chatPromptTemplate-ChatPromptTemplate",
-      "id": "chatPromptTemplate_0-chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable-toolAgent_0-toolAgent_0-input-chatPromptTemplate-ChatPromptTemplate"
+      "targetHandle": "toolAgent_0-input-model-BaseChatModel",
+      "id": "groqChat_0-groqChat_0-output-groqChat-GroqChat|BaseChatModel|BaseLanguageModel|Runnable-toolAgent_0-toolAgent_0-input-model-BaseChatModel"
     }
   ],
   "config": null,

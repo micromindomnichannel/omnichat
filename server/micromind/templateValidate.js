@@ -1,6 +1,9 @@
 // Template export validation for operator uploads (admin template registry).
 // Pure function — no network, no DB. Returns { ok, errors[], hits[] }.
-// Structural: non-empty nodes + trigger + prompt + agent present.
+// Structural: non-empty nodes + trigger + agent + model + memory present.
+// Prompt style is open: v1 templates use chatPromptTemplate; v2 (Dood reference)
+// drives the agent via its own systemMessage — either satisfies the contract
+// because business context injection (buildTenantFlowData) handles both.
 // Secrets: known live-secret shapes anywhere in string values, skipping
 // Flowise template references ({{...}}, .data.instance, -*-input-/output- ids).
 const SECRET_SHAPES = [
@@ -39,9 +42,14 @@ export function validateTemplateExport(flow) {
     return { ok: false, errors: ['flowData must be a flow export object with a non-empty nodes array'], hits: [] };
   }
   const names = flow.nodes.map((n) => String(n?.data?.name || ''));
-  if (!names.some((n) => n.toLowerCase().includes('trigger'))) errors.push('missing trigger node');
-  if (!names.includes('chatPromptTemplate')) errors.push('missing chatPromptTemplate node');
-  if (!names.some((n) => n.toLowerCase().includes('agent'))) errors.push('missing agent node');
+  const lower = names.map((n) => n.toLowerCase());
+  if (!lower.some((n) => n.includes('trigger'))) errors.push('missing trigger node');
+  if (!names.includes('chatPromptTemplate') && !lower.some((n) => n.includes('agent'))) {
+    errors.push('missing prompt contract (chatPromptTemplate or agent systemMessage)');
+  }
+  if (!lower.some((n) => n.includes('agent'))) errors.push('missing agent node');
+  if (!lower.some((n) => n.includes('chat') || n.includes('llm') || n.includes('model'))) errors.push('missing model node');
+  if (!lower.some((n) => n.includes('memory'))) errors.push('missing memory node');
   const hits = scanSecrets(flow);
   return { ok: errors.length === 0 && hits.length === 0, errors, hits };
 }
