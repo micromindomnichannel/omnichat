@@ -205,16 +205,21 @@ and the MicroMind-direct replies died on placeholder page tokens. Fixes:
   falls back to `localhost:5000/api` without it), OpenRouter credit top-up,
   real DPO contact.
 - **Meta app → flow ownership (verified live 2026-09-25/29):**
-  `test_ranim_Mess` (1522030056346232) → Messenger →
+  TWO app entities (portal-verified, MCP-blind to the second):
+  FB `test_ranim_Mess` (1522030056346232) → Messenger/page →
   `Dood - Messenger` (`afb6fb2b-…`, deployed, trigger token `core`, Page token
-  inside) and → Instagram → `dood - insta` (`85db053c-…`, deployed, `core`,
-  token inside; app presumed `test_ranim_Mess`, owner to confirm). `Orbit`
-  holds a field-less page subscription (delivers nothing). `ORBIT Posts`
-  holds nothing. AMENDED Step-0 rollback: Messenger slot restores `afb6fb2b…`
-  (not `f4a7c66d…`); IG slot restores `85db053c…` + fields
-  `messages,message_reads,message_reactions,message_edits`. Cutover changes
-  URL AND token (`core` → `orbit_messenger_2026` / `orbit_instagram_verify`;
-  both handshakes pre-verified green on Railway).
+  inside); IG `test_ranim_Mess - IG` (2045560586846925, Instagram Business
+  Login product, Live) → `dood - insta` (`85db053c-…`, deployed, `core`,
+  token inside). `Orbit` holds a field-less page subscription (delivers
+  nothing). `ORBIT Posts` holds nothing BUT is load-bearing for posting until
+  the main app absorbs it — DO NOT DELETE (Scheduler is compose-only; no
+  publish path existed before migration 012 + publish-now endpoint).
+  AMENDED Step-0 rollback: Messenger slot restores `afb6fb2b…` (not
+  `f4a7c66d…`); IG slot restores `85db053c…` + token `core`. Cutover changes
+  URL AND token per topic (`core` → `orbit_messenger_2026` /
+  `orbit_instagram_verify`; both handshakes pre-verified green on Railway).
+  Review splits per entity: FB submission (messaging + posting sets) AND
+  IG-entity submission (`instagram_manage_messages` + basic).
 - **v2 templates adopted 2026-09-25 (Dood references):** `messenger.json` /
   `instagram.json` REPLACED with the owner's working exports; v1 OpenRouter
   builds archived as `*.v1-openrouter.json`; manifest → `v2`. New shape:

@@ -111,6 +111,16 @@ Symptom: probe green, but connected Page/IG never answered and ORBIT inbox staye
 - Architecture: **ORBIT-owned loop** (Meta → ORBIT → predict → Graph send).
   MicroMind-direct rejected (no inbox, no isolation, silent failures).
 - One Meta app serves all tenants (routing by Page ID); per-client apps deferred.
+- 2026-09-29 ADDENDUM (supersedes "single app" above for Instagram): Meta
+  holds TWO app entities. FB `test_ranim_Mess` owns Messenger; IG
+  `test_ranim_Mess - IG` (2045560586846925, Business Login product, Live)
+  owns Instagram DMs → `dood - insta`. Review submits per entity (FB:
+  messaging + posting; IG: manage_messages + basic). Cutover moves each
+  topic independently (URL AND token `core` → app-level tokens).
+- `ORBIT Posts` is LOAD-BEARING until the main app absorbs posting (Scheduler
+  was compose-only; publish-now endpoint + migration 012 close the gap).
+  DO NOT DELETE until a scheduled post demonstrably publishes via the main
+  app. Same guard for `Orbit` (post-cutover only).
 
 ## 4. Next steps to production (in order)
 
