@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { OrbitLogo } from '../components/shared/OrbitLogo';
 import { GridPulse } from '../components/shared/GridPulse';
+import { AnimatedBeam } from '../components/shared/AnimatedBeam';
+import { TextRewind } from '../components/shared/TextRewind';
 import {
   MessageSquare, ShoppingBag, Calendar, Bot, Zap, Shield, ArrowRight, CheckCircle2,
   Sparkles, Layers, Users, ChevronRight, Check, BarChart3
@@ -44,7 +46,10 @@ export function Landing() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--cloud-white)', color: 'var(--midnight-ink)', fontFamily: 'var(--font-ui)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--cloud-white)', color: 'var(--midnight-ink)', fontFamily: 'var(--font-ui)', position: 'relative' }}>
+      {/* Full-page interactive grid (fixed behind all sections) */}
+      <GridPulse variant="light" style={{ position: 'fixed' }} />
+      <div style={{ position: 'relative', zIndex: 1 }}>
       {/* 1. Header Navigation */}
       <header style={{
         position: 'sticky',
@@ -101,9 +106,7 @@ export function Landing() {
         textAlign: 'center',
         position: 'relative'
       }}>
-        {/* Interactive hairline grid: lights up in brand spectrum on pointer pass, then fades. */}
-        <GridPulse variant="light" />
-        {/* Soft brand wash beneath the grid (kept subtle so hairlines stay visible) */}
+        {/* Soft brand wash in the hero (the page-level grid floats above it) */}
         <div style={{
           position: 'absolute',
           top: -40,
@@ -135,6 +138,13 @@ export function Landing() {
             Many Signals. <br />
             <span style={{ color: 'var(--signal-orange)' }}>One Intelligent Business Flow.</span>
           </h1>
+
+          <div style={{ marginBottom: 28, fontSize: 'clamp(15px, 1.8vw, 18px)', fontWeight: 600, color: 'var(--ink-600)' }}>
+            <TextRewind
+              prefix="Wired for"
+              words={['Messenger', 'Instagram', 'WhatsApp', 'Telegram', 'Gmail']}
+            />
+          </div>
 
           <p style={{
             fontSize: 'clamp(16px, 2vw, 20px)',
@@ -225,6 +235,11 @@ export function Landing() {
             </div>
 
             {/* 3-Stage Diagram: Channels -> ORBIT -> Actions */}
+            <AnimatedBeam
+              activeChannel={selectedChannel}
+              actionLabel="Business Action"
+              style={{ maxWidth: 720, margin: '0 auto 8px' }}
+            />
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
@@ -559,6 +574,7 @@ export function Landing() {
           </div>
         </div>
       </footer>
+      </div>
     </div>
   );
 }

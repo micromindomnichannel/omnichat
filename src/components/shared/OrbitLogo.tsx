@@ -32,32 +32,50 @@ export function OrbitLogo({
     textColor = '#FAFAF9';
   }
 
-  // Symbol SVG rendering matching official ORBIT guide (3 signal nodes merging into loop)
-  const SymbolSvg = ({ width = size, height = size }: { width?: number; height?: number }) => (
+  // Symbol SVG: three signal nodes flowing into an open loop (2026 mark).
+  // Dots left; tapered-feel converging strokes; large ring with a lower-left
+  // gap where the rising stroke enters. viewBox 200x160 (wide mark).
+  const SymbolSvg = ({ width = size, height = size, color = symbolColor }: { width?: number; height?: number; color?: string }) => (
     <svg
       width={width}
-      height={height}
-      viewBox="0 0 100 100"
+      height={(height * 0.8)}
+      viewBox="0 0 200 160"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       style={{ display: 'block', flexShrink: 0 }}
     >
-      {/* Input signal nodes (3 dots on left) */}
-      <circle cx="22" cy="24" r="8" fill={symbolColor} />
-      <circle cx="16" cy="50" r="8" fill={symbolColor} />
-      <circle cx="22" cy="76" r="8" fill={symbolColor} />
-
-      {/* Curved converging signal paths into central loop */}
+      {/* Signal nodes */}
+      <circle cx="52" cy="38" r="17" fill={color} />
+      <circle cx="38" cy="80" r="17" fill={color} />
+      <circle cx="52" cy="122" r="17" fill={color} />
+      {/* Converging flows */}
       <path
-        d="M22 24 C 42 24, 48 38, 56 46
-           C 66 56, 82 56, 82 40
-           C 82 24, 62 24, 52 42
-           C 42 60, 30 76, 22 76
-           M16 50 C 32 50, 42 46, 54 44"
-        stroke={symbolColor}
-        strokeWidth="11"
+        d="M52 38 C 80 38, 92 48, 108 58"
+        stroke={color}
+        strokeWidth="17"
         strokeLinecap="round"
-        strokeLinejoin="round"
+        fill="none"
+      />
+      <path
+        d="M38 80 L 104 80"
+        stroke={color}
+        strokeWidth="17"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <path
+        d="M52 122 C 75 118, 88 100, 100 84"
+        stroke={color}
+        strokeWidth="17"
+        strokeLinecap="round"
+        fill="none"
+      />
+      {/* Open loop: 330° arc, gap at lower-left */}
+      <path
+        d="M101.9 62.3 A42 42 0 1 1 98.2 83.7"
+        stroke={color}
+        strokeWidth="17"
+        strokeLinecap="round"
         fill="none"
       />
     </svg>
@@ -65,6 +83,9 @@ export function OrbitLogo({
 
   // Standalone App Icon
   if (variant === 'icon') {
+    const bg = colorMode === 'dark' ? '#171717' : '#FF5A36';
+    // Symbol must contrast the tile: white on the orange tile, orange on dark.
+    const mark = bg === '#FF5A36' ? '#FFFFFF' : symbolColor;
     return (
       <div
         onClick={onClick}
@@ -73,7 +94,7 @@ export function OrbitLogo({
           width: size,
           height: size,
           borderRadius: Math.max(6, Math.round(size * 0.22)),
-          background: colorMode === 'dark' ? '#171717' : '#FF5A36',
+          background: bg,
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -82,7 +103,7 @@ export function OrbitLogo({
           flexShrink: 0
         }}
       >
-        <SymbolSvg width={size * 0.65} height={size * 0.65} />
+        <SymbolSvg width={size * 0.65} height={size * 0.65} color={mark} />
       </div>
     );
   }

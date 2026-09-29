@@ -149,7 +149,8 @@ export function GridPulse({
     const onLeave = () => kick();
 
     // Respect reduced motion: static hairlines, no pulse loop.
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduced = typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     resize();
     frame();
