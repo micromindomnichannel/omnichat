@@ -249,15 +249,21 @@ export function buildTenantFlowData(channel, template, { verifyToken, businessNa
         inputs.systemMessagePrompt = `${inputs.systemMessagePrompt}\n\n${ctx}`;
       }
     }
-    // v2 model credential: the Dood-reference exports carry NO credential ref
-    // (MicroMind strips credentials on export), so API clones 500 with
-    // "Groq API key not found". The binding lives at node.data.credential
-    // (node level — proven by GUI capture: detach sends "", attach sends the
-    // id; inputs carries NO credential key in this fork). Inject the shared
-    // provisionable credential id (minted once by the owner; env carries only
-    // the id, never the secret). Absent env = untouched clone.
+    // v2/v3 model credential: the Dood-reference exports carry NO credential
+    // ref (MicroMind strips credentials on export), so API clones 500 with
+    // "<provider> API key not found". The binding lives at
+    // node.data.credential (node level — proven by GUI capture; inputs carries
+    // NO credential key in this fork). Inject the shared provisionable
+    // credential id (owner-minted once; env carries only the id, never the
+    // secret). Absent env = untouched clone.
+    // v3 templates run chatOpenRouter (free-tier model) on the shared
+    // openRouterApi credential; v2-groq archives use the groqApi one.
     if (node.data.name === 'groqChat' && process.env.MICROMIND_GROQ_CREDENTIAL_ID) {
       node.data.credential = process.env.MICROMIND_GROQ_CREDENTIAL_ID;
+      if (inputs && 'credential' in inputs) delete inputs.credential;
+    }
+    if (node.data.name === 'chatOpenRouter' && process.env.MICROMIND_OPENROUTER_CREDENTIAL_ID) {
+      node.data.credential = process.env.MICROMIND_OPENROUTER_CREDENTIAL_ID;
       if (inputs && 'credential' in inputs) delete inputs.credential;
     }
     // v2 (Dood reference) contract: no chatPromptTemplate — the agent carries

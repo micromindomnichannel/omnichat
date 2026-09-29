@@ -233,21 +233,24 @@ and the MicroMind-direct replies died on placeholder page tokens. Fixes:
   URL) or the raw Groq key to mint via `POST /credentials`. Until then v2
   clones provision but cannot predict (superseedes the OpenRouter-402 block
   for all new profiles).
-- **Credential-binding verdict 2026-09-25 (BLOCKED, evidence-backed):**
-  API-side model-credential binding is impossible in this fork. Proven:
-  string/object `inputs.credential` on CREATE and UPDATE, fresh-minted AND
-  known-good (`trst`) credential ids — all predict → 500 Groq-key-not-found.
-  Working GUI flows carry NO credential keys in flowData (binding lives
-  outside flowData; no link endpoint in swagger; GET-record shows no link
-  field). Injection code stays in `buildTenantFlowData` (inert without env)
-  for the day binding is discovered. Test credentials deleted.
-  UNBLOCKS (either): (1) capture the GUI save request in browser devtools
-  while attaching a credential (reveals the real endpoint+payload — 5 min,
-  owner action); (2) MicroMind ops sets server `GROQ_API_KEY` env (all flows
-  resolve, zero code). Key hygiene: the pasted `gsk_` transited chat — rotate
-  it in Groq console regardless.- **RESOLVED 2026-09-25 via GUI capture:** binding = `node.data.credential`  (node level; `inputs` carries no credential key in this fork). Provisioner
-  stamps the shared `groqApi` credential (`trst`, owner-side) into every v2
-  clone → live predict `OK` on both channels. Zero-touch restored.
+- **v3 templates (OpenRouter transplant) 2026-09-25:** owner asked to swap the
+  Dood `groqChat` node for the `chatOpenRouter` node from the working
+  Schedule-posts flow (model `cohere/north-mini-code:free`, temp 0.9).
+  Scripted transplant (edges rewired, agent refs repointed); v2-groq archived
+  as `*.v2-groq.json`; manifest → `v3`. Provisioner stamps the pre-existing
+  owner `openRouterApi` credential (`ORBIT`) via `node.data.credential`
+  (`MICROMIND_OPENROUTER_CREDENTIAL_ID`, set locally + Railway). Live gate:
+  provision → predict `{"text":"OK"}` → delete, **PASS both channels**.
+  Free-tier model = zero inference spend, zero-touch preserved. `facebookPostsManager`
+  node deliberately NOT transplanted (posting flow, separate concern).
+  (Historical note: `inputs.credential` binding was proven impossible first —
+  string/object refs on CREATE and UPDATE, fresh and known-good ids, all 500.
+  GUI capture then revealed the real address is `node.data.credential`, which
+  the provisioner now stamps. Test credentials deleted; pasted `gsk_` to rotate.)
+- **RESOLVED 2026-09-25 via GUI capture:** binding = `node.data.credential`
+  (node level; `inputs` carries no credential key in this fork). Provisioner
+  stamps the shared credentials into every clone → live predict `OK` on both
+  channels (v2 Groq, v3 OpenRouter). Zero-touch restored.
 - **Tenant-key mint fix (same day):** `POST /apikey` returns the FULL key list
   (array), not the created object — `ensureTenantKey` now picks by keyName and
   self-heals by vault-adopting orphan labels; junk orphans deleted. This was
