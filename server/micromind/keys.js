@@ -3,7 +3,7 @@
 // 'micromind_prediction') like every other secret — never returned by any API.
 // Verified live: member-mintable (POST /apikey), key enforced on prediction
 // (401 without, 200 with). Blast radius of a leak = one tenant.
-import { createApiKey, deleteApiKey, updateChatflow } from './client.js';
+import { createApiKey, deleteApiKey, listApiKeys, updateChatflow } from './client.js';
 import { encryptSecret, decryptSecret } from '../credentials/crypto.js';
 
 const rid = (p) => `${p}_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
@@ -23,20 +23,37 @@ export function unpackKey(envelope) {
 }
 
 // Resolve-or-mint the tenant key. Returns the VAULT credential id (never the key).
+// Self-healing in two ways:
+// (1) POST /apikey returns the FULL key list (array), not the created object —
+//     pick our entry by keyName instead of reading .apiKey off the response.
+// (2) Adopt-by-keyName: a previous attempt may have minted server-side but thrown
+//     before vaulting (orphan). If the expected label exists server-side and no
+//     vault row does, vault-adopt it instead of minting a duplicate.
 export async function ensureTenantKey(pool, workspaceId, label) {
   const existing = (await pool.query(
     'SELECT id FROM credentials WHERE workspace_id=$1 AND provider=$2 ORDER BY created_at DESC LIMIT 1',
     [workspaceId, PROVIDER])).rows[0];
   if (existing) return { credentialId: existing.id, created: false };
-  const created = await createApiKey(label || `ORBIT tenant - ${workspaceId}`);
-  if (!created?.apiKey) throw new Error('ensureTenantKey: key creation returned no apiKey');
+  const keyName = label || `ORBIT tenant - ${workspaceId}`;
+  const serverKeys = await listApiKeys().catch(() => []);
+  const adopted = (Array.isArray(serverKeys) ? serverKeys : []).find((k) => k?.keyName === keyName && k?.apiKey);
+  if (adopted) {
+    return { credentialId: await vaultKey(pool, workspaceId, adopted), created: false, adopted: true };
+  }
+  const created = await createApiKey(keyName);
+  const entry = (Array.isArray(created) ? created : [created]).find((k) => k?.keyName === keyName && k?.apiKey);
+  if (!entry?.apiKey) throw new Error('ensureTenantKey: key creation returned no apiKey');
+  return { credentialId: await vaultKey(pool, workspaceId, entry), created: true };
+}
+
+async function vaultKey(pool, workspaceId, entry) {
   const credentialId = rid('cred');
   await pool.query(
     'INSERT INTO credentials (id, workspace_id, provider, encrypted_secret, metadata) VALUES ($1,$2,$3,$4,$5)',
-    [credentialId, workspaceId, PROVIDER, packKey(created.apiKey, created.apiSecret),
-     JSON.stringify({ keyId: created.id, keyName: created.keyName || null })]
+    [credentialId, workspaceId, PROVIDER, packKey(entry.apiKey, entry.apiSecret),
+     JSON.stringify({ keyId: entry.id, keyName: entry.keyName || null })]
   );
-  return { credentialId, created: true };
+  return credentialId;
 }
 
 // MicroMind key RECORD id for a vault credential (needed for apikeyid linking).

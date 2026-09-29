@@ -235,3 +235,12 @@ and the MicroMind-direct replies died on placeholder page tokens. Fixes:
   owner action); (2) MicroMind ops sets server `GROQ_API_KEY` env (all flows
   resolve, zero code). Key hygiene: the pasted `gsk_` transited chat — rotate
   it in Groq console regardless.
+- **RESOLVED 2026-09-25 via GUI capture:** binding = `node.data.credential`
+  (node level; `inputs` carries no credential key in this fork). Provisioner
+  stamps the shared `groqApi` credential (`trst`, owner-side) into every v2
+  clone → live predict `OK` on both channels. Zero-touch restored.
+- **Tenant-key mint fix (same day):** `POST /apikey` returns the FULL key list
+  (array), not the created object — `ensureTenantKey` now picks by keyName and
+  self-heals by vault-adopting orphan labels; junk orphans deleted. This was
+  the `provision_error` behind the error-state channel row — retry connect in
+  UI to complete it.

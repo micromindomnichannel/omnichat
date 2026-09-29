@@ -251,11 +251,14 @@ export function buildTenantFlowData(channel, template, { verifyToken, businessNa
     }
     // v2 model credential: the Dood-reference exports carry NO credential ref
     // (MicroMind strips credentials on export), so API clones 500 with
-    // "Groq API key not found". Inject the shared provisionable credential id
-    // (minted once by the owner; env carries only the id, never the secret).
-    // Absent env = untouched clone (predict will 500 until configured).
+    // "Groq API key not found". The binding lives at node.data.credential
+    // (node level — proven by GUI capture: detach sends "", attach sends the
+    // id; inputs carries NO credential key in this fork). Inject the shared
+    // provisionable credential id (minted once by the owner; env carries only
+    // the id, never the secret). Absent env = untouched clone.
     if (node.data.name === 'groqChat' && process.env.MICROMIND_GROQ_CREDENTIAL_ID) {
-      inputs.credential = process.env.MICROMIND_GROQ_CREDENTIAL_ID;
+      node.data.credential = process.env.MICROMIND_GROQ_CREDENTIAL_ID;
+      if (inputs && 'credential' in inputs) delete inputs.credential;
     }
     // v2 (Dood reference) contract: no chatPromptTemplate — the agent carries
     // its own systemMessage. Inject the same business context there so tenant
