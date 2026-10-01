@@ -139,19 +139,18 @@ function App() {
   if (isOnboarding) {
 
     const steps = [
-      <VerticalSelect key="0" onSelect={(v) => { setOnboardingData({ ...onboardingData, vertical: v }); setOnboardingStep(1); }} />,
-      <BusinessInfo key="1" data={onboardingData} onNext={(d) => { setOnboardingData(d); setOnboardingStep(2); }} onBack={() => setOnboardingStep(0)} />,
-      <ConnectChannels key="2" data={onboardingData} onNext={(d) => { setOnboardingData(d); setOnboardingStep(3); }} onBack={() => setOnboardingStep(1)} />,
-      <KnowledgeSetup key="3" data={onboardingData} onNext={(d) => { setOnboardingData(d); setOnboardingStep(4); }} onBack={() => setOnboardingStep(2)} />,
-      <AIReview key="4" data={onboardingData} onNext={() => setOnboardingStep(5)} onBack={() => setOnboardingStep(3)} />,
-      <Finish key="5" data={onboardingData} onComplete={() => {
+      <BusinessInfo key="0" data={onboardingData} onNext={(d) => { setOnboardingData(d); setOnboardingStep(1); }} onBack={() => setOnboardingStep(0)} />,
+      <ConnectChannels key="1" data={onboardingData} onNext={(d) => { setOnboardingData(d); setOnboardingStep(2); }} onBack={() => setOnboardingStep(0)} />,
+      <KnowledgeSetup key="2" data={onboardingData} onNext={(d) => { setOnboardingData(d); setOnboardingStep(3); }} onBack={() => setOnboardingStep(1)} />,
+      <AIReview key="3" data={onboardingData} onNext={() => setOnboardingStep(4)} onBack={() => setOnboardingStep(2)} />,
+      <Finish key="4" data={onboardingData} onComplete={() => {
         const name = onboardingData.businessName || 'My Business';
         dispatch({ type: 'UPDATE_BUSINESS', field: 'businessName', value: name });
         // Best-effort backend sync (offline-safe — onboarding completes regardless).
         api.updateSettings({ business_name: name, industry: onboardingData.industry });
         dispatch({ type: 'COMPLETE_ONBOARDING' });
         navigate('/overview');
-      }} onBack={() => setOnboardingStep(4)} />
+      }} onBack={() => setOnboardingStep(3)} />
     ];
 
     return (
