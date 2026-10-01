@@ -53,6 +53,10 @@ function useSession(enabled = true) {
       if (cancelled) return;
       if (me?.user) {
         localStorage.setItem('orbit_authenticated', 'true');
+        localStorage.setItem('orbit_user', JSON.stringify({
+          email: me.user.email,
+          name: me.user.display_name || ''
+        }));
         localStorage.setItem('orbit_memberships', JSON.stringify(me.memberships || []));
         dispatch({ type: 'SET_SESSION_USER', name: me.user.display_name || '', email: me.user.email });
         setStatus('in');

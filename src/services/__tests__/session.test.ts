@@ -21,12 +21,12 @@ describe('getMemberships', () => {
 });
 
 describe('isAdmin', () => {
-  it('true for owner and admin, false for agent/none', () => {
-    localStorage.setItem('orbit_memberships', JSON.stringify([{ workspace_id: 'w', role: 'agent' }]));
+  it('only allows the platform administrator email', () => {
+    localStorage.setItem('orbit_user', JSON.stringify({ email: 'agent@example.com' }));
     expect(isAdmin()).toBe(false);
-    localStorage.setItem('orbit_memberships', JSON.stringify([{ workspace_id: 'w', role: 'admin' }]));
+    localStorage.setItem('orbit_user', JSON.stringify({ email: 'micromindomnichannel@gmail.com' }));
     expect(isAdmin()).toBe(true);
-    localStorage.setItem('orbit_memberships', JSON.stringify([{ workspace_id: 'w', role: 'owner' }]));
+    localStorage.setItem('orbit_user', JSON.stringify({ email: 'MICROMINDOMNICHANNEL@GMAIL.COM' }));
     expect(isAdmin()).toBe(true);
     localStorage.clear();
     expect(isAdmin()).toBe(false);

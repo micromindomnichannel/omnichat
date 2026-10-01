@@ -10,7 +10,12 @@ export function getMemberships(): Array<{ workspace_id: string; role: string }> 
 }
 
 export function isAdmin() {
-  return getMemberships().some((m) => m.role === 'owner' || m.role === 'admin');
+  try {
+    const user = JSON.parse(localStorage.getItem('orbit_user') || '{}');
+    return String(user.email || '').trim().toLowerCase() === 'micromindomnichannel@gmail.com';
+  } catch {
+    return false;
+  }
 }
 
 export function clearSessionCache() {

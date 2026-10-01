@@ -3,10 +3,11 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useVertical } from '../../state/verticalContext';
 import { useStore } from '../../state/store';
 import { OrbitLogo } from '../../components/shared/OrbitLogo';
-import { isAdmin } from '../../services/session';
+import { clearSessionCache, isAdmin } from '../../services/session';
+import { api } from '../../services/api';
 import {
   LayoutDashboard, MessageSquare, Users, ShoppingBag, Calendar, Package, Scissors,
-  Bot, BookOpen, BarChart3, Settings, ShieldAlert, HelpCircle, Menu, X, Home, ExternalLink
+  Bot, BookOpen, BarChart3, Settings, ShieldAlert, Menu, X, LogOut
 } from 'lucide-react';
 
 const navItems = [
@@ -23,11 +24,9 @@ const navItems = [
   { id: 'analytics', label: 'Analytics', icon: BarChart3, path: '/analytics' },
 ];
 
-const bottomItems = [
-  { id: 'landing', label: 'Landing Page', icon: Home, path: '/' },
+const baseBottomItems = [
+  { id: 'logout', label: 'Log out', icon: LogOut, path: '' },
   { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
-  // Admin is hidden for non-admin members (backend also enforces with 403).
-  ...(isAdmin() ? [{ id: 'admin', label: 'Admin', icon: ShieldAlert, path: '/admin' }] : []),
 ];
 
 export function Sidebar() {
@@ -49,6 +48,9 @@ export function Sidebar() {
   }, []);
 
   const unreadCount = state.conversations.reduce((sum, c) => sum + c.unreadCount, 0);
+  const bottomItems = isAdmin()
+    ? [...baseBottomItems, { id: 'admin', label: 'Admin', icon: ShieldAlert, path: '/admin' }]
+    : baseBottomItems;
 
   const filteredNav = navItems.filter(item => {
     if (item.commerceOnly && vertical !== 'commerce') return false;
@@ -58,6 +60,11 @@ export function Sidebar() {
 
   const isActive = (path: string) => location.pathname === path;
   const sidebarWidth = collapsed ? 72 : 240;
+  const handleLogout = async () => {
+    await api.logout();
+    clearSessionCache();
+    navigate('/login', { replace: true });
+  };
 
   const sidebarContent = (
     <>
@@ -188,7 +195,7 @@ export function Sidebar() {
             return (
               <button
                 key={item.id}
-                onClick={() => navigate(item.path)}
+                onClick={() => item.id === 'logout' ? void handleLogout() : navigate(item.path)}
                 style={{
                   width: '100%', height: 38, borderRadius: 8, border: 'none',
                   background: active ? 'var(--surface-0)' : 'transparent',
