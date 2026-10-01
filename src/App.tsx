@@ -37,10 +37,14 @@ import { isAdmin } from './services/session';
 // Session guard: the server cookie is the source of truth. We always start at
 // 'checking' — a stale localStorage flag from older builds must never route
 // past the login/signup pages before the server confirms the session.
-function useSession() {
+function useSession(enabled = true) {
   const { dispatch } = useStore();
   const [status, setStatus] = useState<'checking' | 'in' | 'out'>('checking');
   useEffect(() => {
+    if (!enabled) {
+      setStatus('out');
+      return;
+    }
     let cancelled = false;
     // Bound the check: a hanging backend (cold start) must resolve to the
     // login page, never an endless splash.
@@ -58,7 +62,7 @@ function useSession() {
       }
     });
     return () => { cancelled = true; };
-  }, []);
+  }, [enabled]);
   return status;
 }
 
@@ -79,15 +83,16 @@ function App() {
   const isDemo = location.pathname === '/demo';
   const isPrivacy = location.pathname === '/privacy';
   const isTerms = location.pathname === '/terms';
-  const session = useSession();
+  const isAuthEntry = isLanding || isLogin || isSignup;
+  const session = useSession(!isAuthEntry);
 
   useEffect(() => {
-    if (isLanding || isLogin) {
+    if (isAuthEntry) {
       // Public entry always starts a fresh auth flow. This prevents an
       // existing browser session from silently opening the dashboard.
       api.logout();
     }
-  }, [isLanding, isLogin]);
+  }, [isAuthEntry]);
 
   // Public routes (no auth needed)
   if (isLanding) {
@@ -99,7 +104,6 @@ function App() {
   }
 
   if (isSignup) {
-    if (session === 'in') return <Navigate to="/overview" replace />;
     return <Signup />;
   }
 
