@@ -13,7 +13,7 @@ interface Props {
 export function AIReview({ data, onNext, onBack }: Props) {
   const { vertical, accentColor } = useVertical();
   const { state } = useStore();
-  const [live, setLive] = useState<{ backend: boolean; db: boolean; channels: number } | null>(null);
+  const [live, setLive] = useState<{ backend: boolean; db: boolean; channels: string[] } | null>(null);
 
   // Live wiring check: backend health + real channel connections.
   useEffect(() => {
@@ -23,7 +23,9 @@ export function AIReview({ data, onNext, onBack }: Props) {
       setLive({
         backend: !!health,
         db: !!(health && (health as any).database?.connected),
-        channels: channels ? channels.filter((c: any) => c.status === 'active').length : 0,
+        channels: channels
+          ? channels.filter((c: any) => c.status === 'active').map((c: any) => c.display_name || c.channel)
+          : Object.entries(state.channelsConnected).filter(([, connected]) => connected).map(([name]) => name),
       });
     })();
   }, []);
@@ -87,7 +89,7 @@ export function AIReview({ data, onNext, onBack }: Props) {
           { ok: true, label: 'Escalate to human when needed' },
           { ok: live?.backend, label: live ? (live.backend ? 'Backend API connected' : 'Backend offline — demo mode') : 'Checking backend…' },
           { ok: live?.db, label: live ? (live.db ? 'Database connected' : 'Database unreachable — demo data') : 'Checking database…' },
-          { ok: (live?.channels || 0) > 0, label: live ? `${live.channels} live channel${live.channels === 1 ? '' : 's'} connected` : 'Checking channels…' },
+          { ok: (live?.channels.length || 0) > 0, label: live ? (live.channels.length ? `Connected: ${live.channels.join(', ')}` : 'No live channels connected') : 'Checking channels…' },
         ].map((row, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, background: 'var(--surface-1)', borderRadius: 8, border: '1px solid var(--border)' }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: row.ok ? 'var(--success)' : row.ok === false ? 'var(--danger)' : 'var(--ink-400)' }} />

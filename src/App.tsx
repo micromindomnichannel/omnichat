@@ -143,7 +143,7 @@ function App() {
   if (isOnboarding) {
 
     const steps = [
-      <BusinessInfo key="0" data={onboardingData} onNext={(d) => { setOnboardingData(d); setOnboardingStep(1); }} onBack={() => setOnboardingStep(0)} />,
+      <BusinessInfo key="0" data={onboardingData} onNext={(d) => { setOnboardingData(d); setOnboardingStep(1); }} onBack={() => navigate('/signup')} />,
       <ConnectChannels key="1" data={onboardingData} onNext={(d) => { setOnboardingData(d); setOnboardingStep(2); }} onBack={() => setOnboardingStep(0)} />,
       <KnowledgeSetup key="2" data={onboardingData} onNext={(d) => { setOnboardingData(d); setOnboardingStep(3); }} onBack={() => setOnboardingStep(1)} />,
       <AIReview key="3" data={onboardingData} onNext={() => setOnboardingStep(4)} onBack={() => setOnboardingStep(2)} />,

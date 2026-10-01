@@ -16,6 +16,9 @@ export function KnowledgeSetup({ data, onNext, onBack }: Props) {
   const [openForm, setOpenForm] = useState<string | null>(null);
   const [q, setQ] = useState('');
   const [a, setA] = useState('');
+  const [questionType, setQuestionType] = useState<'free-text' | 'mcq'>('free-text');
+  const [options, setOptions] = useState(['', '', '']);
+  const [correctOption, setCorrectOption] = useState(0);
   const [saving, setSaving] = useState(false);
   const [uploadingZone, setUploadingZone] = useState<string | null>(null);
 
@@ -48,22 +51,32 @@ export function KnowledgeSetup({ data, onNext, onBack }: Props) {
     setUploadingZone(null);
   };
 
-  // Working quick-add: FAQs persist via store (which syncs to backend),
-  // policies go straight to the workspace knowledge API. Offline-safe.
+  // FAQs use the existing store sync; policies and products use the workspace
+  // knowledge API directly so their metadata is retained.
   const handleQuickAdd = async (zoneLabel: string) => {
     if (!q.trim() || !a.trim() || saving) return;
+    if (zoneLabel === 'FAQs' && questionType === 'mcq' && options.filter(Boolean).length < 2) {
+      showToast('Add at least two answer choices', 'danger');
+      return;
+    }
     setSaving(true);
-    if (zoneLabel === 'FAQs') {
+    if (zoneLabel === 'FAQs' && questionType === 'free-text') {
       dispatch({ type: 'ADD_FAQ', faq: { id: `faq${Date.now()}`, question: q.trim(), answer: a.trim(), category: 'General', vertical } });
       showToast('FAQ added', 'success');
     } else {
       const kind = zoneLabel === 'Policies' ? 'policy' : vertical === 'commerce' ? 'product' : 'service';
-      const res = await api.addKnowledge('default', { kind, title: q.trim(), content: a.trim(), metadata: { source: 'onboarding' } });
-      showToast(res ? `${zoneLabel} saved to knowledge base` : `${zoneLabel} saved locally (backend unreachable)`, res ? 'success' : 'warning');
+      const metadata = questionType === 'mcq'
+        ? { source: 'onboarding', questionType, options: options.filter(Boolean), correctOption }
+        : { source: 'onboarding', questionType };
+      const res = await api.addKnowledge('default', { kind, title: q.trim(), content: a.trim(), metadata });
+      showToast(res ? `${zoneLabel} saved to knowledge base` : `${zoneLabel} could not be saved — backend unreachable`, res ? 'success' : 'danger');
     }
     setSaving(false);
     setQ('');
     setA('');
+    setQuestionType('free-text');
+    setOptions(['', '', '']);
+    setCorrectOption(0);
     setOpenForm(null);
   };
 
@@ -121,13 +134,30 @@ export function KnowledgeSetup({ data, onNext, onBack }: Props) {
               <p style={{ fontSize: 12, color: 'var(--ink-400)' }}>{zone.desc}</p>
               {openForm === zone.label ? (
                 <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }} onClick={(e) => e.stopPropagation()}>
+                  {zone.label === 'FAQs' && (
+                    <select className="input" value={questionType} onChange={e => setQuestionType(e.target.value as 'free-text' | 'mcq')}>
+                      <option value="free-text">Free-text question</option>
+                      <option value="mcq">Multiple choice question</option>
+                    </select>
+                  )}
                   <input
                     className="input" value={q} onChange={(e) => setQ(e.target.value)}
                     placeholder={zone.label === 'FAQs' ? 'Question (e.g. Do you deliver to Giza?)' : 'Title (e.g. Return policy)'}
                   />
+                  {questionType === 'mcq' && zone.label === 'FAQs' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {options.map((option, index) => (
+                        <div key={index} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                          <input type="radio" name="correct-option" checked={correctOption === index} onChange={() => setCorrectOption(index)} />
+                          <input className="input" value={option} placeholder={`Answer choice ${index + 1}`}
+                            onChange={e => setOptions(current => current.map((item, i) => i === index ? e.target.value : item))} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <textarea
                     className="input" rows={2} value={a} onChange={(e) => setA(e.target.value)}
-                    placeholder={zone.label === 'FAQs' ? 'Answer' : 'Details'}
+                    placeholder={questionType === 'mcq' ? 'Explanation or correct answer' : zone.label === 'FAQs' ? 'Answer' : 'Details'}
                   />
                   <button
                     onClick={() => handleQuickAdd(zone.label)}

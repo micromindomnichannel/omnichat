@@ -51,6 +51,19 @@ export function ConnectChannels({ data, onNext, onBack }: Props) {
     showToast(`${channels.find(c => c.id === channelId)?.name} ${isConnected ? 'connected' : 'disconnected'}`, 'success');
   };
 
+  const disconnect = async (account: BackendAccount, channelId: string) => {
+    setBusy(true);
+    const result = await api.disconnectChannel(account.id);
+    setBusy(false);
+    if (result) {
+      setBackend((rows) => (rows || []).map(row => row.id === account.id ? { ...row, status: 'disconnected' } : row));
+      dispatch({ type: 'TOGGLE_CHANNEL', channel: channelId });
+      showToast(`${channels.find(c => c.id === channelId)?.name} disconnected`, 'success');
+    } else {
+      showToast('Could not disconnect channel', 'danger');
+    }
+  };
+
   // Real connect through the backend vault + provisioner (best-effort).
   const submitConnect = async (channelId: string) => {
     if (!token && !flowId) {
@@ -98,7 +111,8 @@ export function ConnectChannels({ data, onNext, onBack }: Props) {
         {channels.map(channel => {
           const Icon = channel.icon;
           const realStatus = backendStatus(channel.id);
-          const connected = realStatus ? realStatus === 'active' : !!state.channelsConnected[channel.id];
+          const account = (backend || []).find((a) => a.channel === channel.id);
+          const connected = realStatus === 'active' || (!backend && !!state.channelsConnected[channel.id]);
           return (
             <div key={channel.id} style={{
               padding: 16, borderRadius: 10, border: '1px solid var(--border)',
@@ -127,7 +141,7 @@ export function ConnectChannels({ data, onNext, onBack }: Props) {
                       <Check size={14} /> Connected
                     </span>
                   )}
-                  {channel.real && backend && !realStatus ? (
+                  {channel.real && backend && realStatus !== 'active' ? (
                     <button
                       onClick={() => setForming(forming === channel.id ? null : channel.id)}
                       className="btn"
@@ -137,7 +151,8 @@ export function ConnectChannels({ data, onNext, onBack }: Props) {
                     </button>
                   ) : (
                     <button
-                      onClick={() => toggleChannel(channel.id)}
+                      onClick={() => account && realStatus === 'active' ? disconnect(account, channel.id) : toggleChannel(channel.id)}
+                      disabled={busy}
                       className="btn"
                       style={{
                         height: 28, padding: '0 14px', fontSize: 12,

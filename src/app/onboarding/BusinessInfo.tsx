@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useVertical } from '../../state/verticalContext';
 import { useStore } from '../../state/store';
 import { Upload, ArrowLeft, ArrowRight } from 'lucide-react';
@@ -16,17 +16,52 @@ export function BusinessInfo({ data, onNext, onBack }: Props) {
   const [businessName, setBusinessName] = useState(data.businessName || '');
   const [industry, setIndustry] = useState(data.industry || '');
   const [description, setDescription] = useState(data.businessDescription || '');
+  const [industryOther, setIndustryOther] = useState(data.industryOther || '');
+  const [logo, setLogo] = useState(data.businessLogo || '');
   const [saving, setSaving] = useState(false);
 
-  const canContinue = businessName.length > 0 && industry.length > 0;
+  const canContinue = businessName.trim().length > 0 && industry.length > 0 &&
+    (industry !== 'other' || industryOther.trim().length > 0);
+
+  useEffect(() => () => {
+    if (logo.startsWith('blob:')) URL.revokeObjectURL(logo);
+  }, [logo]);
+
+  const handleLogo = async (file?: File) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      showToast('Choose a PNG, JPEG, GIF, or WEBP image', 'danger');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Logo must be smaller than 5MB', 'danger');
+      return;
+    }
+    const localPreview = URL.createObjectURL(file);
+    setLogo(localPreview);
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const result = await api.uploadImage(String(reader.result));
+      if (result?.url) {
+        URL.revokeObjectURL(localPreview);
+        setLogo(result.url);
+        showToast('Logo uploaded', 'success');
+      } else {
+        showToast('Logo preview saved locally; upload will retry when connected', 'warning');
+      }
+    };
+    reader.onerror = () => showToast('Could not read logo', 'danger');
+    reader.readAsDataURL(file);
+  };
 
   // Best-effort save to backend (works offline — onboarding continues regardless).
   const handleContinue = async () => {
     setSaving(true);
-    const saved = await api.updateSettings({ business_name: businessName, industry, description });
+    const resolvedIndustry = industry === 'other' ? industryOther.trim() : industry;
+    const saved = await api.updateSettings({ business_name: businessName.trim(), industry: resolvedIndustry, description, logo });
     setSaving(false);
     if (!saved) showToast('Backend unreachable — continuing locally', 'warning');
-    onNext({ ...data, businessName, industry, businessDescription: description });
+    onNext({ ...data, businessName: businessName.trim(), industry: resolvedIndustry, industryKind: industry, industryOther, businessDescription: description, businessLogo: logo });
   };
 
   return (
@@ -70,14 +105,15 @@ export function BusinessInfo({ data, onNext, onBack }: Props) {
           <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-600)', marginBottom: 6, display: 'block' }}>
             Logo
           </label>
-          <div style={{
+          <label style={{
             width: 80, height: 80, borderRadius: '50%',
             border: '2px dashed var(--border)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer', background: 'var(--surface-0)'
           }}>
-            <Upload size={20} color="var(--ink-400)" />
-          </div>
+            {logo ? <img src={logo} alt="Business logo preview" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} /> : <Upload size={20} color="var(--ink-400)" />}
+            <input type="file" hidden accept="image/png,image/jpeg,image/gif,image/webp" onChange={e => { handleLogo(e.target.files?.[0]); e.target.value = ''; }} />
+          </label>
         </div>
 
         <div>
@@ -98,6 +134,11 @@ export function BusinessInfo({ data, onNext, onBack }: Props) {
             <option value="food">Food & Beverage</option>
             <option value="other">Other</option>
           </select>
+          {industry === 'other' && (
+            <input className="input" style={{ marginTop: 8 }} value={industryOther}
+              onChange={e => setIndustryOther(e.target.value)}
+              placeholder="Tell us your business type" />
+          )}
         </div>
 
         <div>
