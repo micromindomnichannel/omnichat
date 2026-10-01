@@ -81,13 +81,20 @@ function App() {
   const isTerms = location.pathname === '/terms';
   const session = useSession();
 
+  useEffect(() => {
+    if (isLanding || isLogin) {
+      // Public entry always starts a fresh auth flow. This prevents an
+      // existing browser session from silently opening the dashboard.
+      api.logout();
+    }
+  }, [isLanding, isLogin]);
+
   // Public routes (no auth needed)
   if (isLanding) {
     return <Landing />;
   }
 
   if (isLogin) {
-    if (session === 'in') return <Navigate to="/overview" replace />;
     return <Login />;
   }
 
