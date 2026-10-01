@@ -41,13 +41,14 @@ export function authRouter(pool) {
          VALUES ($1,$2,$3,$4,$5, CURRENT_TIMESTAMP + INTERVAL '${OTP_TTL_MIN} minutes')`,
         [`otp_${crypto.randomUUID()}`, email, codeHash, await bcrypt.hash(String(password), 12), displayName || email.split('@')[0]]
       );
-      const sent = await sendMail({
+      const debugOtp = process.env.ALLOW_DEBUG_OTP === '1';
+      const sent = debugOtp ? { delivered: false, debugOnly: true } : await sendMail({
         to: email,
         subject: 'Your ORBIT verification code',
         text: `Your ORBIT verification code is: ${code}\nIt expires in ${OTP_TTL_MIN} minutes. If you did not request this, ignore this email.`,
       });
       const out = { success: true, expiresInSec: OTP_TTL_MIN * 60, delivered: sent.delivered };
-      if (!sent.delivered && process.env.ALLOW_DEBUG_OTP === '1') out.debugCode = code;
+      if (debugOtp) out.debugCode = code;
       res.json(out);
     } catch (err) {
       if (String(err?.message || '').startsWith('Email delivery failed')) {
