@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { OrbitLogo } from '../components/shared/OrbitLogo';
 import {
-  Eye, EyeOff, ArrowRight, Mail, Lock, User, Phone, Building2, Sparkles, CheckCircle2
+  Eye, EyeOff, ArrowRight, Mail, Lock, User, Building2, Sparkles, CheckCircle2
 } from 'lucide-react';
 import { api } from '../services/api';
 
@@ -16,7 +16,6 @@ export function Signup() {
   // Step 1: Account
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
 
   // Step 2: Email OTP
@@ -79,7 +78,7 @@ export function Signup() {
     setLoading(false);
     if (res?.user) {
       const userData = {
-        name: fullName, email, phone, businessName, industry, country, avatar: ''
+        name: fullName, email, businessName, industry, country, avatar: ''
       };
       localStorage.setItem('orbit_user', JSON.stringify(userData));
       localStorage.setItem('orbit_authenticated', 'true');
@@ -106,7 +105,7 @@ export function Signup() {
       return;
     }
     setError('');
-    const userData = { name: fullName, email, phone, businessName, industry, country, avatar: '' };
+    const userData = { name: fullName, email, businessName, industry, country, avatar: '' };
     localStorage.setItem('orbit_user', JSON.stringify(userData));
     // Hard navigation (not client-side navigate): the account + session cookie
     // were created at OTP verification, but App's session guard resolved once on
@@ -273,23 +272,6 @@ export function Signup() {
                     style={{ paddingLeft: 40, height: 46 }}
                     required
                     autoComplete="email"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>
-                  Phone Number (Optional)
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <Phone size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--stone-gray)' }} />
-                  <input
-                    className="input"
-                    type="tel"
-                    placeholder="+20 10X XXX XXXX"
-                    value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                    style={{ paddingLeft: 40, height: 46 }}
                   />
                 </div>
               </div>
