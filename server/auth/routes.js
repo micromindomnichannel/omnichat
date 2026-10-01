@@ -18,11 +18,6 @@ const OTP_TTL_MIN = 10;
 const OTP_MAX_ATTEMPTS = 5;
 const newOtpCode = () => String(Math.floor(100000 + Math.random() * 900000));
 
-async function registrationOpen(pool) {
-  const count = await pool.query('SELECT COUNT(*)::int AS n FROM users');
-  return count.rows[0].n === 0;
-}
-
 export function authRouter(pool) {
   const r = express.Router();
 
@@ -35,9 +30,6 @@ export function authRouter(pool) {
     if (!email || !EMAIL_RE.test(email)) return res.status(400).json({ error: 'valid email required' });
     if (!password || String(password).length < 10) return res.status(400).json({ error: 'password min 10 chars' });
     try {
-      if (!(await registrationOpen(pool))) {
-        return res.status(403).json({ code: 'registration_closed', error: 'Ask a workspace owner for an account' });
-      }
       const taken = await pool.query('SELECT id FROM users WHERE email=$1', [email]);
       if (taken.rows.length) return res.status(409).json({ error: 'email taken' });
       const crypto = (await import('crypto')).default;
@@ -84,20 +76,27 @@ export function authRouter(pool) {
         await pool.query('UPDATE signup_otps SET attempts = attempts + 1 WHERE id=$1', [row.id]);
         return res.status(400).json({ error: 'incorrect code' });
       }
-      if (!(await registrationOpen(pool))) {
-        return res.status(403).json({ code: 'registration_closed', error: 'Ask a workspace owner for an account' });
-      }
       const id = rid('u');
+      const workspaceId = rid('ws');
       await pool.query('INSERT INTO users (id, email, password_hash, display_name) VALUES ($1,$2,$3,$4)',
         [id, email, row.password_hash, row.display_name || email.split('@')[0]]);
-      // First user owns the default workspace.
+      // Self-service signups receive an isolated workspace. The legacy
+      // default workspace remains available to existing owner-managed users.
       await pool.query(
-        "INSERT INTO workspace_members (workspace_id, user_id, role) VALUES ('default',$1,'owner') ON CONFLICT DO NOTHING", [id]);
+        'INSERT INTO workspaces (id, name, plan) VALUES ($1,$2,$3)',
+        [workspaceId, `${row.display_name || email.split('@')[0]} Workspace`, 'pro']);
+      await pool.query(
+        `INSERT INTO workspace_settings (workspace_id, business_name)
+         VALUES ($1,$2) ON CONFLICT (workspace_id) DO NOTHING`,
+        [workspaceId, row.display_name || 'ORBIT Omnichannel Business']);
+      await pool.query(
+        'INSERT INTO workspace_members (workspace_id, user_id, role) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING',
+        [workspaceId, id, 'owner']);
       await pool.query('UPDATE signup_otps SET used_at=CURRENT_TIMESTAMP WHERE id=$1', [row.id]);
       await pool.query('DELETE FROM signup_otps WHERE email=$1 AND id<>$2', [email, row.id]);
       const { token, expires } = await createSession(pool, id);
       res.setHeader('Set-Cookie', sessionCookie(token));
-      res.json({ user: { id, email }, memberships: [{ workspace_id: 'default', role: 'owner' }] });
+      res.json({ user: { id, email }, memberships: [{ workspace_id: workspaceId, role: 'owner' }] });
     } catch (err) {
       if (String(err.message).includes('duplicate')) return res.status(409).json({ error: 'email taken' });
       res.status(500).json({ error: err.message });

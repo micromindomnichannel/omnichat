@@ -128,7 +128,7 @@ export function adminRouter(pool) {
     res.json(rows || []);
   });
 
-  // Owner-only: create a member account (public registration closes after bootstrap).
+  // Owner-only: create an additional member account in the current workspace.
   r.post('/api/v1/admin/users', requireRole('owner'), async (req, res) => {    const { email, password, displayName, role = 'agent' } = req.body || {};
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'valid email required' });
     if (!password || String(password).length < 10) return res.status(400).json({ error: 'password min 10 chars' });
