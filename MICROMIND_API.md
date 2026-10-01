@@ -225,9 +225,22 @@ and the MicroMind-direct replies died on placeholder page tokens. Fixes:
   is incomplete" (applicant action required — open the draft for the exact
   checklist). Matrix: messaging set + read_engagement requested-not-approved;
   `instagram_basic`, `instagram_manage_messages`, `pages_manage_posts` NOT
-  requested yet (must join the draft). IG entity (`2045560586846925`) not
+  requested yet (must join the draft).   IG entity (`2045560586846925`) not
   accessible via current MCP grant (separate access needed). Webhook baseline
   intact (4 recorded fields + message_deliveries, messaging_checkout_updates).
+- **Review state 2026-09-29 (Codex relay #2):** FB app RENAMED to `Main ORBIT`
+  ✅; draft `1522089379673633` still UNSUBMITTED. Block reason (Arabic,
+  translated): "cannot submit while previously submitted information is under
+  review" — i.e. some OTHER item is mid-review (find it: App Review →
+  Requests → In Review items; Alerts; Business re-verification). Draft holds
+  MORE than planned: pages_show_list, pages_manage_metadata,
+  pages_utility_messaging, pages_messaging, business_management,
+  pages_read_engagement, Live Video API — recommendation: PRUNE to need-only
+  (drop Live Video API + business_management unless a feature needs them;
+  keep utility_messaging only for order/appointment updates). Missing vs
+  plan: instagram_basic, instagram_manage_messages, pages_manage_posts.
+  IG entity STILL not visible to the connected account (role unconfirmed —
+  ownership investigation required, see below).
 - **v2 templates adopted 2026-09-25 (Dood references):** `messenger.json` /
   `instagram.json` REPLACED with the owner's working exports; v1 OpenRouter
   builds archived as `*.v1-openrouter.json`; manifest → `v2`. New shape:
