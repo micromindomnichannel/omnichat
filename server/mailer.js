@@ -12,6 +12,11 @@ function getTransporter() {
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || '587', 10),
       secure: String(process.env.SMTP_SECURE || '').toLowerCase() === 'true',
+      // Never let a provider/network stall hold an auth request open until the
+      // platform proxy kills it and the UI reports a misleading cold start.
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 15_000,
       auth: process.env.SMTP_USER
         ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS || '' }
         : undefined,
@@ -30,6 +35,12 @@ export async function sendMail({ to, subject, text }) {
     console.log(`[mailer] DEV-ONLY email to ${to} (${subject}): ${String(text).slice(0, 200)}`);
     return { delivered: false, devOnly: true };
   }
-  await t.sendMail({ from: process.env.SMTP_FROM || process.env.SMTP_USER, to, subject, text });
-  return { delivered: true };
+  try {
+    await t.sendMail({ from: process.env.SMTP_FROM || process.env.SMTP_USER, to, subject, text });
+    return { delivered: true };
+  } catch (err) {
+    const message = err?.message || 'SMTP delivery failed';
+    console.error(`[mailer] SMTP delivery failed: ${message}`);
+    throw new Error(`Email delivery failed: ${message}`);
+  }
 }
