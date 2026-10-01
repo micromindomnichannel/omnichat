@@ -1,7 +1,9 @@
 # Keep-warm + availability signal for the backend.
-// Pings /api/health every 10 minutes. On sleep-prone free hosts (Render free)
-// this prevents cold starts; on Railway trial it doubles as an uptime record
-// (check the Actions tab history). Failure = backend or DB unreachable.
+# Pings /api/health every 10 minutes. On sleep-prone free hosts (Render free)
+# this prevents cold starts; on Railway trial it doubles as an uptime record
+# (check the Actions tab history). Failure = backend or DB unreachable.
+# NOTE: lines below must use `#` comments only — `//` is invalid YAML and
+# breaks workflow parsing (previously caused "No jobs were run" runs).
 name: backend-keepwarm
 
 on:
@@ -9,12 +11,31 @@ on:
     - cron: '*/10 * * * *'
   workflow_dispatch:
 
+# Overlapping runs (schedule tick during a slow ping) cancel instead of
+# stacking up and spamming failure mail.
+concurrency:
+  group: backend-keepwarm
+  cancel-in-progress: true
+
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping health endpoint
+      - name: Ping health endpoint (retries across deploy restarts)
         run: |
-          BODY=$(curl -sS -m 60 https://omnichat-production-65a3.up.railway.app/api/health)
-          echo "$BODY"
-          echo "$BODY" | grep -q '"status":"online"' || (echo 'HEALTH CHECK FAILED' && exit 1)
+          URL=https://omnichat-production-65a3.up.railway.app/api/health
+          # Railway redeploys restart the container (~30-90s of refused/reset
+          # connections). Retry so a ping landing mid-deploy does not fail the
+          # run and send failure mail for a healthy-but-restarting backend.
+          for i in 1 2 3 4 5 6; do
+            BODY=$(curl -sS -m 25 "$URL" || true)
+            echo "$BODY"
+            if echo "$BODY" | grep -q '"status":"online"'; then
+              echo "HEALTH OK (attempt $i)"
+              exit 0
+            fi
+            echo "attempt $i not healthy — waiting 20s…"
+            sleep 20
+          done
+          echo 'HEALTH CHECK FAILED after 6 attempts'
+          exit 1
