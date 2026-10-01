@@ -26,6 +26,10 @@ function renderSettings() {
   );
 }
 
+function openAccountSettings() {
+  fireEvent.click(screen.getByRole('button', { name: 'Account' }));
+}
+
 beforeEach(() => {
   assignSpy.mockClear();
   vi.restoreAllMocks();
@@ -39,6 +43,7 @@ describe('Settings danger zone', () => {
   it('sign-out destroys the server session, clears cache, and leaves', async () => {
     const f = (globalThis as any).fetch;
     renderSettings();
+    openAccountSettings();
     fireEvent.click(screen.getByRole('button', { name: /sign out/i }));
     await waitFor(() => expect(f).toHaveBeenCalledWith(
       expect.stringContaining('/auth/logout'), expect.anything()
@@ -50,6 +55,7 @@ describe('Settings danger zone', () => {
   it('delete requires two clicks (no accidental wipes)', async () => {
     const f = (globalThis as any).fetch;
     renderSettings();
+    openAccountSettings();
     const btn = screen.getByRole('button', { name: /delete account/i });
     fireEvent.click(btn);
     expect(screen.getByRole('button', { name: /click again to confirm/i })).toBeInTheDocument();
@@ -60,6 +66,7 @@ describe('Settings danger zone', () => {
     const f = (globalThis as any).fetch;
     f.mockImplementation(async (url: string) => ({ ok: true, json: async () => ({ success: true }) }));
     renderSettings();
+    openAccountSettings();
     fireEvent.click(screen.getByRole('button', { name: /delete account/i }));
     fireEvent.click(screen.getByRole('button', { name: /click again to confirm/i }));
     await waitFor(() => expect(f).toHaveBeenCalledWith(
@@ -78,6 +85,7 @@ describe('Settings danger zone', () => {
       return { ok: true, json: async () => null };
     });
     renderSettings();
+    openAccountSettings();
     fireEvent.click(screen.getByRole('button', { name: /delete account/i }));
     fireEvent.click(screen.getByRole('button', { name: /click again to confirm/i }));
     await waitFor(() => expect(screen.getByText(/unauthorized|delete failed/i)).toBeInTheDocument());

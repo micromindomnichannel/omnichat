@@ -14,7 +14,7 @@ import { PageHeader, Card, SectionTitle, ChannelDot } from '../components/dash/k
 import { api } from '../services/api';
 import { clearSessionCache } from '../services/session';
 
-const settingsTabs = ['Business Profile', 'Channels', 'Plan & Usage', 'AI Settings', 'Working Hours', 'Notifications', 'Team Members'];
+const settingsTabs = ['Business Profile', 'Channels', 'Plan & Usage', 'AI Settings', 'Working Hours', 'Notifications', 'Team Members', 'Account'];
 
 const channelIcons: Record<string, React.ElementType> = {
   instagram: Instagram, whatsapp: MessageCircle, facebook: Facebook, tiktok: Music, website: Globe
@@ -421,6 +421,60 @@ export function Settings() {
           </div>
         );
 
+      case 'Account':
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 760 }}>
+            <Card style={{ padding: 20, borderLeft: '4px solid var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+              <div>
+                <h4 style={{ fontSize: 15, fontWeight: 700, color: 'var(--midnight-ink)', margin: 0 }}>Sign Out of ORBIT</h4>
+                <p style={{ fontSize: 12.5, color: 'var(--stone-gray)', marginTop: 2, marginBottom: 0 }}>You will be redirected to the login page.</p>
+              </div>
+              <button
+                onClick={async () => {
+                  await api.logout();
+                  clearSessionCache();
+                  navigate('/login');
+                }}
+                className="btn btn-outline"
+                style={{ color: 'var(--danger)', borderColor: 'var(--danger)', gap: 8 }}
+              >
+                <LogOut size={16} /> Sign Out
+              </button>
+            </Card>
+            <Card style={{ padding: 20, borderLeft: '4px solid var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+              <div>
+                <h4 style={{ fontSize: 15, fontWeight: 700, color: 'var(--midnight-ink)', margin: 0 }}>Delete My Account</h4>
+                <p style={{ fontSize: 12.5, color: 'var(--stone-gray)', marginTop: 2, marginBottom: 0 }}>
+                  Permanently removes your login and sessions. Workspace, channels, and business data stay intact for remaining members.
+                </p>
+              </div>
+              <button
+                disabled={deleteBusy}
+                onClick={async () => {
+                  if (!confirmDelete) {
+                    setConfirmDelete(true);
+                    return;
+                  }
+                  setDeleteBusy(true);
+                  const res = await api.deleteAccount();
+                  setDeleteBusy(false);
+                  if (res?.success) {
+                    clearSessionCache();
+                    window.location.assign('/login');
+                  } else {
+                    showToast(res?._network ? 'Backend unreachable — try again' : (res?.error || 'Delete failed'), 'danger');
+                    setConfirmDelete(false);
+                  }
+                }}
+                className="btn btn-outline"
+                style={{ color: 'var(--danger)', borderColor: 'var(--danger)', gap: 8 }}
+              >
+                <Trash2 size={16} /> {deleteBusy ? 'Deleting…' : confirmDelete ? 'Click again to confirm' : 'Delete Account'}
+              </button>
+            </Card>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -456,58 +510,6 @@ export function Settings() {
         <div style={{ flex: 1, overflowY: 'auto', minWidth: 0 }}>
           <SectionTitle>{activeTab}</SectionTitle>
           {renderPanel()}
-          {/* Logout Section */}
-          <Card style={{ padding: 20, marginTop: 24, borderLeft: '4px solid var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <h4 style={{ fontSize: 15, fontWeight: 700, color: 'var(--midnight-ink)', margin: 0 }}>Sign Out of ORBIT</h4>
-              <p style={{ fontSize: 12.5, color: 'var(--stone-gray)', marginTop: 2, marginBottom: 0 }}>You will be redirected to the login page.</p>
-            </div>
-            <button
-              onClick={async () => {
-                await api.logout(); // destroys the server session; cache cleared regardless
-                clearSessionCache();
-                navigate('/login');
-              }}
-              className="btn btn-outline"
-              style={{ color: 'var(--danger)', borderColor: 'var(--danger)', gap: 8 }}
-            >
-              <LogOut size={16} /> Sign Out
-            </button>
-          </Card>
-          {/* Delete Account (danger zone): two-step confirm, then the backend
-              destroys sessions + user (workspace data stays by design). Hard
-              navigation so the session guard re-verifies logged-out state. */}
-          <Card style={{ padding: 20, marginTop: 16, borderLeft: '4px solid var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-            <div>
-              <h4 style={{ fontSize: 15, fontWeight: 700, color: 'var(--midnight-ink)', margin: 0 }}>Delete My Account</h4>
-              <p style={{ fontSize: 12.5, color: 'var(--stone-gray)', marginTop: 2, marginBottom: 0 }}>
-                Permanently removes your login and sessions. Workspace, channels, and business data stay intact for remaining members.
-              </p>
-            </div>
-            <button
-              disabled={deleteBusy}
-              onClick={async () => {
-                if (!confirmDelete) {
-                  setConfirmDelete(true);
-                  return;
-                }
-                setDeleteBusy(true);
-                const res = await api.deleteAccount();
-                setDeleteBusy(false);
-                if (res?.success) {
-                  clearSessionCache();
-                  window.location.assign('/login');
-                } else {
-                  showToast(res?._network ? 'Backend unreachable — try again' : (res?.error || 'Delete failed'), 'danger');
-                  setConfirmDelete(false);
-                }
-              }}
-              className="btn btn-outline"
-              style={{ color: 'var(--danger)', borderColor: 'var(--danger)', gap: 8 }}
-            >
-              <Trash2 size={16} /> {deleteBusy ? 'Deleting…' : confirmDelete ? 'Click again to confirm' : 'Delete Account'}
-            </button>
-          </Card>
         </div>
 
         <Modal isOpen={showInvite} onClose={() => setShowInvite(false)} title="Invite Team Member" size="sm">
