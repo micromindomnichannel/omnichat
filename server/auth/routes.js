@@ -50,6 +50,12 @@ export function authRouter(pool) {
       if (!sent.delivered && process.env.ALLOW_DEBUG_OTP === '1') out.debugCode = code;
       res.json(out);
     } catch (err) {
+      if (String(err?.message || '').startsWith('Email delivery failed')) {
+        return res.status(503).json({
+          code: 'email_delivery_failed',
+          error: 'Verification email could not be sent. Check the email service configuration and try again.',
+        });
+      }
       res.status(500).json({ error: err.message });
     }
   });
