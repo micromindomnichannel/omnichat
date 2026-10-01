@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useStore } from '../../state/store';
+import { api } from '../../services/api';
+import { clearSessionCache } from '../../services/session';
 import { Search, Bell, ChevronDown, LogOut, User, Home, ExternalLink } from 'lucide-react';
 import { OrbitLogo } from '../../components/shared/OrbitLogo';
 import { LiveDot } from '../../components/dash/kit';
@@ -118,11 +120,18 @@ export function TopBar() {
           >
             <img
               src={state.currentUser.avatar}
-              alt={state.currentUser.name}
+              alt={state.currentUser.name || 'Account'}
               style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }}
             />
-            <span style={{ fontSize: 13, fontWeight: 650, color: 'var(--midnight-ink)' }}>
-              {state.businessName}
+            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 1 }}>
+              <span style={{ fontSize: 13, fontWeight: 650, color: 'var(--midnight-ink)' }}>
+                {state.currentUser.name || state.currentUser.email || 'Account'}
+              </span>
+              {state.currentUser.email && (
+                <span style={{ fontSize: 10.5, color: 'var(--stone-gray)' }}>
+                  {state.currentUser.email}
+                </span>
+              )}
             </span>
             <ChevronDown size={14} color="var(--stone-gray)" />
           </button>
@@ -156,7 +165,14 @@ export function TopBar() {
                 >
                   <User size={16} /> Business Profile & Settings
                 </button>
-                <button style={{
+                <button
+                  onClick={async () => {
+                    await api.logout();
+                    clearSessionCache();
+                    setShowAccount(false);
+                    navigate('/login', { replace: true });
+                  }}
+                  style={{
                   width: '100%', padding: '8px 12px', borderRadius: 6, border: 'none',
                   background: 'transparent', display: 'flex', alignItems: 'center', gap: 8,
                   cursor: 'pointer', fontSize: 13, color: 'var(--burnt-coral)'

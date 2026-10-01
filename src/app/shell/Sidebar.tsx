@@ -6,7 +6,7 @@ import { OrbitLogo } from '../../components/shared/OrbitLogo';
 import { isAdmin } from '../../services/session';
 import {
   LayoutDashboard, MessageSquare, Users, ShoppingBag, Calendar, Package, Scissors,
-  Bot, BookOpen, BarChart3, Settings, ShieldAlert, HelpCircle, ChevronDown, Menu, X, Home, ExternalLink
+  Bot, BookOpen, BarChart3, Settings, ShieldAlert, HelpCircle, Menu, X, Home, ExternalLink
 } from 'lucide-react';
 
 const navItems = [
@@ -31,13 +31,12 @@ const bottomItems = [
 ];
 
 export function Sidebar() {
-  const { vertical, setVertical } = useVertical();
+  const { vertical } = useVertical();
   const { state } = useStore();
   const location = useLocation();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [showSwitcher, setShowSwitcher] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -89,8 +88,7 @@ export function Sidebar() {
 
       {/* Vertical Switcher */}
       <div style={{ padding: '0 14px 16px', position: 'relative' }}>
-        <button
-          onClick={() => setShowSwitcher(!showSwitcher)}
+        <div
           style={{
             width: '100%',
             height: 38,
@@ -101,7 +99,7 @@ export function Sidebar() {
             alignItems: 'center',
             justifyContent: collapsed ? 'center' : 'space-between',
             padding: collapsed ? 0 : '0 12px',
-            cursor: 'pointer',
+            cursor: 'default',
             gap: 8,
             transition: 'all 0.15s ease'
           }}
@@ -120,49 +118,7 @@ export function Sidebar() {
               </span>
             )}
           </div>
-          {!collapsed && <ChevronDown size={14} color="var(--stone-gray)" />}
-        </button>
-
-        {showSwitcher && (
-          <div style={{
-            position: 'absolute',
-            top: '100%',
-            left: 14,
-            right: 14,
-            marginTop: 4,
-            background: 'var(--surface-1)',
-            border: '1px solid var(--border)',
-            borderRadius: 8,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-            zIndex: 100,
-            padding: 4
-          }}>
-            <button
-              onClick={() => { setVertical('commerce'); setShowSwitcher(false); }}
-              style={{
-                width: '100%', padding: '9px 12px', borderRadius: 6, border: 'none',
-                background: vertical === 'commerce' ? 'var(--signal-orange-subtle)' : 'transparent',
-                display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
-                color: vertical === 'commerce' ? 'var(--signal-orange)' : 'var(--ink-600)',
-                fontSize: 13, fontWeight: 650
-              }}
-            >
-              <Package size={16} /> E-Commerce Mode
-            </button>
-            <button
-              onClick={() => { setVertical('appointments'); setShowSwitcher(false); }}
-              style={{
-                width: '100%', padding: '9px 12px', borderRadius: 6, border: 'none',
-                background: vertical === 'appointments' ? 'rgba(82, 216, 164, 0.15)' : 'transparent',
-                display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
-                color: vertical === 'appointments' ? '#0F8357' : 'var(--ink-600)',
-                fontSize: 13, fontWeight: 650
-              }}
-            >
-              <Calendar size={16} /> Appointments Mode
-            </button>
-          </div>
-        )}
+        </div>
       </div>
 
       {/* Nav Items */}

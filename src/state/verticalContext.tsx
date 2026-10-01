@@ -13,7 +13,14 @@ interface VerticalContextType {
 const VerticalContext = createContext<VerticalContextType | undefined>(undefined);
 
 export function VerticalProvider({ children }: { children: React.ReactNode }) {
-  const [vertical, setVerticalState] = useState<Vertical>('commerce');
+  const [vertical, setVerticalState] = useState<Vertical>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('orbit_user') || '{}');
+      return saved.industry === 'appointments' ? 'appointments' : 'commerce';
+    } catch {
+      return 'commerce';
+    }
+  });
 
   const setVertical = useCallback((v: Vertical) => {
     setVerticalState(v);
