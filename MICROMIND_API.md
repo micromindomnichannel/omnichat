@@ -220,6 +220,14 @@ and the MicroMind-direct replies died on placeholder page tokens. Fixes:
   `orbit_instagram_verify`; both handshakes pre-verified green on Railway).
   Review splits per entity: FB submission (messaging + posting sets) AND
   IG-entity submission (`instagram_manage_messages` + basic).
+- **Review state 2026-09-25 (Codex relay):** FB draft submission
+  `1522089379673633` exists, UNSUBMITTED, blocked: "prior review information
+  is incomplete" (applicant action required — open the draft for the exact
+  checklist). Matrix: messaging set + read_engagement requested-not-approved;
+  `instagram_basic`, `instagram_manage_messages`, `pages_manage_posts` NOT
+  requested yet (must join the draft). IG entity (`2045560586846925`) not
+  accessible via current MCP grant (separate access needed). Webhook baseline
+  intact (4 recorded fields + message_deliveries, messaging_checkout_updates).
 - **v2 templates adopted 2026-09-25 (Dood references):** `messenger.json` /
   `instagram.json` REPLACED with the owner's working exports; v1 OpenRouter
   builds archived as `*.v1-openrouter.json`; manifest → `v2`. New shape:
