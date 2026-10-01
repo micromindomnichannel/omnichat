@@ -39,7 +39,7 @@ export function authRouter(pool) {
       await pool.query(
         `INSERT INTO signup_otps (id, email, code_hash, password_hash, display_name, expires_at)
          VALUES ($1,$2,$3,$4,$5, CURRENT_TIMESTAMP + INTERVAL '${OTP_TTL_MIN} minutes')`,
-        [`otp_${Date.now()}`, email, codeHash, await bcrypt.hash(String(password), 12), displayName || email.split('@')[0]]
+        [`otp_${crypto.randomUUID()}`, email, codeHash, await bcrypt.hash(String(password), 12), displayName || email.split('@')[0]]
       );
       const sent = await sendMail({
         to: email,
