@@ -5,6 +5,7 @@ import { useStore } from '../../state/store';
 import { OrbitLogo } from '../../components/shared/OrbitLogo';
 import { clearSessionCache, isAdmin } from '../../services/session';
 import { api } from '../../services/api';
+import { VerticalSwitcher } from './VerticalSwitcher';
 import {
   LayoutDashboard, MessageSquare, Users, ShoppingBag, Calendar, Package, Scissors,
   Bot, BookOpen, BarChart3, Settings, ShieldAlert, Menu, X, LogOut
@@ -95,37 +96,7 @@ export function Sidebar() {
 
       {/* Vertical Switcher */}
       <div style={{ padding: '0 14px 16px', position: 'relative' }}>
-        <div
-          style={{
-            width: '100%',
-            height: 38,
-            borderRadius: 8,
-            background: 'var(--surface-0)',
-            border: '1px solid var(--border)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: collapsed ? 'center' : 'space-between',
-            padding: collapsed ? 0 : '0 12px',
-            cursor: 'default',
-            gap: 8,
-            transition: 'all 0.15s ease'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{
-              width: 20, height: 20, borderRadius: 5,
-              background: vertical === 'commerce' ? 'var(--signal-orange)' : 'var(--mint-signal)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center'
-            }}>
-              {vertical === 'commerce' ? <Package size={12} color="white" /> : <Calendar size={12} color="white" />}
-            </div>
-            {!collapsed && (
-              <span style={{ fontSize: 13, fontWeight: 650, color: 'var(--midnight-ink)' }}>
-                {vertical === 'commerce' ? 'Commerce Mode' : 'Appointments Mode'}
-              </span>
-            )}
-          </div>
-        </div>
+        <VerticalSwitcher collapsed={collapsed} />
       </div>
 
       {/* Nav Items */}

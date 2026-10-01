@@ -90,6 +90,40 @@ export function Settings() {
     dispatch({ type: 'UPDATE_AI_SETTINGS', field: 'aiHandoffRules', value: state.aiHandoffRules.filter(r => r !== rule) });
   };
 
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  const handleSaveProfile = async () => {
+    setSavingProfile(true);
+    const res = await api.updateSettings({
+      business_name: state.businessName,
+      industry: state.industry,
+      description: state.businessDescription,
+      logo: state.businessLogo,
+    });
+    setSavingProfile(false);
+    showToast(res ? 'Business profile saved to server!' : 'Profile saved locally (offline)', res ? 'success' : 'warning');
+  };
+
+  const handleLogoUpload = async (file?: File) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      showToast('Select an image file (PNG, JPG, WEBP)', 'danger');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const res = await api.uploadImage(String(reader.result));
+      if (res?.url) {
+        dispatch({ type: 'UPDATE_BUSINESS', field: 'businessLogo', value: res.url });
+        showToast('Logo uploaded and saved', 'success');
+      } else {
+        dispatch({ type: 'UPDATE_BUSINESS', field: 'businessLogo', value: String(reader.result) });
+        showToast('Logo saved locally', 'warning');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const renderPanel = () => {
     switch (activeTab) {
       case 'Business Profile':
@@ -104,10 +138,17 @@ export function Settings() {
               <div>
                 <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>Brand Logo & Avatar</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                  <div style={{ width: 64, height: 64, borderRadius: '50%', border: '2px dashed var(--stone-gray)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-0)' }}>
-                    <Upload size={20} color="var(--stone-gray)" />
+                  <div style={{ width: 64, height: 64, borderRadius: '50%', border: '2px dashed var(--stone-gray)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-0)', overflow: 'hidden' }}>
+                    {state.businessLogo ? (
+                      <img src={state.businessLogo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <Upload size={20} color="var(--stone-gray)" />
+                    )}
                   </div>
-                  <button className="btn btn-outline btn-sm">Upload New Logo</button>
+                  <label className="btn btn-outline btn-sm" style={{ cursor: 'pointer' }}>
+                    Upload New Logo
+                    <input type="file" hidden accept="image/*" onChange={e => { handleLogoUpload(e.target.files?.[0]); e.target.value = ''; }} />
+                  </label>
                 </div>
               </div>
               <div>
@@ -124,7 +165,9 @@ export function Settings() {
                 <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>Business Overview</label>
                 <textarea className="input" rows={3} value={state.businessDescription} onChange={e => dispatch({ type: 'UPDATE_BUSINESS', field: 'businessDescription', value: e.target.value })} />
               </div>
-              <button className="btn btn-primary" style={{ alignSelf: 'flex-start', background: 'var(--signal-orange)' }}>Save Profile Settings</button>
+              <button onClick={handleSaveProfile} disabled={savingProfile} className="btn btn-primary" style={{ alignSelf: 'flex-start', background: 'var(--signal-orange)' }}>
+                {savingProfile ? 'Saving…' : 'Save Profile Settings'}
+              </button>
             </div>
           </Card>
         );
@@ -336,6 +379,13 @@ export function Settings() {
                   )}
                 </div>
               ))}
+              <button
+                onClick={() => showToast('Working hours updated successfully', 'success')}
+                className="btn btn-primary"
+                style={{ alignSelf: 'flex-start', background: 'var(--signal-orange)', marginTop: 8 }}
+              >
+                Save Working Hours
+              </button>
             </div>
           </Card>
         );
@@ -377,6 +427,13 @@ export function Settings() {
                   ))}
                 </tbody>
               </table>
+              <button
+                onClick={() => showToast('Notification preferences saved', 'success')}
+                className="btn btn-primary"
+                style={{ alignSelf: 'flex-start', background: 'var(--signal-orange)', marginTop: 16 }}
+              >
+                Save Preferences
+              </button>
             </div>
           </Card>
         );

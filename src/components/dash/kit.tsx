@@ -46,16 +46,19 @@ export function LiveDot({ label }: { label?: string }) {
   );
 }
 
-export function Card({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+export function Card({ children, style, onClick }: { children: React.ReactNode; style?: React.CSSProperties; onClick?: () => void }) {
   return (
-    <div style={{
-      background: 'var(--surface-1)',
-      border: '1px solid var(--border)',
-      borderRadius: 16,
-      boxShadow: 'var(--shadow-card)',
-      padding: 24,
-      ...style,
-    }}>
+    <div
+      onClick={onClick}
+      style={{
+        background: 'var(--surface-1)',
+        border: '1px solid var(--border)',
+        borderRadius: 16,
+        boxShadow: 'var(--shadow-card)',
+        padding: 24,
+        ...style,
+      }}
+    >
       {children}
     </div>
   );

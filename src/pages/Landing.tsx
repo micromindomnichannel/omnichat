@@ -559,13 +559,15 @@ export function Landing() {
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
             <OrbitLogo variant="horizontal" colorMode="dark" size={28} />
-            <div style={{ display: 'flex', gap: 20 }}>
+            <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
               <span onClick={() => navigate('/overview')} style={{ cursor: 'pointer' }}>Overview</span>
               <span onClick={() => navigate('/inbox')} style={{ cursor: 'pointer' }}>Inbox</span>
               <span onClick={() => navigate('/orders')} style={{ cursor: 'pointer' }}>Orders</span>
               <span onClick={() => navigate('/appointments')} style={{ cursor: 'pointer' }}>Appointments</span>
               <span onClick={() => navigate('/analytics')} style={{ cursor: 'pointer' }}>Analytics</span>
               <span onClick={() => navigate('/settings')} style={{ cursor: 'pointer' }}>Settings</span>
+              <span onClick={() => navigate('/privacy')} style={{ cursor: 'pointer', color: '#A8A29E' }}>Privacy Policy</span>
+              <span onClick={() => navigate('/terms')} style={{ cursor: 'pointer', color: '#A8A29E' }}>Terms of Service</span>
             </div>
           </div>
           <div style={{ borderTop: '1px solid #242424', paddingTop: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#666' }}>

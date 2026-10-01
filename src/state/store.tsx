@@ -49,8 +49,10 @@ type Action =
   | { type: 'ADD_MESSAGE'; conversationId: string; message: Message }
   | { type: 'UPDATE_PRODUCT'; product: Product }
   | { type: 'ADD_PRODUCT'; product: Product }
+  | { type: 'DELETE_PRODUCT'; id: string }
   | { type: 'UPDATE_SERVICE'; service: Service }
   | { type: 'ADD_SERVICE'; service: Service }
+  | { type: 'DELETE_SERVICE'; id: string }
   | { type: 'ADD_ORDER'; order: Order }
   | { type: 'UPDATE_ORDER'; order: Order }
   | { type: 'ADD_APPOINTMENT'; appointment: Appointment }
@@ -198,6 +200,10 @@ function reducer(state: AppState, action: Action): AppState {
       api.addProduct(action.product);
       return { ...state, products: [...state.products, action.product] };
 
+    case 'DELETE_PRODUCT':
+      api.deleteProduct(action.id);
+      return { ...state, products: state.products.filter(p => p.id !== action.id) };
+
     case 'UPDATE_SERVICE':
       api.updateService(action.service);
       return {
@@ -208,6 +214,10 @@ function reducer(state: AppState, action: Action): AppState {
     case 'ADD_SERVICE':
       api.addService(action.service);
       return { ...state, services: [...state.services, action.service] };
+
+    case 'DELETE_SERVICE':
+      api.deleteService(action.id);
+      return { ...state, services: state.services.filter(s => s.id !== action.id) };
 
     case 'ADD_ORDER':
       api.addOrder(action.order);

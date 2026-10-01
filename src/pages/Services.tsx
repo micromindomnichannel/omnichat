@@ -13,6 +13,7 @@ export function Services() {
   const [view, setView] = useState<'grid' | 'table'>('grid');
   const [search, setSearch] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingService, setEditingService] = useState<any>(null);
   const [newService, setNewService] = useState({
     name: '',
     price: '',
@@ -24,17 +25,43 @@ export function Services() {
 
   const filtered = state.services.filter(s => !search || s.name.toLowerCase().includes(search.toLowerCase()));
 
-  const handleAdd = () => {
+  const handleOpenAdd = () => {
+    setEditingService(null);
+    setNewService({
+      name: '',
+      price: '',
+      duration: '30',
+      category: 'Dental / Clinic',
+      description: '',
+      image: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=500&auto=format&fit=crop'
+    });
+    setShowAddModal(true);
+  };
+
+  const handleOpenEdit = (service: any) => {
+    setEditingService(service);
+    setNewService({
+      name: service.name,
+      price: String(service.price),
+      duration: String(service.duration),
+      category: service.category || 'Dental / Clinic',
+      description: service.description || '',
+      image: service.image || ''
+    });
+    setShowAddModal(true);
+  };
+
+  const handleSave = () => {
     if (!newService.name || !newService.price) return;
     const service = {
-      id: `s${Date.now()}`,
+      id: editingService ? editingService.id : `s${Date.now()}`,
       name: newService.name,
       price: Number(newService.price),
       duration: Number(newService.duration) || 30,
       category: newService.category,
       description: newService.description,
       image: newService.image || 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=500&auto=format&fit=crop',
-      availability: [
+      availability: editingService?.availability || [
         { day: 'Saturday', start: '09:00', end: '17:00', available: true },
         { day: 'Sunday', start: '09:00', end: '17:00', available: true },
         { day: 'Monday', start: '09:00', end: '17:00', available: true },
@@ -44,10 +71,25 @@ export function Services() {
         { day: 'Friday', start: '09:00', end: '14:00', available: false }
       ]
     };
-    dispatch({ type: 'ADD_SERVICE', service });
+
+    if (editingService) {
+      dispatch({ type: 'UPDATE_SERVICE', service });
+      showToast(`Service "${service.name}" updated`, 'success');
+    } else {
+      dispatch({ type: 'ADD_SERVICE', service });
+      showToast('Service added with pre-loaded AI photo!', 'success');
+    }
     setShowAddModal(false);
-    setNewService({ name: '', price: '', duration: '', category: 'Dental / Clinic', description: '', image: '' });
-    showToast('Service added with pre-loaded AI photo!', 'success');
+    setEditingService(null);
+  };
+
+  const handleDelete = (id: string, sName: string) => {
+    if (confirm(`Are you sure you want to delete "${sName}" from services?`)) {
+      dispatch({ type: 'DELETE_SERVICE', id });
+      setShowAddModal(false);
+      setEditingService(null);
+      showToast(`Service "${sName}" deleted`, 'warning');
+    }
   };
 
   return (
@@ -57,7 +99,7 @@ export function Services() {
         title="Services"
         sub="Services, durations, and pricing the AI books for you."
         actions={
-          <button onClick={() => setShowAddModal(true)} className="btn btn-primary" style={{ background: 'var(--signal-orange)', border: 'none', color: '#fff', height: 40, padding: '0 18px', borderRadius: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+          <button onClick={handleOpenAdd} className="btn btn-primary" style={{ background: 'var(--signal-orange)', border: 'none', color: '#fff', height: 40, padding: '0 18px', borderRadius: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
             <Plus size={16} /> Add New Service
           </button>
         }
@@ -87,13 +129,13 @@ export function Services() {
             icon={<Briefcase size={24} color="var(--signal-orange)" />}
             title="No services found"
             copy="Add a service so customers can book it through chat."
-            action={<button onClick={() => setShowAddModal(true)} style={{ background: 'var(--signal-orange)', border: 'none', color: '#fff', height: 40, padding: '0 18px', borderRadius: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}><Plus size={16} /> Add New Service</button>}
+            action={<button onClick={handleOpenAdd} style={{ background: 'var(--signal-orange)', border: 'none', color: '#fff', height: 40, padding: '0 18px', borderRadius: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}><Plus size={16} /> Add New Service</button>}
           />
         </Card>
       ) : view === 'grid' ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
           {filtered.map(service => (
-            <Card key={service.id} style={{ padding: 0, overflow: 'hidden', borderRadius: 12 }}>
+            <Card key={service.id} onClick={() => handleOpenEdit(service)} style={{ padding: 0, overflow: 'hidden', borderRadius: 12, cursor: 'pointer', transition: 'box-shadow 0.2s' }}>
               <div style={{ height: 140, overflow: 'hidden', position: 'relative', background: 'var(--surface-0)' }}>
                 <img
                   src={service.image || 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=500&auto=format&fit=crop'}
@@ -118,10 +160,10 @@ export function Services() {
           ))}
         </div>
       ) : (
-        <Card style={{ padding: 0, overflow: 'hidden' }}><ServiceTable onServiceClick={() => {}} /></Card>
+        <Card style={{ padding: 0, overflow: 'hidden' }}><ServiceTable onServiceClick={handleOpenEdit} /></Card>
       )}
 
-      <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Add Service & Pre-loaded Photo" size="sm">
+      <Modal isOpen={showAddModal} onClose={() => { setShowAddModal(false); setEditingService(null); }} title={editingService ? 'Edit Service' : 'Add Service & Pre-loaded Photo'} size="sm">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
             <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 4, display: 'block' }}>Service Name</label>
@@ -155,9 +197,21 @@ export function Services() {
             label="Service Photo (Upload File or Select)"
           />
 
-          <button onClick={handleAdd} className="btn btn-primary" style={{ width: '100%', background: 'var(--signal-orange)', marginTop: 6 }}>
-            Add Service & Photo
-          </button>
+          <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
+            {editingService && (
+              <button
+                type="button"
+                onClick={() => handleDelete(editingService.id, editingService.name)}
+                className="btn btn-outline"
+                style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}
+              >
+                Delete
+              </button>
+            )}
+            <button onClick={handleSave} className="btn btn-primary" style={{ flex: 1, background: 'var(--signal-orange)' }}>
+              {editingService ? 'Save Changes' : 'Add Service & Photo'}
+            </button>
+          </div>
         </div>
       </Modal>
     </div>

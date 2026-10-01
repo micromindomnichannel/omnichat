@@ -90,12 +90,9 @@ export function Products() {
   };
 
   const handleDeleteProduct = (id: string, prodName: string) => {
-    if (confirm(`Are you sure you want to mark "${prodName}" as deleted?`)) {
-      const prod = products.find(p => p.id === id);
-      if (prod) {
-        dispatch({ type: 'UPDATE_PRODUCT', product: { ...prod, stock: 0 } });
-        showToast(`Product "${prodName}" set to Out of Stock`, 'warning');
-      }
+    if (confirm(`Are you sure you want to delete "${prodName}" from inventory?`)) {
+      dispatch({ type: 'DELETE_PRODUCT', id });
+      showToast(`Product "${prodName}" deleted`, 'warning');
     }
   };
 
