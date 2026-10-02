@@ -85,4 +85,13 @@ export async function publishInstagramMedia({ pageAccessToken, igId, imageUrl, c
   return graphPost(pageAccessToken, `/${igId}/media_publish`, { creation_id: container.id }); // -> { id: mediaId }
 }
 
+export async function getMessagingProfile({ pageAccessToken, senderId }) {
+  if (!pageAccessToken || !senderId) return null;
+  try {
+    return await graphGet(pageAccessToken, `/${encodeURIComponent(senderId)}?fields=name,username`);
+  } catch {
+    return null;
+  }
+}
+
 export { GRAPH_VERSION, graphGet };

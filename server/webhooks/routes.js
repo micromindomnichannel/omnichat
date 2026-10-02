@@ -16,7 +16,7 @@ import { decryptSecret } from '../credentials/crypto.js';
 import { CHANNELS, buildSessionId } from '../micromind/provisionChannel.js';
 import { predict } from '../micromind/client.js';
 import { tenantKeyMaterial } from '../micromind/keys.js';
-import { sendTextMessage } from '../meta/graph.js';
+import { getMessagingProfile, sendTextMessage } from '../meta/graph.js';
 import { verifyMetaSignature } from '../meta/verify.js';
 import { webhookLimit } from '../middleware/rateLimit.js';
 import { parseWhatsAppWebhook, sendWhatsAppText } from '../meta/whatsapp.js';
@@ -82,7 +82,9 @@ export function webhooksRouter(pool) {
       if (provider === 'messenger' || provider === 'instagram') {
         for (const entry of req.body?.entry || []) {
           // Route by Page/IG ID when several tenants share this URL.
-          const account = pick((a) => a.external_account_id && String(entry.id) && a.external_account_id === String(entry.id));
+          const account = pick((a) =>
+            (a.external_account_id && String(entry.id) && a.external_account_id === String(entry.id)) ||
+            (provider === 'instagram' && a.metadata?.page_id && a.metadata.page_id === String(entry.id)));
           for (const item of entry.messaging || []) {
             try {
               await handleMetaMessaging(pool, provider, account, item);
@@ -130,11 +132,21 @@ async function handleMetaMessaging(pool, provider, account, item) {
   if (!msg || msg.is_echo || !msg.text) return;
   const senderId = String(item.sender?.id || '');
   if (!senderId) return;
+  let profile = null;
+  if (account?.credential_id) {
+    try {
+      const cred = (await pool.query('SELECT encrypted_secret FROM credentials WHERE id=$1', [account.credential_id])).rows[0];
+      if (cred) profile = await getMessagingProfile({
+        pageAccessToken: decryptSecret(cred.encrypted_secret),
+        senderId,
+      });
+    } catch { /* profile lookup is optional; message processing must continue */ }
+  }
   await handleNormalized(pool, provider, account, {
     senderId,
     text: String(msg.text).slice(0, 2000),
     mid: String(msg.mid || `${provider}_${Date.now()}`),
-  });
+  }, { profileName: profile?.name || profile?.username || null, profileUsername: profile?.username || null });
 }
 
 // Shared persist -> AI -> send pipeline. Workspace comes from the ACCOUNT
@@ -161,8 +173,14 @@ async function handleNormalized(pool, provider, account, { senderId, text, mid }
   const customerId = `${workspaceId}:${provider}:${senderId}`;
   await pool.query(
     'INSERT INTO customers (id, workspace_id, name, channels, status) VALUES ($1,$2,$3,$4,\'New\') ON CONFLICT (id) DO NOTHING',
-    [customerId, workspaceId, `Customer ${senderId.slice(-6)}`, [provider]]
+    [customerId, workspaceId, extra.profileName || `Customer ${senderId.slice(-6)}`, [provider]]
   );
+  if (extra.profileName) {
+    await pool.query(
+      "UPDATE customers SET name=$1 WHERE id=$2 AND (name IS NULL OR name LIKE 'Customer %')",
+      [extra.profileName, customerId]
+    );
+  }
 
   let conv;
   const found = await pool.query(
