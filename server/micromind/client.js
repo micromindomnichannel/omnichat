@@ -55,7 +55,8 @@ export const deleteCredential = (id) => request('DELETE', `/credentials/${id}`);
 
 // ---- Folder CRUD (verified live: POST /api/v1/folders -> 201 + {id}) ----
 export const createFolder = (payload) => request('POST', '/folders', payload);
-export const listFolders = () => request('GET', '/folders');
+export const listFolders = (resourceType = 'chatflow') =>
+  request('GET', `/folders?resourceType=${encodeURIComponent(resourceType)}`);
 export const deleteFolder = (id) => request('DELETE', `/folders/${id}`);
 
 // ---- Prediction API keys (verified live: member-mintable, user-bound) ----
