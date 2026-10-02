@@ -4,6 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { Instagram, Facebook, MessageCircle, Send, Mail, Music, Globe } from 'lucide-react';
 import { api } from '../../services/api';
+import { getMemberships } from '../../services/session';
 
 const SLICE: Record<string, { label: string; Icon: React.ElementType; color: string; tokenHint: string; byof?: boolean; guide: string[] }> = {
   messenger: { label: 'Messenger', Icon: Facebook, color: '#0099FF', tokenHint: 'Page access token (encrypted server-side)', guide: ['Meta Developers → your app → Messenger → generate a Page access token (pages_messaging).', 'Paste it below — ORBIT encrypts it, provisions your AI flow, and gives you the webhook URL.', 'In Meta → Webhooks, subscribe with that URL + the verify token shown after connect.'] },
@@ -29,11 +30,13 @@ const TEST_LABEL: Record<string, string> = {
   blocked: '🟡 blocked', model_error: '🟡 model error', unreachable: '⚪ unreachable', skipped: '⚪ not tested',
 };
 
-export function ChannelsPanel({ showToast, local, onToggleLocal }: {
+export function ChannelsPanel({ showToast, local, onToggleLocal, workspaceId }: {
   showToast: (msg: string, type?: 'success' | 'warning' | 'danger') => void;
   local: Record<string, boolean>;
   onToggleLocal: (channel: string) => void;
+  workspaceId?: string;
 }) {
+  const activeWorkspaceId = workspaceId || getMemberships()[0]?.workspace_id || 'default';
   const [accounts, setAccounts] = useState<Account[] | null>(null);
   const [forming, setForming] = useState<string | null>(null);
   const [rekeying, setRekeying] = useState<string | null>(null);
@@ -42,10 +45,18 @@ export function ChannelsPanel({ showToast, local, onToggleLocal }: {
   const [form, setForm] = useState({ displayName: '', username: '', externalAccountId: '', pageAccessToken: '', micromindFlowId: '', flowKey: '' });
 
   const refresh = async () => {
-    const rows = await api.getChannels('default');
+    const rows = await api.getChannels(activeWorkspaceId);
     if (rows) setAccounts(rows);
   };
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => { refresh(); }, [activeWorkspaceId]);
+
+  const startOAuth = async (channel: 'messenger' | 'instagram') => {
+    setBusy(true);
+    const res = await api.startMetaOAuth(activeWorkspaceId, channel);
+    setBusy(false);
+    if (res?.authUrl) window.location.assign(res.authUrl);
+    else showToast(res?.error || 'Meta OAuth is not configured', 'danger');
+  };
 
   const byChannel = (c: string) => (accounts || []).filter((a) => a.channel === c);
   const dot = (s: string) => s === 'active' ? '🟢' : s === 'danger' ? '🔴' : s === 'disconnected' ? '⚪' : '🟡';
@@ -56,7 +67,7 @@ export function ChannelsPanel({ showToast, local, onToggleLocal }: {
       return;
     }
     setBusy(true);
-    const res = await api.connectChannel('default', channel, {
+    const res = await api.connectChannel(activeWorkspaceId, channel, {
       displayName: form.displayName || undefined,
       username: form.username || undefined,
       externalAccountId: form.externalAccountId || undefined,
@@ -195,6 +206,11 @@ export function ChannelsPanel({ showToast, local, onToggleLocal }: {
                   {meta.guide.map((g, i) => <li key={i}>{g}</li>)}
                 </ol>
               </details>
+            )}
+            {(key === 'messenger' || key === 'instagram') && (
+              <button className="btn" disabled={busy} onClick={() => startOAuth(key as 'messenger' | 'instagram')} style={{ borderColor: meta.color, color: meta.color, fontWeight: 700 }}>
+                Connect with Meta
+              </button>
             )}
             <input className="input" placeholder="Display name (e.g. Luna Store)" value={form.displayName} onChange={(e) => setForm({ ...form, displayName: e.target.value })} />
             <input className="input" placeholder="Username / Page name" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />

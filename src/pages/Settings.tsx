@@ -12,7 +12,7 @@ import { OrbitLogo } from '../components/shared/OrbitLogo';
 import { ChannelsPanel } from '../components/settings/ChannelsPanel';
 import { PageHeader, Card, SectionTitle, ChannelDot } from '../components/dash/kit';
 import { api } from '../services/api';
-import { clearSessionCache } from '../services/session';
+import { clearSessionCache, getMemberships } from '../services/session';
 
 const settingsTabs = ['Business Profile', 'Channels', 'Plan & Usage', 'AI Settings', 'Working Hours', 'Notifications', 'Team Members', 'Account'];
 
@@ -34,6 +34,7 @@ export function Settings() {
   const [newRule, setNewRule] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const workspaceId = getMemberships()[0]?.workspace_id || 'default';
 
   const isDirty = false; // Simplified for prototype
 
@@ -185,6 +186,7 @@ export function Settings() {
                 <ChannelDot channel="gmail" label="Gmail" />
               </div>
               <ChannelsPanel
+                workspaceId={workspaceId}
                 showToast={showToast}
                 local={state.channelsConnected}
                 onToggleLocal={handleToggleChannel}

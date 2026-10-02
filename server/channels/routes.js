@@ -8,6 +8,7 @@ import { testFlowLink, recordLinkTest } from '../micromind/linktest.js';
 import { assertCanConnectChannel } from '../billing/plans.js';
 import { requireAuth, requireWorkspace, workspaceFor } from '../auth/middleware.js';
 import { publishPagePost, publishInstagramMedia } from '../meta/graph.js';
+import { buildMetaAuthUrl, discoverMetaAssets, exchangeMetaCode, metaConfigured, metaRedirectUri, subscribePage } from '../meta/oauth.js';
 
 const FULL = ['messenger', 'instagram']; // verified template + auto-provision
 const BYOF = ['whatsapp', 'telegram', 'gmail']; // wiring done, template pending -> micromindFlowId required
@@ -317,27 +318,89 @@ export function channelsRouter(pool) {
     }
   });
 
-  // OAuth start (Meta app handoff): stores state, returns it for the redirect builder.
+  // OAuth start: create a one-time state bound to the caller's workspace and
+  // return the Meta authorization URL. The callback is deliberately cookieless;
+  // the state is the workspace trust anchor.
   r.post('/api/v1/workspaces/:workspaceId/channels/:channel/oauth/start', requireWorkspace, async (req, res) => {
     const { channel } = req.params;
-    if (!FULL.includes(channel) && !BYOF.includes(channel)) return res.status(400).json({ error: `Unknown channel: ${channel}` });
+    if (!['messenger', 'instagram'].includes(channel)) return res.status(400).json({ error: 'Meta OAuth is available for Messenger and Instagram only' });
+    if (!metaConfigured()) return res.status(503).json({ code: 'meta_oauth_not_configured', error: 'Set META_APP_ID and META_APP_SECRET on the backend first' });
     const state = crypto.randomBytes(24).toString('hex');
     await pool.query(
-      "INSERT INTO oauth_states (id, workspace_id, provider, state, expires_at) VALUES ($1,$2,$3,$4, CURRENT_TIMESTAMP + INTERVAL '15 minutes')",
-      [rid('oas'), req.workspaceId, channel, state]
+      "INSERT INTO oauth_states (id, workspace_id, provider, state, metadata, expires_at) VALUES ($1,$2,$3,$4,$5, CURRENT_TIMESTAMP + INTERVAL '15 minutes')",
+      [rid('oas'), req.workspaceId, channel, state, JSON.stringify({ requested_channel: channel })]
     );
-    res.json({ provider: channel, state, note: 'Complete Meta OAuth in the developer portal, then finish via /connect with the token (MVP) or the callback when the Meta app is configured.' });
+    res.json({ provider: channel, state, authUrl: buildMetaAuthUrl({ channel, state }), redirectUri: metaRedirectUri(channel) });
   });
 
-  // OAuth callback: validates state (code exchange lands here once the Meta app is configured).
+  // OAuth callback: exchange the code, discover Page + Instagram assets, vault
+  // their Page tokens, and provision one ORBIT/MicroMind flow per asset.
   r.get('/api/v1/channels/:channel/oauth/callback', async (req, res) => {
     const { state, code } = req.query;
     if (!state) return res.status(400).json({ error: 'missing state' });
     const { rows } = await pool.query("SELECT * FROM oauth_states WHERE state=$1 AND expires_at > CURRENT_TIMESTAMP", [state]);
     if (!rows.length) return res.status(400).json({ error: 'invalid or expired state' });
+    const oauthState = rows[0];
+    if (oauthState.provider !== req.params.channel || !['messenger', 'instagram'].includes(req.params.channel)) {
+      return res.status(400).json({ error: 'OAuth state/provider mismatch' });
+    }
     await pool.query('DELETE FROM oauth_states WHERE state=$1', [state]);
-    if (!code) return res.json({ channel: req.params.channel, status: 'state_verified', next: 'supply code/page token via connect' });
-    res.json({ channel: req.params.channel, status: 'callback_received', next: 'code exchange not configured yet — finish via connect' });
+    if (req.query.error) return res.status(400).json({ error: String(req.query.error_description || req.query.error) });
+    if (!code) return res.status(400).json({ error: 'missing OAuth code' });
+    try {
+      const exchanged = await exchangeMetaCode({ code: String(code), channel: req.params.channel });
+      const discovered = await discoverMetaAssets(exchanged.access_token);
+      const metaCredentialId = rid('cred');
+      const connectionId = rid('meta');
+      const expiresAt = exchanged.expires_in ? new Date(Date.now() + Number(exchanged.expires_in) * 1000) : null;
+      await pool.query(
+        'INSERT INTO credentials (id, workspace_id, provider, encrypted_secret, metadata, expires_at, refreshed_at) VALUES ($1,$2,$3,$4,$5,$6,CURRENT_TIMESTAMP)',
+        [metaCredentialId, oauthState.workspace_id, 'meta_user_oauth', encryptSecret(exchanged.access_token), JSON.stringify({ meta_user_id: discovered.user.id }), expiresAt]
+      );
+      await pool.query(
+        "INSERT INTO meta_connections (id, workspace_id, meta_user_id, meta_user_name, credential_id, scopes, expires_at, metadata) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (workspace_id, meta_user_id) DO UPDATE SET meta_user_name=EXCLUDED.meta_user_name, credential_id=EXCLUDED.credential_id, scopes=EXCLUDED.scopes, expires_at=EXCLUDED.expires_at, status='active', updated_at=CURRENT_TIMESTAMP",
+        [connectionId, oauthState.workspace_id, discovered.user.id, discovered.user.name || null, metaCredentialId,
+          String(process.env.META_OAUTH_SCOPES || '').split(',').map((s) => s.trim()).filter(Boolean), expiresAt, JSON.stringify({ source: 'oauth' })]
+      );
+      const actualConnectionId = (await pool.query('SELECT id FROM meta_connections WHERE workspace_id=$1 AND meta_user_id=$2', [oauthState.workspace_id, discovered.user.id])).rows[0]?.id || connectionId;
+      const linked = [];
+      for (const asset of discovered.assets) {
+        const credentialId = rid('cred');
+        await pool.query(
+          'INSERT INTO credentials (id, workspace_id, provider, encrypted_secret, metadata) VALUES ($1,$2,$3,$4,$5)',
+          [credentialId, oauthState.workspace_id, asset.channel === 'messenger' ? 'meta_messenger' : 'meta_instagram', encryptSecret(asset.pageAccessToken), JSON.stringify({ channel: asset.channel, page_id: asset.pageId, instagram_business_id: asset.instagramBusinessId || null })]
+        );
+        const existing = (await pool.query('SELECT id FROM channel_accounts WHERE workspace_id=$1 AND channel=$2 AND external_account_id=$3', [oauthState.workspace_id, asset.channel, asset.externalAccountId])).rows[0];
+        const accountId = existing?.id || rid('ch');
+        const verifyToken = CHANNELS[asset.channel].defaultVerifyToken;
+        let subscription = 'active';
+        try { await subscribePage(asset.pageId, asset.pageAccessToken); } catch (err) { subscription = `failed: ${String(err.message).slice(0, 180)}`; }
+        await pool.query(
+          `INSERT INTO channel_accounts (id, workspace_id, channel, external_account_id, display_name, username, credential_id, status, meta_connection_id, metadata)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,'connecting',$8,$9)
+           ON CONFLICT (workspace_id, channel, external_account_id) DO UPDATE SET display_name=EXCLUDED.display_name, username=EXCLUDED.username, credential_id=EXCLUDED.credential_id, status='connecting', meta_connection_id=EXCLUDED.meta_connection_id, metadata=EXCLUDED.metadata, updated_at=CURRENT_TIMESTAMP`,
+          [accountId, oauthState.workspace_id, asset.channel, asset.externalAccountId, asset.displayName, asset.username, credentialId, actualConnectionId, JSON.stringify({ verify_token: verifyToken, webhook_name: asset.channel, page_id: asset.pageId, instagram_business_id: asset.instagramBusinessId || null, source: 'meta_oauth', webhook_subscription: subscription })]
+        );
+        const ws = (await pool.query('SELECT * FROM workspace_settings WHERE workspace_id=$1', [oauthState.workspace_id])).rows[0] || {};
+        try {
+          const out = await provisionTenantChannelFlow(pool, oauthState.workspace_id, asset.channel, {
+            name: `ORBIT ${asset.channel} - ${ws.business_name || oauthState.workspace_id}`,
+            verifyToken, businessName: ws.business_name, aiTone: ws.ai_tone, language: ws.language,
+          });
+          const flowRowId = rid('mmf');
+          await pool.query("INSERT INTO micromind_flows (id, workspace_id, channel_account_id, external_flow_id, template, template_version, purpose, label, source, prediction_key_credential_id, status) VALUES ($1,$2,$3,$4,$5,$6,'channel',$7,'provisioned',$8,'active')",
+            [flowRowId, oauthState.workspace_id, accountId, out.flow.id, asset.channel, await templateVersionForAsync(pool, asset.channel), `ORBIT ${asset.channel} - ${asset.displayName}`, out.credentialId]);
+          await pool.query("UPDATE channel_accounts SET status='active', micromind_flow_id=$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2", [out.flow.id, accountId]);
+          linked.push({ channel: asset.channel, id: asset.externalAccountId, status: 'active' });
+        } catch (err) {
+          await pool.query("UPDATE channel_accounts SET status='error', metadata=metadata || $1 WHERE id=$2", [JSON.stringify({ provision_error: String(err.message).slice(0, 300) }), accountId]);
+          linked.push({ channel: asset.channel, id: asset.externalAccountId, status: 'error', error: String(err.message).slice(0, 160) });
+        }
+      }
+      return res.json({ channel: req.params.channel, status: 'connected', metaUser: { id: discovered.user.id, name: discovered.user.name || null }, linked });
+    } catch (err) {
+      return res.status(err.status || 502).json({ code: err.code || 'meta_oauth_failed', error: err.message });
+    }
   });
 
   r.post('/api/v1/channels/:id/disconnect', async (req, res) => {

@@ -52,6 +52,9 @@ npm run probe:micromind     # MicroMind prediction + management CRUD probe
 | `MICROMIND_MESSENGER_FLOW_ID` | backend | Reference flow for the probe |
 | `MICROMIND_ANALYST_FLOW_ID` | backend | Dedicated analyst flow for reports + knowledge answers (falls back to messenger flow) |
 | `META_GRAPH_VERSION` | backend | Graph API version for sends (default `v19.0`) |
+| `META_APP_ID/META_APP_SECRET` | backend | Meta Login / Business Login OAuth credentials |
+| `META_OAUTH_REDIRECT_URI[_MESSENGER/_INSTAGRAM]` | backend | Exact public OAuth callback URL(s); defaults from `ORBIT_BACKEND_URL` |
+| `META_OAUTH_SCOPES` | backend | Approved Meta permissions requested during account linking |
 | `CORS_ORIGIN` | backend | Comma-separated browser origins (required in production) |
 | `COOKIE_SAMESITE` / `COOKIE_SECURE` | backend | `None`+Secure for cross-site prod (Vercel + VPS); Lax default |
 | `VITE_API_URL` | frontend | API base, default `http://localhost:5000/api` |
@@ -135,6 +138,15 @@ Webhooks (Meta owns the callback URL → ORBIT)
   GET|POST /webhooks/messenger, /webhooks/instagram, /webhooks/whatsapp
   POST     /webhooks/telegram (secret-token checked), /webhooks/gmail (501)
 ```
+
+Meta account linking now uses the “Connect with Meta” button in Settings →
+Channels. The callback exchanges the authorization code, discovers the
+authorized Pages and linked Instagram Business accounts, encrypts their Page
+tokens, subscribes the Page to messaging webhooks, and provisions one isolated
+MicroMind flow per asset. The Meta app must register these exact callback URLs:
+`{ORBIT_BACKEND_URL}/api/v1/channels/messenger/oauth/callback` and
+`{ORBIT_BACKEND_URL}/api/v1/channels/instagram/oauth/callback` (or set the two
+per-channel redirect variables above).
 
 ## Channel slices
 
