@@ -5,13 +5,14 @@ import { Clock } from 'lucide-react';
 
 interface Props {
   onServiceClick: (service: any) => void;
+  services?: any[];
 }
 
-export function ServiceTable({ onServiceClick }: Props) {
+export function ServiceTable({ onServiceClick, services }: Props) {
   const { state } = useStore();
   return (
     <Table columns={[{ key: 'name', label: 'Service' }, { key: 'price', label: 'Price' }, { key: 'duration', label: 'Duration' }, { key: 'category', label: 'Category' }]}
-      data={state.services}
+      data={services || state.services}
       renderRow={(service) => (
         <tr key={service.id} onClick={() => onServiceClick(service)} style={{ cursor: 'pointer', borderBottom: '1px solid var(--border)' }}
           onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-0)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>

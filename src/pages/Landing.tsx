@@ -4,6 +4,7 @@ import { OrbitLogo } from '../components/shared/OrbitLogo';
 import { GridPulse } from '../components/shared/GridPulse';
 import { AnimatedBeam } from '../components/shared/AnimatedBeam';
 import { TextRewind } from '../components/shared/TextRewind';
+import { Marquee } from '../components/shared/Marquee';
 import {
   MessageSquare, ShoppingBag, Calendar, Bot, Zap, Shield, ArrowRight, CheckCircle2,
   Sparkles, Layers, Users, ChevronRight, Check, BarChart3
@@ -13,6 +14,7 @@ export function Landing() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'commerce' | 'appointments'>('commerce');
   const [selectedChannel, setSelectedChannel] = useState<'messenger' | 'instagram' | 'whatsapp' | 'telegram'>('instagram');
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const channelExamples = {
     messenger: {
@@ -70,7 +72,7 @@ export function Landing() {
           <a href="#concept" style={{ color: 'var(--ink-600)', textDecoration: 'none', fontWeight: 600, fontSize: 13.5 }}>Brand Concept</a>
           <a href="#features" style={{ color: 'var(--ink-600)', textDecoration: 'none', fontWeight: 600, fontSize: 13.5 }}>Core Features</a>
           <a href="#verticals" style={{ color: 'var(--ink-600)', textDecoration: 'none', fontWeight: 600, fontSize: 13.5 }}>Dual-Vertical Engine</a>
-          <a href="#workflow" style={{ color: 'var(--ink-600)', textDecoration: 'none', fontWeight: 600, fontSize: 13.5 }}>Signals to Actions</a>
+          <a href="#concept" style={{ color: 'var(--ink-600)', textDecoration: 'none', fontWeight: 600, fontSize: 13.5 }}>Signals to Actions</a>
         </nav>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -188,6 +190,18 @@ export function Landing() {
         </div>
       </section>
 
+      {/* Proof ticker (eloqwnt-style marquee): capability claims only, no invented results */}
+      <Marquee
+        items={[
+          'Messenger + Instagram + WhatsApp + Telegram + Gmail',
+          '24/7 automatic AI replies',
+          'One inbox for every channel',
+          'Dedicated AI flow per channel',
+          'Human takeover anytime',
+          'Encrypted credential vault',
+        ]}
+      />
+
       {/* 3. Core Brand Principle: "Channels → ORBIT → Actions" */}
       <section id="concept" style={{
         background: 'var(--warm-sand)',
@@ -207,7 +221,7 @@ export function Landing() {
           </div>
 
           {/* Core Concept Flow Visual */}
-          <div style={{
+          <div id="workflow" style={{
             background: 'var(--cloud-white)',
             borderRadius: 20,
             padding: '36px 32px',
@@ -309,7 +323,69 @@ export function Landing() {
         </div>
       </section>
 
-      {/* 4. Dual-Vertical Engine Section */}
+      {/* 4. Proof in Action (eloqwnt-style selected work): the same demo
+          narratives as the concept switcher, expanded as case cards. */}
+      <section id="work" style={{ padding: '80px 32px', maxWidth: 1100, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: 48 }}>
+          <div className="eyebrow" style={{ color: 'var(--burnt-coral)', marginBottom: 8 }}>Proof in Action</div>
+          <h2 style={{ fontSize: 32, fontWeight: 800, color: 'var(--midnight-ink)', letterSpacing: '-0.02em' }}>
+            Live Conversations, Real Outcomes
+          </h2>
+          <p style={{ fontSize: 15, color: 'var(--ink-600)', maxWidth: 620, margin: '8px auto 0' }}>
+            The same flows running in the demo above — an Instagram sale and a WhatsApp booking, handled end to end.
+          </p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
+          <div className="card" style={{ padding: 28, borderLeft: '4px solid #E4405F' }}>
+            <div className="eyebrow" style={{ color: '#E4405F', marginBottom: 8 }}>E-Commerce · Instagram Direct</div>
+            <h3 style={{ fontSize: 20, fontWeight: 800, color: 'var(--midnight-ink)', marginBottom: 12 }}>
+              DM Question → COD Order
+            </h3>
+            <p style={{ fontSize: 13.5, color: 'var(--ink-600)', fontStyle: 'italic', background: 'var(--surface-0)', padding: 12, borderRadius: 8, border: '1px solid var(--border)', marginBottom: 12 }}>
+              Customer: "Is the Black Leather Bag in stock? How much is shipping to Alexandria?"
+            </p>
+            <p style={{ fontSize: 13.5, color: 'var(--ink-600)', lineHeight: 1.6, marginBottom: 16 }}>
+              ORBIT matched SKU #1049 (12 units), quoted Alexandria delivery (50 EGP), and drafted the COD order — all inside the customer's Instagram thread.
+            </p>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+              {['SKU #1049 matched', '12 units in stock', '94% AI confidence'].map((m) => (
+                <span key={m} style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--signal-orange)', background: 'var(--signal-orange-subtle)', padding: '4px 10px', borderRadius: 20 }}>
+                  {m}
+                </span>
+              ))}
+            </div>
+            <button onClick={() => navigate('/demo')} className="btn btn-outline" style={{ height: 40, padding: '0 20px' }}>
+              See it in the demo <ArrowRight size={16} />
+            </button>
+          </div>
+
+          <div className="card" style={{ padding: 28, borderLeft: '4px solid #25D366' }}>
+            <div className="eyebrow" style={{ color: '#0F8357', marginBottom: 8 }}>Healthcare · WhatsApp Business</div>
+            <h3 style={{ fontSize: 20, fontWeight: 800, color: 'var(--midnight-ink)', marginBottom: 12 }}>
+              Message → Confirmed Booking
+            </h3>
+            <p style={{ fontSize: 13.5, color: 'var(--ink-600)', fontStyle: 'italic', background: 'var(--surface-0)', padding: 12, borderRadius: 8, border: '1px solid var(--border)', marginBottom: 12 }}>
+              Patient: "I need to book a dental checkup slot for Thursday around 11 AM."
+            </p>
+            <p style={{ fontSize: 13.5, color: 'var(--ink-600)', lineHeight: 1.6, marginBottom: 16 }}>
+              ORBIT synced the doctor agenda, offered the open 11:00 AM slot, and scheduled the confirmation reminder — no staff involved.
+            </p>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+              {['Slot found instantly', 'Reminder scheduled', 'Zero staff time'].map((m) => (
+                <span key={m} style={{ fontSize: 11.5, fontWeight: 700, color: '#0F8357', background: 'rgba(82, 216, 164, 0.12)', padding: '4px 10px', borderRadius: 20 }}>
+                  {m}
+                </span>
+              ))}
+            </div>
+            <button onClick={() => navigate('/demo')} className="btn btn-outline" style={{ height: 40, padding: '0 20px' }}>
+              See it in the demo <ArrowRight size={16} />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Dual-Vertical Engine Section */}
       <section id="verticals" style={{ padding: '80px 32px', maxWidth: 1100, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <div className="orbit-badge" style={{ marginBottom: 12 }}>
@@ -430,7 +506,7 @@ export function Landing() {
         </div>
       </section>
 
-      {/* 5. Core Features Grid */}
+      {/* 6. Core Features Grid */}
       <section id="features" style={{ padding: '70px 32px', background: 'var(--surface-0)', borderTop: '1px solid var(--border)' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 48 }}>
@@ -510,7 +586,121 @@ export function Landing() {
         </div>
       </section>
 
-      {/* 6. Call to Action Banner */}
+      {/* 7. Numbered channel index (eloqwnt-style services list) */}
+      <section style={{ padding: '70px 32px', maxWidth: 900, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: 40 }}>
+          <div className="eyebrow" style={{ color: 'var(--burnt-coral)', marginBottom: 8 }}>Every Channel, One Engine</div>
+          <h2 style={{ fontSize: 32, fontWeight: 800, color: 'var(--midnight-ink)', letterSpacing: '-0.02em' }}>
+            Connect Anything That Messages
+          </h2>
+        </div>
+        <div>
+          {[
+            { n: '01', id: 'messenger', name: 'Messenger', color: '#0099FF', desc: 'Page conversations answered instantly, escalated to you when it matters.' },
+            { n: '02', id: 'instagram', name: 'Instagram', color: '#E4405F', desc: 'DMs that sell: stock answers, COD orders, and booking flows in-thread.' },
+            { n: '03', id: 'whatsapp', name: 'WhatsApp', color: '#25D366', desc: 'Bookings, reminders, and support on the channel your customers live in.' },
+            { n: '04', id: 'telegram', name: 'Telegram', color: '#229ED9', desc: 'Bot-powered support and alerts with human takeover on demand.' },
+            { n: '05', id: 'gmail', name: 'Gmail', color: '#A8A29E', desc: 'Email threads triaged and drafted alongside every chat channel.' },
+            { n: '06', id: 'scheduler', name: 'Scheduler', color: '#FF5A36', desc: 'Broadcasts that actually publish: Facebook feed + Instagram media, tracked live.' },
+          ].map((s) => (
+            <button
+              key={s.id}
+              onClick={() => document.getElementById('concept')?.scrollIntoView({ behavior: 'smooth' })}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: 20,
+                padding: '20px 8px', background: 'none', border: 'none',
+                borderBottom: '1px solid var(--border)', cursor: 'pointer', textAlign: 'left',
+              }}
+            >
+              <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--stone-gray)', fontFamily: 'var(--font-mono)', minWidth: 28 }}>
+                {s.n}
+              </span>
+              <span style={{ width: 10, height: 10, borderRadius: '50%', background: s.color, flexShrink: 0 }} />
+              <span style={{ flex: 1 }}>
+                <span style={{ display: 'block', fontSize: 18, fontWeight: 800, color: 'var(--midnight-ink)' }}>
+                  {s.name}
+                </span>
+                <span style={{ display: 'block', fontSize: 13.5, color: 'var(--ink-600)', marginTop: 2 }}>
+                  {s.desc}
+                </span>
+              </span>
+              <ChevronRight size={18} color="var(--signal-orange)" />
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* 8. FAQ (eloqwnt-style accordion) */}
+      <section style={{ padding: '70px 32px', background: 'var(--surface-0)', borderTop: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: 760, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 40 }}>
+            <div className="eyebrow" style={{ color: 'var(--burnt-coral)', marginBottom: 8 }}>Questions, Answered</div>
+            <h2 style={{ fontSize: 32, fontWeight: 800, color: 'var(--midnight-ink)', letterSpacing: '-0.02em' }}>
+              Frequently Asked Questions
+            </h2>
+          </div>
+          {[
+            {
+              q: 'What is ORBIT?',
+              a: 'ORBIT is an AI omnichannel inbox for merchants: customer chats from Messenger, Instagram, WhatsApp, Telegram, and Gmail converge into one dashboard, where a dedicated AI flow per channel answers instantly — and you can take over any thread at any time.',
+            },
+            {
+              q: 'How do I connect a channel?',
+              a: 'Settings → Channels → pick the channel → paste its token. ORBIT encrypts the token in a server-side vault, auto-provisions a dedicated AI flow for that connection, and starts handling messages. No code, no dashboard outside ORBIT.',
+            },
+            {
+              q: 'Is my Page token safe?',
+              a: 'Yes. Tokens are AES-256 encrypted at rest, never returned by any API, never logged, and never visible in the UI after entry. You can disconnect or rotate them anytime from Settings → Channels.',
+            },
+            {
+              q: 'Which channels work today?',
+              a: 'Messenger and Instagram connect end to end with auto-provisioned AI flows. WhatsApp, Telegram, and Gmail connect bring-your-own-flow (paste a MicroMind flow id). TikTok is not started yet.',
+            },
+            {
+              q: 'What happens when the AI cannot answer?',
+              a: 'Every reply carries a confidence score. Below your threshold, the thread escalates for human takeover with full context — and you can return it to the AI whenever you like.',
+            },
+            {
+              q: 'Do my customers need to install anything?',
+              a: 'No. They message your Page, profile, or number exactly as before. All the intelligence lives on your side, invisible to them.',
+            },
+          ].map((item, i) => (
+            <div key={i} style={{ borderBottom: '1px solid var(--border)' }}>
+              <button
+                onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  gap: 16, padding: '20px 4px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+                }}
+              >
+                <span style={{ fontSize: 16, fontWeight: 750, color: 'var(--midnight-ink)' }}>
+                  <span style={{ color: 'var(--signal-orange)', marginRight: 12, fontFamily: 'var(--font-mono)', fontSize: 13 }}>
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  {item.q}
+                </span>
+                <span style={{
+                  width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+                  background: openFaq === i ? 'var(--signal-orange)' : 'var(--surface-1)',
+                  color: openFaq === i ? 'white' : 'var(--signal-orange)',
+                  border: '1px solid var(--border)',
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 18, fontWeight: 700, lineHeight: 1,
+                }}>
+                  {openFaq === i ? '−' : '+'}
+                </span>
+              </button>
+              {openFaq === i && (
+                <p style={{ fontSize: 14.5, color: 'var(--ink-600)', lineHeight: 1.7, margin: '0 0 22px', paddingLeft: 44, maxWidth: 640 }}>
+                  {item.a}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 9. Call to Action Banner */}
       <section style={{
         background: 'var(--midnight-ink)',
         color: 'var(--cloud-white)',
@@ -519,6 +709,7 @@ export function Landing() {
         position: 'relative',
         overflow: 'hidden'
       }}>
+        <GridPulse variant="dark" />
         <div style={{ maxWidth: 800, margin: '0 auto', position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
             <OrbitLogo variant="primary" colorMode="dark" size={44} />

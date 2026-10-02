@@ -65,7 +65,7 @@ export function Overview() {
       <PageHeader
         eyebrow="Command Center"
         title={`Welcome back, ${state.currentUser.name}!`}
-        sub="Here is your live business performance synced directly with host 148.251.171.147."
+        sub="Here is your live business performance synced directly with the live backend."
         live
         actions={
           <>

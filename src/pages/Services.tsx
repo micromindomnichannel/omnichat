@@ -160,7 +160,7 @@ export function Services() {
           ))}
         </div>
       ) : (
-        <Card style={{ padding: 0, overflow: 'hidden' }}><ServiceTable onServiceClick={handleOpenEdit} /></Card>
+        <Card style={{ padding: 0, overflow: 'hidden' }}><ServiceTable services={filtered} onServiceClick={handleOpenEdit} /></Card>
       )}
 
       <Modal isOpen={showAddModal} onClose={() => { setShowAddModal(false); setEditingService(null); }} title={editingService ? 'Edit Service' : 'Add Service & Pre-loaded Photo'} size="sm">
