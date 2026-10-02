@@ -23,6 +23,28 @@ const PROVIDER = {
 
 const rid = (p) => `${p}_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
 
+function oauthReturnTarget(value) {
+  const fallback = process.env.ORBIT_FRONTEND_URL || 'https://orbit-xi-one-60.vercel.app';
+  try {
+    const url = new URL(String(value || fallback));
+    const allowed = new URL(fallback);
+    return url.origin === allowed.origin ? url.toString() : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function oauthCallbackPage(res, status, payload, returnTo) {
+  const target = new URL(oauthReturnTarget(returnTo));
+  target.searchParams.set('meta_oauth', status >= 200 && status < 300 ? 'connected' : 'error');
+  const title = status >= 200 && status < 300 ? 'Meta connected' : 'Meta connection needs attention';
+  const message = status >= 200 && status < 300
+    ? 'Your Messenger and Instagram accounts were connected successfully.'
+    : String(payload?.error || 'Meta connection failed');
+  const safe = (text) => String(text).replace(/[&<>\"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', "'": '&#39;' }[c]));
+  return res.status(status).type('html').send(`<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="3;url=${safe(target.toString())}"><title>${safe(title)}</title><style>body{font-family:system-ui,sans-serif;display:grid;place-items:center;min-height:100vh;color:#172033}main{max-width:560px;padding:32px;text-align:center;border:1px solid #eee;border-radius:16px}p{color:#667085}</style></head><body><main><h1>${safe(title)}</h1><p>${safe(message)}</p><p>You will be redirected to Orbit in <strong>3 seconds</strong>.</p><a href="${safe(target.toString())}">Return to Orbit now</a></main><script>setTimeout(()=>location.href=${JSON.stringify(target.toString())},3000)</script></body></html>`);
+}
+
 function safeAccount(row) {
   if (!row) return row;
   const { ...safe } = row;
@@ -326,9 +348,10 @@ export function channelsRouter(pool) {
     if (!['messenger', 'instagram'].includes(channel)) return res.status(400).json({ error: 'Meta OAuth is available for Messenger and Instagram only' });
     if (!metaConfigured()) return res.status(503).json({ code: 'meta_oauth_not_configured', error: 'Set META_APP_ID and META_APP_SECRET on the backend first' });
     const state = crypto.randomBytes(24).toString('hex');
+    const returnTo = oauthReturnTarget(req.body?.returnTo);
     await pool.query(
       "INSERT INTO oauth_states (id, workspace_id, provider, state, metadata, expires_at) VALUES ($1,$2,$3,$4,$5, CURRENT_TIMESTAMP + INTERVAL '15 minutes')",
-      [rid('oas'), req.workspaceId, channel, state, JSON.stringify({ requested_channel: channel })]
+      [rid('oas'), req.workspaceId, channel, state, JSON.stringify({ requested_channel: channel, return_to: returnTo })]
     );
     res.json({ provider: channel, state, authUrl: buildMetaAuthUrl({ channel, state }), redirectUri: metaRedirectUri(channel) });
   });
@@ -341,12 +364,13 @@ export function channelsRouter(pool) {
     const { rows } = await pool.query("SELECT * FROM oauth_states WHERE state=$1 AND expires_at > CURRENT_TIMESTAMP", [state]);
     if (!rows.length) return res.status(400).json({ error: 'invalid or expired state' });
     const oauthState = rows[0];
+    const returnTo = oauthState.metadata?.return_to;
     if (oauthState.provider !== req.params.channel || !['messenger', 'instagram'].includes(req.params.channel)) {
       return res.status(400).json({ error: 'OAuth state/provider mismatch' });
     }
     await pool.query('DELETE FROM oauth_states WHERE state=$1', [state]);
-    if (req.query.error) return res.status(400).json({ error: String(req.query.error_description || req.query.error) });
-    if (!code) return res.status(400).json({ error: 'missing OAuth code' });
+    if (req.query.error) return oauthCallbackPage(res, 400, { error: String(req.query.error_description || req.query.error) }, returnTo);
+    if (!code) return oauthCallbackPage(res, 400, { error: 'missing OAuth code' }, returnTo);
     try {
       const exchanged = await exchangeMetaCode({ code: String(code), channel: req.params.channel });
       const discovered = await discoverMetaAssets(exchanged.access_token);
@@ -397,9 +421,9 @@ export function channelsRouter(pool) {
           linked.push({ channel: asset.channel, id: asset.externalAccountId, status: 'error', error: String(err.message).slice(0, 160) });
         }
       }
-      return res.json({ channel: req.params.channel, status: 'connected', metaUser: { id: discovered.user.id, name: discovered.user.name || null }, linked });
+      return oauthCallbackPage(res, 200, { channel: req.params.channel, status: 'connected', metaUser: { id: discovered.user.id, name: discovered.user.name || null }, linked }, returnTo);
     } catch (err) {
-      return res.status(err.status || 502).json({ code: err.code || 'meta_oauth_failed', error: err.message });
+      return oauthCallbackPage(res, err.status || 502, { code: err.code || 'meta_oauth_failed', error: err.message }, returnTo);
     }
   });
 

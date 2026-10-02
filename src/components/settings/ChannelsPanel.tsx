@@ -52,7 +52,7 @@ export function ChannelsPanel({ showToast, local, onToggleLocal, workspaceId }: 
 
   const startOAuth = async (channel: 'messenger' | 'instagram') => {
     setBusy(true);
-    const res = await api.startMetaOAuth(activeWorkspaceId, channel);
+    const res = await api.startMetaOAuth(activeWorkspaceId, channel, window.location.href);
     setBusy(false);
     if (res?.authUrl) window.location.assign(res.authUrl);
     else showToast(res?.error || 'Meta OAuth is not configured', 'danger');

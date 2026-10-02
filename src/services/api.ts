@@ -112,8 +112,8 @@ export const api = {
   getChannels: (workspaceId = 'default') => fetchJson(`/v1/workspaces/${workspaceId}/channels`),
   connectChannel: (workspaceId: string, channel: string, payload: any) =>
     fetchJson(`/v1/workspaces/${workspaceId}/channels/${channel}/connect`, { method: 'POST', body: JSON.stringify(payload) }),
-  startMetaOAuth: (workspaceId: string, channel: 'messenger' | 'instagram') =>
-    fetchJson(`/v1/workspaces/${workspaceId}/channels/${channel}/oauth/start`, { method: 'POST' }),
+  startMetaOAuth: (workspaceId: string, channel: 'messenger' | 'instagram', returnTo?: string) =>
+    fetchJson(`/v1/workspaces/${workspaceId}/channels/${channel}/oauth/start`, { method: 'POST', body: JSON.stringify({ returnTo }) }),
   disconnectChannel: (id: string) => fetchJson(`/v1/channels/${id}/disconnect`, { method: 'POST' }),
   reconnectChannel: (id: string) => fetchJson(`/v1/channels/${id}/reconnect`, { method: 'POST' }),
   testChannel: (id: string) => fetchJson(`/v1/channels/${id}/test`, { method: 'POST' }),
