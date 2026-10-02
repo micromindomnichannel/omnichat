@@ -24,14 +24,29 @@ export async function ensureTenantFolder(pool, workspaceId, displayName) {
       }
     } catch { /* fall through to recreate */ }
   }
-  const created = await createFolder({
-    name: displayName || `ORBIT - ${workspaceId}`,
+  const folderName = displayName || `ORBIT - ${workspaceId}`;
+  const folderPayload = {
+    name: folderName,
     description: `Tenant folder for ORBIT workspace ${workspaceId} (auto-provisioned)`,
     resourceType: 'chatflow',
     color: FOLDER_COLOR,
     isOrgShared: false,
     sharedUserIds: [],
-  });
+  };
+  let created;
+  try {
+    created = await createFolder(folderPayload);
+  } catch (err) {
+    // MicroMind enforces unique folder names. If another provisioning attempt
+    // already created this workspace folder, resolve it instead of failing.
+    if (!String(err.message || '').toLowerCase().includes('folder') ||
+        !String(err.message || '').toLowerCase().includes('already exists')) throw err;
+    const folders = await listFolders();
+    const candidates = Array.isArray(folders) ? folders : folders?.data || [];
+    created = candidates.find((folder) => folder.name === folderName &&
+      (!folderPayload.resourceType || !folder.resourceType || folder.resourceType === folderPayload.resourceType));
+    if (!created?.id) throw err;
+  }
   if (!created?.id) throw new Error('ensureTenantFolder: folder creation returned no id');
   await pool.query("UPDATE workspaces SET micromind_folder_id=$1, micromind_folder_status='ready' WHERE id=$2",
     [created.id, workspaceId]);
