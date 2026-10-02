@@ -52,13 +52,17 @@ export function buildMetaAuthUrl({ channel, state }) {
   if (!metaConfigured()) return null;
   const scopes = process.env.META_OAUTH_SCOPES ||
     'pages_show_list,pages_read_engagement,pages_messaging,instagram_basic,instagram_manage_messages,business_management';
-  return graphUrl('/dialog/oauth', {
+  // The authorization dialog is served by www.facebook.com, not the Graph API
+  // host. Using graph.facebook.com makes Meta treat "dialog" as an object ID.
+  const url = new URL('https://www.facebook.com/dialog/oauth');
+  Object.entries({
     client_id: process.env.META_APP_ID,
     redirect_uri: metaRedirectUri(channel),
     state,
     response_type: 'code',
     scope: scopes,
-  }).toString();
+  }).forEach(([key, value]) => url.searchParams.set(key, String(value)));
+  return url.toString();
 }
 
 export async function exchangeMetaCode({ code, channel }) {
