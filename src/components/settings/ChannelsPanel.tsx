@@ -191,11 +191,18 @@ export function ChannelsPanel({ showToast, local, onToggleLocal, workspaceId }: 
               )}
             </div>
           </div>
-          {primary && primary.status === 'active'
-            ? <button className="btn" disabled={busy} onClick={() => act(primary.id, 'disconnect')} style={{ height: 32, padding: '0 16px', fontSize: 12.5, fontWeight: 700, background: 'var(--danger-bg)', color: 'var(--burnt-coral)' }}>Disconnect</button>
-            : primary && primary.status !== 'active'
-              ? <button className="btn" disabled={busy} onClick={() => act(primary.id, 'reconnect')} style={{ height: 32, padding: '0 16px', fontSize: 12.5, fontWeight: 700, background: 'var(--signal-orange)', color: 'white' }}>Reconnect</button>
-              : <button className="btn" disabled={busy} onClick={() => setForming(forming === key ? null : key)} style={{ height: 32, padding: '0 16px', fontSize: 12.5, fontWeight: 700, background: 'var(--signal-orange)', color: 'white' }}>Connect</button>}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {(key === 'messenger' || key === 'instagram') && (
+              <button className="btn" disabled={busy} onClick={() => startOAuth(key as 'messenger' | 'instagram')} style={{ height: 32, padding: '0 12px', fontSize: 12, fontWeight: 700, border: `1px solid ${meta.color}`, color: meta.color, background: 'white' }}>
+                {primary ? 'Reconnect with Meta' : 'Connect with Meta'}
+              </button>
+            )}
+            {primary && primary.status === 'active'
+              ? <button className="btn" disabled={busy} onClick={() => act(primary.id, 'disconnect')} style={{ height: 32, padding: '0 16px', fontSize: 12.5, fontWeight: 700, background: 'var(--danger-bg)', color: 'var(--burnt-coral)' }}>Disconnect</button>
+              : primary && primary.status !== 'active'
+                ? <button className="btn" disabled={busy} onClick={() => act(primary.id, 'reconnect')} style={{ height: 32, padding: '0 16px', fontSize: 12.5, fontWeight: 700, background: 'var(--signal-orange)', color: 'white' }}>Reconnect</button>
+                : <button className="btn" disabled={busy} onClick={() => setForming(forming === key ? null : key)} style={{ height: 32, padding: '0 16px', fontSize: 12.5, fontWeight: 700, background: 'var(--signal-orange)', color: 'white' }}>Connect</button>}
+          </div>
         </div>
         {forming === key && !primary && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
