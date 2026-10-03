@@ -65,7 +65,17 @@ function safeAccount(row) {
     username: safe.username,
     micromind_flow_id: safe.micromind_flow_id,
     status: safe.status,
-    metadata: { verify_token: safe.metadata?.verify_token, webhook_name: safe.metadata?.webhook_name, phone_number_id: safe.metadata?.phone_number_id },
+    metadata: {
+      verify_token: safe.metadata?.verify_token,
+      webhook_name: safe.metadata?.webhook_name,
+      phone_number_id: safe.metadata?.phone_number_id,
+      history_sync: safe.metadata?.history_sync ? {
+        status: safe.metadata.history_sync.status,
+        conversations: safe.metadata.history_sync.conversations || 0,
+        messages: safe.metadata.history_sync.messages || 0,
+        error: safe.metadata.history_sync.error ? String(safe.metadata.history_sync.error).replace(/EA[A-Za-z0-9]+/g, '[redacted-token]') : undefined,
+      } : undefined,
+    },
     created_at: safe.created_at,
     updated_at: safe.updated_at,
   };
