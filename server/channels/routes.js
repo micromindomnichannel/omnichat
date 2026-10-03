@@ -8,7 +8,7 @@ import { CHANNELS, provisionTenantChannelFlow, templateVersionForAsync } from '.
 import { testFlowLink, recordLinkTest } from '../micromind/linktest.js';
 import { assertCanConnectChannel } from '../billing/plans.js';
 import { requireAuth, requireWorkspace, workspaceFor } from '../auth/middleware.js';
-import { publishPagePost, publishInstagramMedia } from '../meta/graph.js';
+import { graphGet, publishPagePost, publishInstagramMedia } from '../meta/graph.js';
 import { buildMetaAuthUrl, discoverMetaAssets, exchangeMetaCode, metaConfigured, metaRedirectUri, subscribePage } from '../meta/oauth.js';
 
 const FULL = ['messenger', 'instagram']; // verified template + auto-provision
@@ -126,6 +126,43 @@ export function channelsRouter(pool) {
           lastTestAt: testByAccount[a.id]?.last_test_at || null,
         },
       })));
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Instagram-only diagnostics: no tokens are returned. This separates Meta
+  // access/delivery failures from Orbit persistence and Inbox failures.
+  r.get('/api/v1/workspaces/:workspaceId/channels/instagram/diagnostics', requireWorkspace, async (req, res) => {
+    try {
+      const account = (await pool.query(
+        "SELECT * FROM channel_accounts WHERE workspace_id=$1 AND channel='instagram' ORDER BY updated_at DESC LIMIT 1",
+        [req.workspaceId]
+      )).rows[0];
+      if (!account) return res.status(404).json({ error: 'instagram account not connected' });
+      const credential = account.credential_id
+        ? (await pool.query('SELECT encrypted_secret FROM credentials WHERE id=$1', [account.credential_id])).rows[0]
+        : null;
+      const token = credential ? decryptSecret(credential.encrypted_secret) : null;
+      const pageId = account.metadata?.page_id || null;
+      const report = {
+        account: { id: account.external_account_id, status: account.status, pageId, flowId: account.micromind_flow_id },
+        historySync: account.metadata?.history_sync || null,
+        webhookEvents: (await pool.query("SELECT status, COUNT(*)::int AS count FROM webhook_events WHERE provider='instagram' GROUP BY status ORDER BY status")).rows,
+        conversations: (await pool.query("SELECT COUNT(*)::int AS count FROM conversations WHERE workspace_id=$1 AND channel='instagram'", [req.workspaceId])).rows[0]?.count || 0,
+        graph: { attempted: Boolean(token && pageId) },
+      };
+      if (token && pageId) {
+        try {
+          const out = await graphGet(token, `/${pageId}/conversations?platform=instagram&limit=5`);
+          report.graph.ok = true;
+          report.graph.returnedConversations = Array.isArray(out?.data) ? out.data.length : 0;
+        } catch (err) {
+          report.graph.ok = false;
+          report.graph.error = String(err.message).slice(0, 300);
+        }
+      }
+      res.json(report);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
