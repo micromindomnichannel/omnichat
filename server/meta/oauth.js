@@ -51,7 +51,7 @@ export function metaRedirectUri(channel) {
 export function buildMetaAuthUrl({ channel, state }) {
   if (!metaConfigured()) return null;
   const scopes = process.env.META_OAUTH_SCOPES ||
-    'pages_show_list,pages_read_engagement,pages_messaging,instagram_basic,instagram_manage_messages,business_management';
+    'pages_show_list,pages_read_engagement,pages_messaging,pages_manage_metadata,instagram_basic,instagram_manage_messages,business_management';
   // The authorization dialog is served by www.facebook.com, not the Graph API
   // host. Using graph.facebook.com makes Meta treat "dialog" as an object ID.
   const url = new URL('https://www.facebook.com/dialog/oauth');
