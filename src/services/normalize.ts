@@ -20,6 +20,30 @@ function parseJson(v: any, fallback: any) {
   }
 }
 
+// Friendly list timestamp: raw backend values are ISO strings
+// (2026-10-03T01:56:35.653Z), which must never render verbatim beside a
+// name. Values that are already friendly ("2 min ago") pass through.
+export function formatListTime(v: any, now = Date.now()): string {
+  if (v === null || v === undefined) return '';
+  const s = String(v).trim();
+  if (!s) return '';
+  const t = new Date(s).getTime();
+  if (!Number.isFinite(t)) return s; // already friendly / unknown shape
+  const diff = now - t;
+  if (diff < 0) return s; // future clock skew: show raw rather than lie
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return 'just now';
+  if (min < 60) return `${min}m`;
+  const hrs = Math.floor(min / 60);
+  if (hrs < 24) return `${hrs}h`;
+  const d = new Date(t);
+  const day = new Date(now);
+  const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  if (startOf(d) === startOf(day) - 86400000) return 'Yesterday';
+  if (diff < 7 * 86400000) return d.toLocaleDateString([], { weekday: 'short' });
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+}
+
 export function normalizeConversation(row: any): Conversation {
   const ctx = parseJson(row.ai_context, {});
   return {
@@ -29,7 +53,7 @@ export function normalizeConversation(row: any): Conversation {
     status: row.status || 'ai_handling',
     intent: row.intent || 'support',
     lastMessage: row.last_message || '',
-    lastMessageTime: row.last_message_time || row.updated_at || '',
+    lastMessageTime: formatListTime(row.last_message_time || row.updated_at || ''),
     unreadCount: Number(row.unread_count || 0),
     updatedAt: row.updated_at || row.last_message_time || '',
     aiContext: {
