@@ -207,9 +207,13 @@ describe('Signup step 3: merged business form (single writer)', () => {
     const forms = document.querySelectorAll('form');
     fireEvent.submit(forms[forms.length - 1]);
     await waitFor(() => expect(assignSpy).toHaveBeenCalledWith('/onboarding'));
-    const settingsCalls = f.mock.calls.filter(([u]: any[]) => String(u).includes('/settings'));
+    type FetchCall = [string, { body?: string }];
+    const calls = f.mock.calls as unknown as FetchCall[];
+    const settingsCalls = calls.filter(([u]) => String(u).includes('/settings'));
     expect(settingsCalls).toHaveLength(1);
-    expect(JSON.parse(settingsCalls[0][1].body)).toEqual({
+    const sentBody = settingsCalls[0]?.[1]?.body;
+    expect(sentBody).toBeTruthy();
+    expect(JSON.parse(String(sentBody))).toEqual({
       business_name: 'Cairo Fashion Store',
       industry: 'Retail & E-Commerce',
       description: 'Fashion retail',
