@@ -40,7 +40,7 @@ function oauthCallbackPage(res, status, payload, returnTo) {
   target.searchParams.set('meta_oauth', status >= 200 && status < 300 ? 'connected' : 'error');
   const title = status >= 200 && status < 300 ? 'Meta connected' : 'Meta connection needs attention';
   const syncSummary = Array.isArray(payload?.linked)
-    ? payload.linked.map((item) => `${item.channel}: ${item.historySync?.status || 'not reported'}${item.historySync?.error ? ` — ${item.historySync.error}` : ''}`).join(' | ')
+    ? payload.linked.map((item) => `${item.channel}: ${item.historySync?.status || 'not reported'}${item.historySync?.error ? ' — see Orbit diagnostics' : ''}`).join(' | ')
     : '';
   const message = status >= 200 && status < 300
     ? `Your Messenger and Instagram accounts were connected successfully.${syncSummary ? ` Historical sync: ${syncSummary}.` : ''}`

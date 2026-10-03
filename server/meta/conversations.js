@@ -11,12 +11,12 @@ export async function syncMetaConversations(pool, {
 }) {
   if (!pageId || !pageAccessToken) return { conversations: 0, messages: 0 };
   const platform = channel === 'instagram' ? 'instagram' : 'messenger';
-  const list = await graphGet(`/${pageId}/conversations?platform=${platform}&limit=100`, pageAccessToken);
+  const list = await graphGet(pageAccessToken, `/${pageId}/conversations?platform=${platform}&limit=100`);
   let conversations = 0;
   let messages = 0;
   for (const item of list?.data || []) {
     if (!item?.id) continue;
-    const detail = await graphGet(`/${item.id}?fields=messages.limit(20){id,created_time,from,to,message}`, pageAccessToken).catch(() => null);
+    const detail = await graphGet(pageAccessToken, `/${item.id}?fields=messages.limit(20){id,created_time,from,to,message}`).catch(() => null);
     const rows = detail?.messages?.data || [];
     const latest = rows[rows.length - 1];
     const sender = latest?.from?.id && String(latest.from.id) !== String(businessId || pageId)
