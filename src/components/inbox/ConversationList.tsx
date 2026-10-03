@@ -2,9 +2,28 @@ import React, { useState } from 'react';
 import { useStore } from '../../state/store';
 import { useVertical } from '../../state/verticalContext';
 import { ChannelBadge } from '../../components/shared/ChannelIcon';
+import { ChannelDot } from '../../components/dash/kit';
 import { Search } from 'lucide-react';
 
 const filters = ['All', 'Unread', 'AI Handling', 'Needs Human', 'High Intent', 'Converted'];
+
+// Channel identities stay separate: filtering only hides rows, it never merges
+// customers or conversations (each row keeps its own channel + customer).
+const channelFilters = [
+  { id: 'all', label: 'All' },
+  { id: 'messenger', label: 'Messenger' },
+  { id: 'instagram', label: 'Instagram' },
+  { id: 'whatsapp', label: 'WhatsApp' },
+] as const;
+
+type ChannelFilter = typeof channelFilters[number]['id'];
+
+const channelNames: Record<ChannelFilter, string> = {
+  all: 'All',
+  messenger: 'Messenger',
+  instagram: 'Instagram',
+  whatsapp: 'WhatsApp',
+};
 
 interface Props {
   selectedId: string | null;
@@ -16,12 +35,17 @@ export function ConversationList({ selectedId, onSelect }: Props) {
   const { accentColor } = useVertical();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
+  const [channelFilter, setChannelFilter] = useState<ChannelFilter>('all');
 
   const filtered = state.conversations.filter(conv => {
     const customer = state.customers.find(c => c.id === conv.customerId);
-    const matchesSearch = !searchQuery || 
+    const matchesSearch = !searchQuery ||
       customer?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       conv.lastMessage.toLowerCase().includes(searchQuery.toLowerCase());
+
+    // Channel separation: a row shows only when it belongs to the selected
+    // channel identity. 'all' shows every identity side by side, each labeled.
+    const matchesChannel = channelFilter === 'all' || conv.channel === channelFilter;
 
     let matchesFilter = true;
     if (activeFilter === 'Unread') matchesFilter = conv.unreadCount > 0;
@@ -30,8 +54,21 @@ export function ConversationList({ selectedId, onSelect }: Props) {
     else if (activeFilter === 'High Intent') matchesFilter = conv.intent === 'purchase' || conv.intent === 'booking';
     else if (activeFilter === 'Converted') matchesFilter = conv.status === 'resolved';
 
-    return matchesSearch && matchesFilter;
+    return matchesSearch && matchesChannel && matchesFilter;
   });
+
+  const emptyTitle =
+    channelFilter !== 'all'
+      ? `No ${channelNames[channelFilter]} conversations yet`
+      : searchQuery
+        ? 'No conversations match your search'
+        : 'No conversations yet';
+  const emptyCopy =
+    channelFilter !== 'all'
+      ? `Threads from connected ${channelNames[channelFilter]} accounts will appear here once messages arrive.`
+      : searchQuery
+        ? 'Try a different name or message text, or clear the channel filter.'
+        : 'Customer threads will appear here once messages arrive from connected channels.';
 
   return (
     <div style={{
@@ -60,6 +97,29 @@ export function ConversationList({ selectedId, onSelect }: Props) {
           />
         </div>
 
+        {/* Channel identity filter: separate Messenger / Instagram / WhatsApp.
+            Composes with search + status pills; never merges identities. */}
+        <div style={{
+          display: 'flex', gap: 6, overflowX: 'auto', marginTop: 8,
+          scrollbarWidth: 'none', msOverflowStyle: 'none'
+        }} role="group" aria-label="Filter by channel">
+          {channelFilters.map(cf => (
+            <button
+              key={cf.id}
+              onClick={() => setChannelFilter(cf.id)}
+              aria-pressed={channelFilter === cf.id}
+              style={{
+                padding: '4px 10px', borderRadius: 14, border: '1px solid var(--border)',
+                fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', cursor: 'pointer',
+                background: channelFilter === cf.id ? 'var(--midnight-ink)' : 'transparent',
+                color: channelFilter === cf.id ? 'white' : 'var(--ink-600)'
+              }}
+            >
+              {cf.label}
+            </button>
+          ))}
+        </div>
+
         {/* Filter Pills */}
         <div style={{
           display: 'flex', gap: 6, overflowX: 'auto',
@@ -84,6 +144,16 @@ export function ConversationList({ selectedId, onSelect }: Props) {
 
       {/* List */}
       <div style={{ flex: 1, overflow: 'auto' }}>
+        {filtered.length === 0 && (
+          <div style={{ padding: '40px 24px', textAlign: 'center' }}>
+            <p style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--ink-900)', margin: '0 0 6px' }}>
+              {emptyTitle}
+            </p>
+            <p style={{ fontSize: 12.5, color: 'var(--ink-400)', margin: 0, lineHeight: 1.6 }}>
+              {emptyCopy}
+            </p>
+          </div>
+        )}
         {filtered.map(conv => {
           const customer = state.customers.find(c => c.id === conv.customerId);
           const isSelected = conv.id === selectedId;
@@ -129,9 +199,12 @@ export function ConversationList({ selectedId, onSelect }: Props) {
                     {conv.lastMessageTime}
                   </span>
                 </div>
-                <p style={{ fontSize: 12.5, color: 'var(--ink-600)' }} className="truncate">
+                <p style={{ fontSize: 12.5, color: 'var(--ink-600)', margin: '0 0 4px' }} className="truncate">
                   {conv.lastMessage}
                 </p>
+                {/* Channel identity: every row names its channel, so the All
+                    view never reads as one merged stream. */}
+                <ChannelDot channel={conv.channel} label={channelNames[conv.channel as ChannelFilter] || conv.channel} />
               </div>
 
               {/* Status */}
