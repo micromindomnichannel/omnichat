@@ -394,7 +394,7 @@ export function channelsRouter(pool) {
           'INSERT INTO credentials (id, workspace_id, provider, encrypted_secret, metadata) VALUES ($1,$2,$3,$4,$5)',
           [credentialId, oauthState.workspace_id, asset.channel === 'messenger' ? 'meta_messenger' : 'meta_instagram', encryptSecret(asset.pageAccessToken), JSON.stringify({ channel: asset.channel, page_id: asset.pageId, instagram_business_id: asset.instagramBusinessId || null })]
         );
-        const existing = (await pool.query('SELECT id FROM channel_accounts WHERE workspace_id=$1 AND channel=$2 AND external_account_id=$3', [oauthState.workspace_id, asset.channel, asset.externalAccountId])).rows[0];
+        const existing = (await pool.query('SELECT * FROM channel_accounts WHERE workspace_id=$1 AND channel=$2 AND external_account_id=$3', [oauthState.workspace_id, asset.channel, asset.externalAccountId])).rows[0];
         const accountId = existing?.id || rid('ch');
         const verifyToken = CHANNELS[asset.channel].defaultVerifyToken;
         let subscription = 'active';
@@ -405,6 +405,24 @@ export function channelsRouter(pool) {
            ON CONFLICT (workspace_id, channel, external_account_id) DO UPDATE SET display_name=EXCLUDED.display_name, username=EXCLUDED.username, credential_id=EXCLUDED.credential_id, status='connecting', meta_connection_id=EXCLUDED.meta_connection_id, metadata=EXCLUDED.metadata, updated_at=CURRENT_TIMESTAMP`,
           [accountId, oauthState.workspace_id, asset.channel, asset.externalAccountId, asset.displayName, asset.username, credentialId, actualConnectionId, JSON.stringify({ verify_token: verifyToken, webhook_name: asset.channel, page_id: asset.pageId, instagram_business_id: asset.instagramBusinessId || null, source: 'meta_oauth', webhook_subscription: subscription })]
         );
+        // OAuth reconnects refresh Meta credentials, but must not clone the
+        // tenant's MicroMind flow. Reuse the existing linked flow whenever it
+        // is still recorded for this channel account.
+        if (existing?.micromind_flow_id) {
+          const flowRow = (await pool.query(
+            'SELECT id FROM micromind_flows WHERE workspace_id=$1 AND channel_account_id=$2 AND external_flow_id=$3 ORDER BY updated_at DESC LIMIT 1',
+            [oauthState.workspace_id, accountId, existing.micromind_flow_id]
+          )).rows[0];
+          if (flowRow) {
+            await pool.query(
+              "UPDATE channel_accounts SET status='active', micromind_flow_id=$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2",
+              [existing.micromind_flow_id, accountId]
+            );
+            await pool.query("UPDATE micromind_flows SET status='active', updated_at=CURRENT_TIMESTAMP WHERE id=$1", [flowRow.id]);
+            linked.push({ channel: asset.channel, id: asset.externalAccountId, status: 'active', reused: true });
+            continue;
+          }
+        }
         const ws = (await pool.query('SELECT * FROM workspace_settings WHERE workspace_id=$1', [oauthState.workspace_id])).rows[0] || {};
         try {
           const out = await provisionTenantChannelFlow(pool, oauthState.workspace_id, asset.channel, {
