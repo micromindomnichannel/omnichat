@@ -67,11 +67,11 @@ describe('Onboarding Step 1: ConnectChannels', () => {
     (globalThis as any).fetch = vi.fn(async () => ({ ok: false, status: 500 }));
     renderWithProviders(<ConnectChannels data={{}} onNext={vi.fn()} onBack={vi.fn()} />);
 
-    const tiktokCard = screen.getByText('TikTok').closest('div[style*="border-radius: 10px"]')!;
-    const tiktokBtn = within(tiktokCard as HTMLElement).getByRole('button', { name: /^connect$/i });
-    fireEvent.click(tiktokBtn);
+    const websiteCard = screen.getByText('Website').closest('div[style*="border-radius: 10px"]')!;
+    const websiteBtn = within(websiteCard as HTMLElement).getByRole('button', { name: /^connect$/i });
+    fireEvent.click(websiteBtn);
 
-    expect(await screen.findByText(/TikTok connected/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Website connected/i)).toBeInTheDocument();
   });
 
   it('gates channel connection requiring token or flow id when backend is active', async () => {

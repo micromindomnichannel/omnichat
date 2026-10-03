@@ -93,7 +93,7 @@ export function Login() {
           </h1>
 
           <p style={{ fontSize: 15, color: '#A8A29E', lineHeight: 1.7, marginBottom: 40 }}>
-            ORBIT converges customer chats from Instagram, WhatsApp, Facebook & TikTok into one intelligent AI engine — turning incoming signals into sales, bookings, and support tickets instantly.
+            ORBIT converges customer chats from Instagram, WhatsApp, and Facebook into one intelligent AI engine — turning incoming signals into sales, bookings, and support tickets instantly.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, textAlign: 'left' }}>

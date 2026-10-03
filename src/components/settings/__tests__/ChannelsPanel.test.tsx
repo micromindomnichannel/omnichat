@@ -15,15 +15,14 @@ describe('ChannelsPanel matrix', () => {
   it('renders offline fallback note when backend accounts fetch fails (returns null)', async () => {
     (globalThis as any).fetch = vi.fn(async () => ({ ok: false, status: 500 }));
 
-    render(<ChannelsPanel showToast={showToast} local={{ tiktok: false, website: false }} onToggleLocal={onToggleLocal} />);
+    render(<ChannelsPanel showToast={showToast} local={{ website: false }} onToggleLocal={onToggleLocal} />);
 
     expect(await screen.findByText(/backend unreachable — showing local preview toggles below/i)).toBeInTheDocument();
   });
 
-  it('toggles local-only channels (TikTok and Website)', async () => {
-    render(<ChannelsPanel showToast={showToast} local={{ tiktok: false, website: true }} onToggleLocal={onToggleLocal} />);
+  it('toggles the local-only channel (Website)', async () => {
+    render(<ChannelsPanel showToast={showToast} local={{ website: true }} onToggleLocal={onToggleLocal} />);
 
-    expect(screen.getByText('TikTok')).toBeInTheDocument();
     expect(screen.getByText('Website')).toBeInTheDocument();
     expect(screen.getByText('🟢 Local preview')).toBeInTheDocument();
 

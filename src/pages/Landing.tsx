@@ -654,7 +654,7 @@ export function Landing() {
             },
             {
               q: 'Which channels work today?',
-              a: 'Messenger and Instagram connect end to end with auto-provisioned AI flows. WhatsApp, Telegram, and Gmail connect bring-your-own-flow (paste a MicroMind flow id). TikTok is not started yet.',
+              a: 'Messenger and Instagram connect end to end with auto-provisioned AI flows. Telegram and Discord connect with automatic provisioning too — paste the bot token and ORBIT handles the rest. WhatsApp and Gmail connect bring-your-own-flow (paste a MicroMind flow id).',
             },
             {
               q: 'What happens when the AI cannot answer?',

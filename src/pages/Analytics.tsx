@@ -5,7 +5,7 @@ import { PageHeader, Card, SectionTitle, Stat } from '../components/dash/kit';
 import { bucketMessagesByDay, countByChannel } from '../services/normalize';
 import { api } from '../services/api';
 import {
-  BarChart3, TrendingUp, Users, MessageSquare, DollarSign, Clock, Instagram, Facebook, MessageCircle, Music, Globe, FileText, Sparkles, Send, CheckCircle2, Download, Copy, Check
+  BarChart3, TrendingUp, Users, MessageSquare, DollarSign, Clock, Instagram, Facebook, MessageCircle, Globe, FileText, Sparkles, Send, CheckCircle2, Download, Copy, Check
 } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell
@@ -54,7 +54,6 @@ export function Analytics() {
     messenger: { name: 'Messenger', color: '#0099FF' },
     telegram: { name: 'Telegram', color: '#229ED9' },
     gmail: { name: 'Gmail', color: '#EA4335' },
-    tiktok: { name: 'TikTok', color: '#171717' },
     website: { name: 'Website', color: '#6B7280' },
   };
 
@@ -207,13 +206,6 @@ Strategic notes:
           style={{ background: platform === 'facebook' ? '#1877F2' : 'white', color: platform === 'facebook' ? 'white' : 'inherit' }}
         >
           <Facebook size={15} /> Facebook Messenger
-        </button>
-        <button
-          onClick={() => setPlatform('tiktok')}
-          className={'btn ' + (platform === 'tiktok' ? 'btn-primary' : 'btn-outline')}
-          style={{ background: platform === 'tiktok' ? '#171717' : 'white', color: platform === 'tiktok' ? 'white' : 'inherit' }}
-        >
-          <Music size={15} /> TikTok
         </button>
       </Card>
 

@@ -1,6 +1,6 @@
 export type Vertical = 'commerce' | 'appointments';
 
-export type Channel = 'instagram' | 'whatsapp' | 'facebook' | 'messenger' | 'telegram' | 'discord' | 'gmail' | 'tiktok' | 'website';
+export type Channel = 'instagram' | 'whatsapp' | 'facebook' | 'messenger' | 'telegram' | 'discord' | 'gmail' | 'website';
 
 export interface Customer {
   id: string;
@@ -162,7 +162,6 @@ export const CHANNEL_COLORS: Record<Channel, string> = {
   telegram: '#229ED9',
   discord: '#5865F2',
   gmail: '#EA4335',
-  tiktok: '#000000',
   website: '#6B7280'
 };
 
@@ -174,7 +173,6 @@ export const CHANNEL_NAMES: Record<Channel, string> = {
   telegram: 'Telegram',
   discord: 'Discord',
   gmail: 'Gmail',
-  tiktok: 'TikTok',
   website: 'Website'
 };
 
@@ -241,7 +239,7 @@ export const customers: Customer[] = [
     name: 'Omar Khalil',
     avatar: getAvatar('Omar Khalil'),
     phone: '0100 987 6543',
-    channels: ['tiktok', 'website'],
+    channels: ['website'],
     customerSince: '2024-06-01',
     tags: ['New'],
     status: 'New',
@@ -311,7 +309,7 @@ export const customers: Customer[] = [
     name: 'Layla Mahmoud',
     avatar: getAvatar('Layla Mahmoud'),
     phone: '0114 333 2222',
-    channels: ['tiktok'],
+    channels: ['website'],
     customerSince: '2024-07-01',
     tags: ['New'],
     status: 'New',
@@ -388,7 +386,7 @@ export const conversations: Conversation[] = [
   {
     id: 'conv4',
     customerId: 'c4',
-    channel: 'tiktok',
+    channel: 'website',
     status: 'ai_handling',
     intent: 'purchase',
     lastMessage: 'Is this available in black?',
@@ -468,7 +466,7 @@ export const conversations: Conversation[] = [
   {
     id: 'conv9',
     customerId: 'c9',
-    channel: 'tiktok',
+    channel: 'website',
     status: 'human',
     intent: 'purchase',
     lastMessage: 'Can I get a discount?',

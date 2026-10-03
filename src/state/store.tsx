@@ -98,7 +98,6 @@ const initialState: AppState = {
     instagram: false,
     whatsapp: false,
     facebook: false,
-    tiktok: false,
     website: false
   },
   aiEnabled: true,

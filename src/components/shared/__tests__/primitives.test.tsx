@@ -163,7 +163,7 @@ describe('Shared Primitives', () => {
 
   describe('ChannelIcon & ChannelBadge', () => {
     it('renders icons for all supported channels and labels when requested', () => {
-      const channels = ['messenger', 'instagram', 'whatsapp', 'telegram', 'gmail', 'tiktok', 'website'] as const;
+      const channels = ['messenger', 'instagram', 'whatsapp', 'telegram', 'discord', 'gmail', 'website'] as const;
       const { rerender } = render(<ChannelIcon channel="messenger" showLabel />);
       expect(screen.getByText('Messenger')).toBeInTheDocument();
 

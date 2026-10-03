@@ -6,7 +6,7 @@ import { Tabs } from '../components/shared/Tabs';
 import { Modal } from '../components/shared/Modal';
 import { EGYPTIAN_GOVERNORATES } from '../state/mockData';
 import {
-  Upload, Check, X, Plus, Trash2, UserPlus, Instagram, MessageCircle, Facebook, Music, Globe, Sparkles, Shield, LogOut
+  Upload, Check, X, Plus, Trash2, UserPlus, Instagram, MessageCircle, Facebook, Globe, Sparkles, Shield, LogOut
 } from 'lucide-react';
 import { OrbitLogo } from '../components/shared/OrbitLogo';
 import { ChannelsPanel } from '../components/settings/ChannelsPanel';
@@ -17,7 +17,7 @@ import { clearSessionCache, getMemberships } from '../services/session';
 const settingsTabs = ['Business Profile', 'Channels', 'Plan & Usage', 'AI Settings', 'Working Hours', 'Notifications', 'Team Members', 'Account'];
 
 const channelIcons: Record<string, React.ElementType> = {
-  instagram: Instagram, whatsapp: MessageCircle, facebook: Facebook, tiktok: Music, website: Globe
+  instagram: Instagram, whatsapp: MessageCircle, facebook: Facebook, website: Globe
 };
 
 export function Settings() {
@@ -195,7 +195,6 @@ export function Settings() {
             <Card>
               <SectionTitle>Local preview channels</SectionTitle>
               <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                <ChannelDot channel="tiktok" label="TikTok" />
                 <ChannelDot channel="website" label="Website" />
               </div>
               <p style={{ fontSize: 12, color: 'var(--stone-gray)', margin: '8px 0 0' }}>Local-only toggles live inside the panel above when the backend is unreachable.</p>

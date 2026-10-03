@@ -4,18 +4,18 @@ import express from 'express';
 import crypto from 'crypto';
 import { encryptSecret, decryptSecret } from '../credentials/crypto.js';
 import { syncMetaConversations } from '../meta/conversations.js';
-import { CHANNELS, provisionTenantChannelFlow, templateVersionForAsync } from '../micromind/provisionChannel.js';
+import { CHANNELS, provisionTenantChannelFlow, templateVersionForAsync, orbitBackendPublicUrl } from '../micromind/provisionChannel.js';
 import { testFlowLink, recordLinkTest } from '../micromind/linktest.js';
 import { assertCanConnectChannel } from '../billing/plans.js';
 import { requireAuth, requireWorkspace, workspaceFor } from '../auth/middleware.js';
 import { graphGet, publishPagePost, publishInstagramMedia } from '../meta/graph.js';
 import { discoverDiscordBot } from '../integrations/discord.js';
 import { startDiscordAccount, stopDiscordAccount } from '../integrations/discordGateway.js';
+import { setTelegramWebhook, deleteTelegramWebhook } from '../integrations/telegram.js';
 import { buildMetaAuthUrl, discoverMetaAssets, exchangeMetaCode, metaConfigured, metaRedirectUri, subscribePage } from '../meta/oauth.js';
 
 const FULL = ['messenger', 'instagram', 'telegram', 'discord']; // verified template + auto-provision
 const BYOF = ['whatsapp', 'gmail']; // wiring done, template pending -> micromindFlowId required
-const NOT_STARTED = ['tiktok'];
 const PROVIDER = {
   messenger: 'meta_messenger',
   instagram: 'meta_instagram',
@@ -182,9 +182,6 @@ export function channelsRouter(pool) {
   r.post('/api/v1/workspaces/:workspaceId/channels/:channel/connect', requireWorkspace, async (req, res) => {
     const { channel } = req.params;
     const workspaceId = req.workspaceId;
-    if (NOT_STARTED.includes(channel)) {
-      return res.status(400).json({ code: 'channel_pending', error: `${channel} slice not started yet` });
-    }
     if (!FULL.includes(channel) && !BYOF.includes(channel)) {
       return res.status(400).json({ error: `Unknown channel: ${channel}` });
     }
@@ -322,6 +319,27 @@ export function channelsRouter(pool) {
           console.error(`[channel:discord] gateway start failed:`, err.message);
         }
       }
+      // Zero-touch intake registration (best-effort, never fails connect):
+      // telegram -> ORBIT calls setWebhook itself (the per-tenant cutover).
+      // Anything unresolved stays manual via the returned secrets/hints.
+      let intake = { attempted: false };
+      const backendUrl = orbitBackendPublicUrl();
+      const backendReal = !backendUrl.includes('YOUR-ORBIT-BACKEND');
+      if (channel === 'telegram' && status === 'active' && credentialSecret && webhookSecret) {
+        intake = { attempted: true, transport: 'telegram-webhook', url: `${backendUrl}/webhooks/telegram` };
+        if (!backendReal) {
+          intake = { ...intake, ok: false, error: 'backend URL not configured — register manually (secret + URL hint returned)' };
+        } else {
+          try {
+            await setTelegramWebhook({ botToken: credentialSecret, url: `${backendUrl}/webhooks/telegram`, secret: webhookSecret });
+            intake = { ...intake, ok: true };
+          } catch (err) {
+            intake = { ...intake, ok: false, error: String(err.message).slice(0, 200) };
+          }
+        }
+        await pool.query('UPDATE channel_accounts SET metadata = metadata || $1 WHERE id=$2',
+          [JSON.stringify({ webhook_registration: { ...intake, at: new Date().toISOString() } }), accId]).catch(() => {});
+      }
       // Automatic link validation (fixed harmless ping). Records the result on
       // the flow row; a failed test never fails the connect itself.
       let test = { status: 'skipped', detail: 'no key linked — test once a key is added' };
@@ -335,12 +353,15 @@ export function channelsRouter(pool) {
       res.json({
         channel, status, account: safeAccount(rows[0]),
         test,
+        intake,
         tenancy: {
           folder: folderId ? 'ready' : 'pending',
           folderId: folderId || null,
           keyProvisioned: Boolean(keyCredentialId),
         },
-        // Returned ONCE: configure as the Telegram setWebhook secret_token. Never stored elsewhere.
+        // Returned ONCE: manual fallback for the Telegram webhook (auto-registered
+        // above when possible) — configure via setWebhook with this secret_token.
+        // Never stored elsewhere.
         ...(webhookSecret ? { webhookSecret, webhookUrlHint: 'POST /webhooks/telegram' } : {}),
       });
     } catch (err) {
@@ -353,7 +374,7 @@ export function channelsRouter(pool) {
   // (messenger account preferred, instagram fallback) — tokens must carry
   // pages_manage_posts under the production app. Per-platform outcomes land in
   // content_schedules.result; row goes published if ANY platform succeeded.
-  // whatsapp/tiktok have no Meta publish API here and are recorded skipped.
+  // whatsapp has no Meta publish API here and is recorded skipped.
   r.post('/api/v1/workspaces/:workspaceId/schedules/:id/publish', requireWorkspace, async (req, res) => {
     const workspaceId = req.workspaceId;
     try {
@@ -546,6 +567,14 @@ export function channelsRouter(pool) {
       if (!rows.length) return res.status(404).json({ error: 'channel not found' });
       if (rows[0].channel === 'discord') {
         try { await stopDiscordAccount(rows[0].id); } catch { /* listener already dead */ }
+      }
+      if (rows[0].channel === 'telegram' && rows[0].credential_id) {
+        // Zero-touch offboarding: release the bot's webhook so updates stop
+        // hitting ORBIT (and the token can be re-pointed). Never fails disconnect.
+        try {
+          const cred = (await pool.query('SELECT encrypted_secret FROM credentials WHERE id=$1', [rows[0].credential_id])).rows[0];
+          if (cred) await deleteTelegramWebhook({ botToken: decryptSecret(cred.encrypted_secret) });
+        } catch { /* webhook already gone or token dead */ }
       }
       await audit(pool, workspaceId, 'channel.disconnect', rows[0].channel + ':' + rows[0].id, {}, req.user.email);
       res.json({ channel: rows[0].channel, status: 'disconnected' });

@@ -2,7 +2,7 @@
 // with local-toggle fallback when the API is unreachable.
 // Backend never returns secrets — only {channel, status, display_name, ...}.
 import React, { useEffect, useState } from 'react';
-import { Instagram, Facebook, MessageCircle, Send, Bot, Mail, Music, Globe } from 'lucide-react';
+import { Instagram, Facebook, MessageCircle, Send, Bot, Mail, Globe } from 'lucide-react';
 import { api } from '../../services/api';
 import { getMemberships } from '../../services/session';
 
@@ -10,13 +10,12 @@ const SLICE: Record<string, { label: string; Icon: React.ElementType; color: str
   messenger: { label: 'Messenger', Icon: Facebook, color: '#0099FF', tokenHint: 'Page access token (encrypted server-side)', guide: ['Meta Developers → your app → Messenger → generate a Page access token (pages_messaging).', 'Paste it below — ORBIT encrypts it, provisions your AI flow, and gives you the webhook URL.', 'In Meta → Webhooks, subscribe with that URL + the verify token shown after connect.'] },
   instagram: { label: 'Instagram', Icon: Instagram, color: '#E4405F', tokenHint: 'Page access token (encrypted server-side)', guide: ['Connect your Instagram Business account to a Facebook Page.', 'Generate a Page token with instagram_manage_messages, paste it below.', 'Subscribe the webhook URL in Meta, then send yourself a test DM.'] },
   whatsapp: { label: 'WhatsApp', Icon: MessageCircle, color: '#25D366', tokenHint: 'System-user token (encrypted server-side)', byof: true, guide: ['Meta app → WhatsApp → API Setup: copy the phone-number ID and a system-user token.', 'In MicroMind: open your flow → assign a prediction key (API protection) → copy the flow id and the key.', 'Paste all three below — ORBIT vaults the key and runs a harmless test ping automatically.'] },
-  telegram: { label: 'Telegram', Icon: Send, color: '#229ED9', tokenHint: 'Bot token from @BotFather (encrypted server-side)', guide: ['Chat @BotFather → /newbot → copy the token.', 'Paste it below — ORBIT encrypts it, provisions your AI flow, and returns a webhook secret.', 'Register the webhook: https://api.telegram.org/bot<TOKEN>/setWebhook with the secret, then send your bot a test message.'] },
+  telegram: { label: 'Telegram', Icon: Send, color: '#229ED9', tokenHint: 'Bot token from @BotFather (encrypted server-side)', guide: ['Chat @BotFather → /newbot → copy the token.', 'Paste it below and connect — ORBIT encrypts it, provisions your AI flow, and registers its own webhook on your bot automatically.', 'Send your bot a test message. Manual fallback (secret + URL) is shown only if auto-registration fails.'] },
   discord: { label: 'Discord', Icon: Bot, color: '#5865F2', tokenHint: 'Bot token (Discord Developer Portal → Bot → Token)', guide: ['Developer Portal → your app → Bot → copy the token and turn on Message Content Intent.', 'Invite the bot to your server with View Channel + Read History + Send Messages.', 'Paste the token below — ORBIT encrypts it, provisions your AI flow, and starts listening. No webhook to register.'] },
   gmail: { label: 'Gmail', Icon: Mail, color: '#EA4335', tokenHint: 'OAuth refresh token (placeholder — slice pending)', byof: true, guide: ['Google Cloud OAuth consent + Pub/Sub watch required — slice pending, connect disabled for now.'] },
 };
 
 const LOCAL_ONLY: Record<string, { label: string; Icon: React.ElementType; color: string }> = {
-  tiktok: { label: 'TikTok', Icon: Music, color: '#171717' },
   website: { label: 'Website', Icon: Globe, color: '#343434' },
 };
 

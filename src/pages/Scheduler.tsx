@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Calendar, Clock, Plus, Trash2, CheckCircle2, Instagram, Facebook, MessageCircle, Music, Send, Image, Sparkles
+  Calendar, Clock, Plus, Trash2, CheckCircle2, Instagram, Facebook, MessageCircle, Send, Image, Sparkles
 } from 'lucide-react';
 import { OrbitLogo } from '../components/shared/OrbitLogo';
 import { PageHeader, Card, EmptyState } from '../components/dash/kit';
@@ -109,8 +109,7 @@ export function Scheduler() {
   const platformIcons: Record<string, { icon: React.ElementType; color: string; name: string }> = {
     instagram: { icon: Instagram, color: '#E4405F', name: 'Instagram' },
     facebook: { icon: Facebook, color: '#1877F2', name: 'Facebook' },
-    whatsapp: { icon: MessageCircle, color: '#25D366', name: 'WhatsApp' },
-    tiktok: { icon: Music, color: '#171717', name: 'TikTok' }
+    whatsapp: { icon: MessageCircle, color: '#25D366', name: 'WhatsApp' }
   };
 
   return (
@@ -118,7 +117,7 @@ export function Scheduler() {
       <PageHeader
         eyebrow="Schedule"
         title="Scheduled Content & Social Broadcasts"
-        sub="Plan, schedule, and auto-broadcast marketing updates simultaneously across Instagram, WhatsApp, Facebook & TikTok."
+        sub="Plan, schedule, and auto-broadcast marketing updates simultaneously across Instagram, WhatsApp, and Facebook."
         actions={
           <button
             onClick={() => setShowModal(true)}

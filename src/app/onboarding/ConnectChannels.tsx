@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useVertical } from '../../state/verticalContext';
 import { useStore } from '../../state/store';
-import { ArrowLeft, ArrowRight, Check, Instagram, MessageCircle, Facebook, Music, Globe, Send, Mail } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Instagram, MessageCircle, Facebook, Globe, Send, Mail } from 'lucide-react';
 import { api } from '../../services/api';
 
 interface Props {
@@ -14,9 +14,8 @@ const channels = [
   { id: 'instagram', name: 'Instagram', icon: Instagram, color: '#E4405F', real: true, tokenHint: 'Page access token' },
   { id: 'messenger', name: 'Messenger', icon: Facebook, color: '#0099FF', real: true, tokenHint: 'Page access token' },
   { id: 'whatsapp', name: 'WhatsApp', icon: MessageCircle, color: '#25D366', real: true, tokenHint: 'System-user token', byof: true },
-  { id: 'telegram', name: 'Telegram', icon: Send, color: '#229ED9', real: true, tokenHint: 'Bot token', byof: true },
+  { id: 'telegram', name: 'Telegram', icon: Send, color: '#229ED9', real: true, tokenHint: 'Bot token' },
   { id: 'gmail', name: 'Gmail', icon: Mail, color: '#EA4335', real: true, tokenHint: 'OAuth token (pending)', byof: true },
-  { id: 'tiktok', name: 'TikTok', icon: Music, color: '#000000', real: false },
   { id: 'website', name: 'Website', icon: Globe, color: '#6B7280', real: false },
 ];
 
@@ -26,7 +25,7 @@ const guides: Record<string, string[]> = {
   instagram: ['Connect your Instagram Business account to a Facebook Page, then paste a Page token with instagram_manage_messages.'],
   messenger: ['Meta Developers → your app → Messenger → generate a Page access token (pages_messaging).'],
   whatsapp: ['Meta app → WhatsApp → copy the phone-number ID + system-user token. A MicroMind flow ID is also required for now.'],
-  telegram: ['Chat @BotFather → /newbot → copy the token. A MicroMind flow ID is also required for now.'],
+  telegram: ['Chat @BotFather → /newbot → copy the token, then connect — ORBIT provisions the flow and registers its webhook automatically.'],
   gmail: ['Google OAuth + Pub/Sub watch required — slice pending.'],
 };
 
