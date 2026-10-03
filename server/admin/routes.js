@@ -182,7 +182,7 @@ export function adminRouter(pool) {
   r.put('/api/v1/admin/templates/:channel', requireRole('owner'), async (req, res) => {
     const { channel } = req.params;
     const { flowData, version, status = 'draft', confirmNoSecrets = false } = req.body || {};
-    const KNOWN = ['messenger', 'instagram', 'whatsapp', 'telegram', 'gmail'];
+    const KNOWN = ['messenger', 'instagram', 'whatsapp', 'telegram', 'discord', 'gmail'];
     if (!KNOWN.includes(channel)) return res.status(400).json({ error: `Unknown channel: ${channel}` });
     if (!version || !/^v\d+(-draft)?$/.test(String(version))) {
       return res.status(400).json({ error: "version required, format 'vN' or 'vN-draft' (e.g. v2-draft)" });

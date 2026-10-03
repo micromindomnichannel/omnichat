@@ -27,9 +27,10 @@ export function Settings() {
   const [activeTab, setActiveTab] = useState('Business Profile');
   const [showInvite, setShowInvite] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
-  const [invitePassword, setInvitePassword] = useState('');
   const [inviteRole, setInviteRole] = useState('agent');
   const [members, setMembers] = useState<any[] | null>(null);
+  const [invites, setInvites] = useState<any[] | null>(null);
+  const [manualLink, setManualLink] = useState('');
   const [plan, setPlan] = useState<any>(null);
   const [newRule, setNewRule] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -42,6 +43,7 @@ export function Settings() {
   useEffect(() => {
     api.adminUsers().then((rows) => { if (rows) setMembers(rows); });
     api.getPlan('default').then((p) => { if (p) setPlan(p); });
+    api.listInvites(workspaceId).then((rows) => { if (rows) setInvites(rows); });
   }, []);
 
   const handleToggleChannel = (channel: string) => {
@@ -50,34 +52,40 @@ export function Settings() {
   };
 
   const handleInvite = async () => {
-    if (!inviteEmail.trim() || invitePassword.length < 10) {
-      showToast('Email + 10-char password required', 'danger');
+    if (!inviteEmail.trim()) {
+      showToast('Email address required', 'danger');
       return;
     }
-    // Real path: owner creates the account server-side (admin/agent roles).
-    const res = await api.adminCreateUser({
-      email: inviteEmail.trim(), password: invitePassword, displayName: inviteEmail.split('@')[0], role: inviteRole,
-    });
-    if (res?.user) {
-      showToast(`Account created for ${res.user.email}`, 'success');
+    // Invitation flow: owner sends an email, the receiver accepts via link
+    // and sets their own password. No shared/temporary passwords ever exist.
+    const res = await api.createInvite(workspaceId, { email: inviteEmail.trim(), role: inviteRole });
+    if (res?.invite) {
+      showToast(
+        res.invite.delivered
+          ? `Invitation sent to ${res.invite.email}`
+          : `Invite created — email service unreachable, forward the link manually`,
+        res.invite.delivered ? 'success' : 'warning'
+      );
+      setManualLink(res.acceptUrl || '');
       setShowInvite(false);
       setInviteEmail('');
-      setInvitePassword('');
-      const rows = await api.adminUsers();
-      if (rows) setMembers(rows);
+      const rows = await api.listInvites(workspaceId);
+      if (rows) setInvites(rows);
     } else if (res?._network) {
-      setShowInvite(false);
-      showToast('Backend unreachable — cannot create account right now', 'danger');
+      showToast('Backend unreachable — cannot send the invitation right now', 'danger');
     } else {
-      // Fallback: local-only entry (backend unreachable or not owner).
-      dispatch({
-        type: 'ADD_TEAM_MEMBER',
-        member: { id: `t${Date.now()}`, name: inviteEmail.split('@')[0], email: inviteEmail, role: inviteRole as any, status: 'Pending' }
-      });
-      setShowInvite(false);
-      setInviteEmail('');
-      setInvitePassword('');
-      showToast(res?.error || 'Saved locally (backend unreachable or owner-only)', 'warning');
+      showToast(res?.error || 'Invitation failed (owner-only)', 'danger');
+    }
+  };
+
+  const handleRevokeInvite = async (id: string) => {
+    const res = await api.revokeInvite(id);
+    if (res?.revoked) {
+      showToast('Invitation revoked', 'success');
+      const rows = await api.listInvites(workspaceId);
+      if (rows) setInvites(rows);
+    } else {
+      showToast(res?.error || 'Revoke failed', 'danger');
     }
   };
 
@@ -476,6 +484,43 @@ export function Settings() {
                 </tbody>
               </table>
             </Card>
+            {manualLink && (
+              <Card style={{ marginTop: 12 }}>
+                <SectionTitle>Forward this invitation link</SectionTitle>
+                <p style={{ fontSize: 12, color: 'var(--stone-gray)', margin: '0 0 8px' }}>Email delivery is not configured — copy and send this link yourself. It expires in 7 days.</p>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input className="input" readOnly value={manualLink} onFocus={(e) => e.target.select()} style={{ flex: 1 }} />
+                  <button
+                    className="btn" style={{ height: 38, padding: '0 16px', fontWeight: 700 }}
+                    onClick={() => { try { navigator.clipboard.writeText(manualLink); showToast('Link copied', 'success'); } catch { showToast('Copy failed — select the text manually', 'danger'); } }}
+                  >
+                    Copy
+                  </button>
+                </div>
+              </Card>
+            )}
+            {invites && invites.filter((i: any) => i.status === 'pending').length > 0 && (
+              <Card style={{ marginTop: 12, padding: 0, overflow: 'hidden' }}>
+                <div style={{ padding: '20px 20px 0' }}>
+                  <SectionTitle>Pending invitations</SectionTitle>
+                </div>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <tbody>
+                    {invites.filter((i: any) => i.status === 'pending').map((inv: any) => (
+                      <tr key={inv.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                        <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--ink-600)' }}>{inv.email}</td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <span style={{ padding: '4px 10px', borderRadius: 4, background: 'var(--surface-0)', fontSize: 12, fontWeight: 650, border: '1px solid var(--border)', textTransform: 'capitalize' }}>{inv.role}</span>
+                        </td>
+                        <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                          <button onClick={() => handleRevokeInvite(inv.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: 'var(--burnt-coral)' }}>Revoke</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Card>
+            )}
           </div>
         );
 
@@ -573,13 +618,12 @@ export function Settings() {
         <Modal isOpen={showInvite} onClose={() => setShowInvite(false)} title="Invite Team Member" size="sm">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <input className="input" placeholder="Email address" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
-            <input className="input" type="password" placeholder="Temporary password (min 10 chars)" value={invitePassword} onChange={e => setInvitePassword(e.target.value)} />
             <select className="input" value={inviteRole} onChange={e => setInviteRole(e.target.value)}>
               <option value="admin">Admin</option>
               <option value="agent">Agent</option>
             </select>
-            <p style={{ fontSize: 11.5, color: 'var(--stone-gray)' }}>Owner-only. The account is created immediately and can sign in.</p>
-            <button onClick={handleInvite} className="btn btn-primary" style={{ width: '100%', background: 'var(--signal-orange)' }}>Create Account</button>
+            <p style={{ fontSize: 11.5, color: 'var(--stone-gray)' }}>Owner-only. An email invitation is sent — the receiver accepts the link and sets their own password. Nothing to share or remember.</p>
+            <button onClick={handleInvite} className="btn btn-primary" style={{ width: '100%', background: 'var(--signal-orange)' }}>Send Invitation</button>
           </div>
         </Modal>
       </div>

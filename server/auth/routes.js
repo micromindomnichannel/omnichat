@@ -87,11 +87,13 @@ export function authRouter(pool) {
       const workspaceId = rid('ws');
       await pool.query('INSERT INTO users (id, email, password_hash, display_name) VALUES ($1,$2,$3,$4)',
         [id, email, row.password_hash, row.display_name || email.split('@')[0]]);
-      // Self-service signups receive an isolated workspace. The legacy
-      // default workspace remains available to existing owner-managed users.
+      // Self-service signups receive an isolated workspace. The requested plan
+      // (pricing page -> /signup?plan=) is whitelisted; anything else is pro.
+      // The legacy default workspace remains available to existing owner-managed users.
+      const plan = ['free', 'pro', 'business'].includes(String(req.body?.plan || '')) ? String(req.body.plan) : 'pro';
       await pool.query(
         'INSERT INTO workspaces (id, name, plan) VALUES ($1,$2,$3)',
-        [workspaceId, `${row.display_name || email.split('@')[0]} Workspace`, 'pro']);
+        [workspaceId, `${row.display_name || email.split('@')[0]} Workspace`, plan]);
       await pool.query(
         `INSERT INTO workspace_settings (workspace_id, business_name)
          VALUES ($1,$2) ON CONFLICT (workspace_id) DO NOTHING`,

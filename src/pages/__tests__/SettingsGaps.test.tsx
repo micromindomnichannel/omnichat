@@ -144,14 +144,22 @@ describe('Settings panels & workflows', () => {
     expect(await screen.findByText('Notification preferences saved')).toBeInTheDocument();
   });
 
-  it('validates invite member modal and handles success & local fallback', async () => {
+  it('sends an email invitation and lists it as pending (no shared passwords)', async () => {
     (globalThis as any).fetch = vi.fn(async (url: string, opts: any) => {
-      if (opts?.method === 'POST' && String(url).includes('/users')) {
+      if (opts?.method === 'POST' && String(url).includes('/invites') && !String(url).includes('/accept')) {
         return {
           ok: true,
           json: async () => ({
-            user: { id: 'u_new', email: 'agent.sarah@orbit.com' }
+            invite: { id: 'inv_1', email: 'agent.sarah@orbit.com', role: 'agent', expiresInDays: 7, delivered: true }
           })
+        };
+      }
+      if (String(url).includes('/invites')) {
+        return {
+          ok: true,
+          json: async () => ([
+            { id: 'inv_1', email: 'agent.sarah@orbit.com', role: 'agent', status: 'pending' }
+          ])
         };
       }
       return { ok: true, json: async () => null };
@@ -164,18 +172,16 @@ describe('Settings panels & workflows', () => {
     fireEvent.click(screen.getByRole('button', { name: /invite new member/i }));
     expect(screen.getByText('Invite Team Member')).toBeInTheDocument();
 
-    // 1. Validation error: password < 10 chars
+    // 1. Validation: email required.
+    fireEvent.click(screen.getByRole('button', { name: /send invitation/i }));
+    expect(await screen.findByText('Email address required')).toBeInTheDocument();
+
+    // 2. Valid submission: invitation sent, modal closes, pending row appears.
     fireEvent.change(screen.getByPlaceholderText(/email address/i), { target: { value: 'agent.sarah@orbit.com' } });
-    fireEvent.change(screen.getByPlaceholderText(/temporary password/i), { target: { value: 'short' } });
-    fireEvent.click(screen.getByRole('button', { name: /create account/i }));
+    fireEvent.click(screen.getByRole('button', { name: /send invitation/i }));
 
-    expect(await screen.findByText('Email + 10-char password required')).toBeInTheDocument();
-
-    // 2. Valid submission
-    fireEvent.change(screen.getByPlaceholderText(/temporary password/i), { target: { value: 'superSecurePassword123' } });
-    fireEvent.click(screen.getByRole('button', { name: /create account/i }));
-
-    expect(await screen.findByText('Account created for agent.sarah@orbit.com')).toBeInTheDocument();
+    expect(await screen.findByText('Invitation sent to agent.sarah@orbit.com')).toBeInTheDocument();
     expect(screen.queryByText('Invite Team Member')).not.toBeInTheDocument();
+    expect(await screen.findByText('Pending invitations')).toBeInTheDocument();
   });
 });

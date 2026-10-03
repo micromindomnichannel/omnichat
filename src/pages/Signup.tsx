@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { OrbitLogo } from '../components/shared/OrbitLogo';
 import {
   Eye, EyeOff, ArrowRight, Mail, Lock, User, Phone, Building2, Sparkles, CheckCircle2, Upload
@@ -8,6 +8,10 @@ import { api } from '../services/api';
 
 export function Signup() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  // Pricing link: /signup?plan=free|pro|business preselects the workspace plan
+  // (whitelisted server-side; defaults to pro). Shown as a confirmation chip.
+  const requestedPlan = ['free', 'pro', 'business'].includes(params.get('plan') || '') ? params.get('plan') as string : null;
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -81,7 +85,7 @@ export function Signup() {
     setError('');
     // Account is created server-side on successful verification (first-ever
     // user becomes workspace owner; afterwards registration is closed).
-    const res = await api.signupVerify(email, otp.trim());
+    const res = await api.signupVerify(email, otp.trim(), requestedPlan || undefined);
     setLoading(false);
     if (res?.user) {
       const userData = {
@@ -267,6 +271,12 @@ export function Signup() {
                   ? `We sent a 6-digit code to ${email || 'your email'}. It expires in 10 minutes.`
                   : 'Tell us about your business so ORBIT can adapt.'}
             </p>
+            {requestedPlan && step === 1 && (
+              <div className="orbit-badge" style={{ marginTop: 10 }}>
+                <CheckCircle2 size={14} color="var(--signal-orange)" />
+                <span style={{ textTransform: 'capitalize' }}>{requestedPlan} plan selected — applied to your workspace on verify</span>
+              </div>
+            )}
           </div>
 
           {/* Step indicator pills */}

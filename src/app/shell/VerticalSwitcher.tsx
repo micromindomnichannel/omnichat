@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useVertical } from '../../state/verticalContext';
 import { useStore } from '../../state/store';
+import { isAdmin } from '../../services/session';
 import { Package, Calendar, ChevronDown, Check } from 'lucide-react';
 
 interface VerticalSwitcherProps {
@@ -41,6 +42,23 @@ export function VerticalSwitcher({ collapsed = false }: VerticalSwitcherProps) {
     showToast(`Switched workspace to ${mode === 'commerce' ? 'Commerce' : 'Appointments'} Mode`, 'success');
     setIsOpen(false);
   };
+
+  // Workspace vertical is single-mode per workspace: only the admin can
+  // switch. Everyone else sees their workspace's mode as a static badge.
+  if (!isAdmin()) {
+    return (
+      <div style={{ width: '100%', height: 38, borderRadius: 8, background: 'var(--surface-0)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8, padding: collapsed ? 0 : '0 10px', justifyContent: collapsed ? 'center' : 'flex-start' }} title={vertical === 'commerce' ? 'Commerce Mode (set by your workspace)' : 'Appointments Mode (set by your workspace)'}>
+        <div style={{ width: 22, height: 22, borderRadius: 5, background: vertical === 'commerce' ? 'var(--signal-orange)' : 'var(--mint-signal)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          {vertical === 'commerce' ? <Package size={13} color="white" /> : <Calendar size={13} color="white" />}
+        </div>
+        {!collapsed && (
+          <span style={{ fontSize: 13, fontWeight: 650, color: 'var(--midnight-ink)' }}>
+            {vertical === 'commerce' ? 'Commerce Mode' : 'Appointments Mode'}
+          </span>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>

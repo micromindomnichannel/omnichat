@@ -108,8 +108,14 @@ describe('Admin dashboard', () => {
       }
     ];
 
+    const mockTemplates = {
+      telegram: { file: 'telegram.json', currentVersion: 'v1', currentSource: 'file', status: 'verified', inUse: [] },
+      discord: { file: 'discord.json', currentVersion: 'v1', currentSource: 'file', status: 'verified', inUse: [{ version: 'v1', clones: 2, stale: false }] },
+    };
+
     (globalThis as any).fetch = vi.fn(async (url: string) => {
       if (String(url).includes('/overview')) return { ok: true, json: async () => mockOverview };
+      if (String(url).includes('/templates')) return { ok: true, json: async () => mockTemplates };
       if (String(url).includes('/micromind')) return { ok: true, json: async () => mockMm };
       if (String(url).includes('/channels')) return { ok: true, json: async () => mockChannels };
       if (String(url).includes('/flows')) return { ok: true, json: async () => mockFlows };
@@ -147,5 +153,11 @@ describe('Admin dashboard', () => {
     // Table 5: Usage
     expect(screen.getByRole('heading', { name: 'Usage (30d)' })).toBeInTheDocument();
     expect(screen.getByText('meta_graph')).toBeInTheDocument();
+
+    // Table 6: Flow templates (registry sync, incl. telegram + discord)
+    expect(screen.getByRole('heading', { name: /flow templates/i })).toBeInTheDocument();
+    expect(screen.getByText('telegram')).toBeInTheDocument();
+    expect(screen.getByText('discord')).toBeInTheDocument();
+    expect(screen.getByText(/v1×2/)).toBeInTheDocument();
   });
 });

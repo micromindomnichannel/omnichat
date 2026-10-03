@@ -24,12 +24,13 @@ export function Admin() {
   const [errors, setErrors] = useState<any>({ webhooks: [], audit: [] });
   const [usage, setUsage] = useState<any[]>([]);
   const [mm, setMm] = useState<any>(null);
+  const [templates, setTemplates] = useState<any>(null);
 
   useEffect(() => {
     (async () => {
-      const [o, c, f, e, u, m] = await Promise.all([
+      const [o, c, f, e, u, m, t] = await Promise.all([
         api.adminOverview(), api.adminChannels(), api.adminFlows(), api.adminErrors(), api.adminUsage(),
-        api.adminMicromind(),
+        api.adminMicromind(), api.adminTemplates(),
       ]);
       if (o) setOverview(o);
       if (c) setChannels(c);
@@ -37,6 +38,7 @@ export function Admin() {
       if (e) setErrors(e);
       if (u) setUsage(u);
       if (m) setMm(m);
+      if (t) setTemplates(t);
     })();
   }, []);
 
@@ -102,6 +104,23 @@ export function Admin() {
             f.updated_at,
           ])}
         />
+      </Card>
+      <Card style={{ marginBottom: 16 }}>
+        <SectionTitle>Flow templates (registry sync)</SectionTitle>
+        {!templates ? <div style={{ fontSize: 12, color: 'var(--stone-gray)' }}>No data.</div> : (
+          <Table
+            cols={['Channel', 'Current', 'Source', 'Status', 'Clones']}
+            rows={Object.entries(templates).map(([channel, t]: [string, any]) => [
+              channel,
+              t.currentVersion || '—',
+              t.currentSource || '—',
+              t.status || '—',
+              (t.inUse || []).length
+                ? (t.inUse || []).map((u: any) => `${u.version}×${u.clones}${u.stale ? ' (stale)' : ''}`).join(', ')
+                : 'none',
+            ])}
+          />
+        )}
       </Card>
       <Card style={{ marginBottom: 16 }}>
         <SectionTitle>Errors (24h)</SectionTitle>

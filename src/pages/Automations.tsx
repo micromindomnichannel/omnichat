@@ -16,7 +16,7 @@ export function Automations() {
       <PageHeader
         eyebrow="AI Workflows"
         title="Automations"
-        sub="Follow-ups, confirmations, and win-backs running on autopilot."
+        sub="Follow-ups, confirmations, and win-backs running on autopilot. Each workflow watches inbox events and acts without staff — toggle any flow on or off instantly."
         live
       />
       {automations.length === 0 ? (

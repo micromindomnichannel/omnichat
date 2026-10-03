@@ -6,7 +6,7 @@ import { Landing } from '../Landing';
 
 function LocationProbe() {
   const loc = useLocation();
-  return <span data-testid="location">{loc.pathname}</span>;
+  return <span data-testid="location">{loc.pathname + loc.search}</span>;
 }
 
 function renderLanding() {
@@ -71,8 +71,21 @@ describe('Landing', () => {
     expect(screen.getByText(/bring-your-own-flow/i)).toBeInTheDocument();
   });
 
-  it('footer links to legal pages', () => {
-    renderLanding();
+  it('pricing section links each plan to signup with the plan param', () => {
+    const { container } = renderLanding();
+    // Anchor target exists (header link validation covers it too).
+    expect(container.querySelector('#pricing')).not.toBeNull();
+    expect(screen.getByText('Starter')).toBeInTheDocument();
+    expect(screen.getByText('Pro')).toBeInTheDocument();
+    expect(screen.getByText('Business')).toBeInTheDocument();
+    // Plan capabilities come from the real billing limits.
+    expect(screen.getByText(/2 active channels/i)).toBeInTheDocument();
+    expect(screen.getByText(/20,000 AI messages/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /start pro trial/i }));
+    expect(screen.getByTestId('location').textContent).toBe('/signup?plan=pro');
+  });
+
+  it('footer links to legal pages', () => {    renderLanding();
     expect(screen.getByText('Privacy Policy')).toBeInTheDocument();
     expect(screen.getByText('Terms of Service')).toBeInTheDocument();
   });

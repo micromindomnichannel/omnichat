@@ -72,6 +72,7 @@ export function Landing() {
           <a href="#concept" style={{ color: 'var(--ink-600)', textDecoration: 'none', fontWeight: 600, fontSize: 13.5 }}>Brand Concept</a>
           <a href="#features" style={{ color: 'var(--ink-600)', textDecoration: 'none', fontWeight: 600, fontSize: 13.5 }}>Core Features</a>
           <a href="#verticals" style={{ color: 'var(--ink-600)', textDecoration: 'none', fontWeight: 600, fontSize: 13.5 }}>Dual-Vertical Engine</a>
+          <a href="#pricing" style={{ color: 'var(--ink-600)', textDecoration: 'none', fontWeight: 600, fontSize: 13.5 }}>Pricing</a>
           <a href="#concept" style={{ color: 'var(--ink-600)', textDecoration: 'none', fontWeight: 600, fontSize: 13.5 }}>Signals to Actions</a>
         </nav>
 
@@ -630,7 +631,59 @@ export function Landing() {
         </div>
       </section>
 
-      {/* 8. FAQ (eloqwnt-style accordion) */}
+      {/* 8. Pricing (plans mirror the backend billing limits; the chosen plan
+          is applied to the workspace at signup via /signup?plan=) */}
+      <section id="pricing" style={{ padding: '70px 32px', background: 'var(--surface-0)', borderTop: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: 1050, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 40 }}>
+            <div className="orbit-badge" style={{ marginBottom: 12 }}>
+              <span>Pricing</span>
+            </div>
+            <h2 style={{ fontSize: 32, fontWeight: 800, color: 'var(--midnight-ink)', letterSpacing: '-0.02em' }}>
+              Pick the plan that fits your business
+            </h2>
+            <p style={{ fontSize: 15, color: 'var(--ink-600)', maxWidth: 560, margin: '8px auto 0' }}>
+              Every plan includes the unified inbox, dedicated AI flows, and human takeover. Billing provider not connected yet — all plans free during pilot.
+            </p>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
+            {[
+              { id: 'free', name: 'Starter', price: '$0', per: 'free forever', tint: 'rgba(47, 92, 255, 0.06)', border: 'var(--border)', cta: 'Start free', features: ['2 active channels', '1 team seat', '1,000 AI messages / month', 'Unified inbox + AI replies'] },
+              { id: 'pro', name: 'Pro', price: 'Pilot', per: 'free during pilot', tint: 'rgba(255, 90, 54, 0.07)', border: 'var(--signal-orange)', cta: 'Start Pro trial', popular: true, features: ['6 active channels', '5 team seats', '20,000 AI messages / month', 'Everything in Starter', 'Priority support'] },
+              { id: 'business', name: 'Business', price: 'Custom', per: 'talk to us', tint: 'rgba(15, 157, 119, 0.07)', border: 'var(--border)', cta: 'Contact sales', mailto: true, features: ['Unlimited channels', '20 team seats', 'Unlimited messages', 'Everything in Pro', 'Dedicated onboarding'] },
+            ].map((p) => (
+              <div key={p.id} className="card" style={{ padding: 28, background: p.tint, border: `1.5px solid ${p.border}`, position: 'relative' }}>
+                {p.popular && (
+                  <span style={{ position: 'absolute', top: -12, left: 24, fontSize: 11, fontWeight: 800, color: 'white', background: 'var(--signal-orange)', padding: '3px 12px', borderRadius: 20, letterSpacing: '0.04em' }}>
+                    MOST POPULAR
+                  </span>
+                )}
+                <div className="eyebrow" style={{ color: 'var(--signal-orange)', marginBottom: 6 }}>{p.name}</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontSize: 40, fontWeight: 800, color: 'var(--midnight-ink)', letterSpacing: '-0.02em' }}>{p.price}</span>
+                  <span style={{ fontSize: 13, color: 'var(--ink-400)', fontWeight: 500 }}>{p.per}</span>
+                </div>
+                <ul style={{ listStyle: 'none', padding: 0, margin: '18px 0 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {p.features.map((f) => (
+                    <li key={f} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5, color: 'var(--ink-600)', fontWeight: 500 }}>
+                      <Check size={16} color="var(--signal-orange)" /> {f}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  onClick={() => p.mailto ? (window.location.href = 'mailto:info@aimicromind.com?subject=ORBIT Business plan') : navigate(`/signup?plan=${p.id}`)}
+                  className="btn btn-primary"
+                  style={{ width: '100%', height: 46, background: p.popular ? 'var(--signal-orange)' : 'var(--midnight-ink)', fontSize: 14 }}
+                >
+                  {p.cta} <ArrowRight size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 9. FAQ (eloqwnt-style accordion) */}
       <section style={{ padding: '70px 32px', background: 'var(--surface-0)', borderTop: '1px solid var(--border)' }}>
         <div style={{ maxWidth: 760, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 40 }}>

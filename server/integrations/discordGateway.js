@@ -81,6 +81,11 @@ export function discordClientCount() {
   return clients.size;
 }
 
+export function isDiscordListening(accountId) {
+  const client = clients.get(accountId);
+  return Boolean(client && client.isReady && client.isReady());
+}
+
 // Boot: one listener per active discord account. Failures are per-account
 // (never break boot) and logged for the operator.
 export async function startDiscordGateway(pool) {

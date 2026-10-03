@@ -10,8 +10,8 @@ import { assertCanConnectChannel } from '../billing/plans.js';
 import { requireAuth, requireWorkspace, workspaceFor } from '../auth/middleware.js';
 import { graphGet, publishPagePost, publishInstagramMedia } from '../meta/graph.js';
 import { discoverDiscordBot } from '../integrations/discord.js';
-import { startDiscordAccount, stopDiscordAccount } from '../integrations/discordGateway.js';
-import { setTelegramWebhook, deleteTelegramWebhook } from '../integrations/telegram.js';
+import { startDiscordAccount, stopDiscordAccount, isDiscordListening } from '../integrations/discordGateway.js';
+import { setTelegramWebhook, deleteTelegramWebhook, getTelegramWebhook } from '../integrations/telegram.js';
 import { buildMetaAuthUrl, discoverMetaAssets, exchangeMetaCode, metaConfigured, metaRedirectUri, subscribePage } from '../meta/oauth.js';
 
 const FULL = ['messenger', 'instagram', 'telegram', 'discord']; // verified template + auto-provision
@@ -171,7 +171,73 @@ export function channelsRouter(pool) {
     }
   });
 
-  // Connect: manual token (MVP) or OAuth handoff. Body:
+  // Telegram diagnostics: webhook registration (ORBIT URL? pending? errors),
+  // intake history, and inbox persistence. No tokens are returned.
+  r.get('/api/v1/workspaces/:workspaceId/channels/telegram/diagnostics', requireWorkspace, async (req, res) => {
+    try {
+      const account = (await pool.query(
+        "SELECT * FROM channel_accounts WHERE workspace_id=$1 AND channel='telegram' ORDER BY updated_at DESC LIMIT 1",
+        [req.workspaceId]
+      )).rows[0];
+      if (!account) return res.status(404).json({ error: 'telegram account not connected' });
+      const credential = account.credential_id
+        ? (await pool.query('SELECT encrypted_secret FROM credentials WHERE id=$1', [account.credential_id])).rows[0]
+        : null;
+      const token = credential ? decryptSecret(credential.encrypted_secret) : null;
+      const report = {
+        account: { id: account.external_account_id, status: account.status, flowId: account.micromind_flow_id },
+        registered: account.metadata?.webhook_registration || null,
+        webhookEvents: (await pool.query("SELECT status, COUNT(*)::int AS count FROM webhook_events WHERE provider='telegram' GROUP BY status ORDER BY status")).rows,
+        conversations: (await pool.query("SELECT COUNT(*)::int AS count FROM conversations WHERE workspace_id=$1 AND channel='telegram'", [req.workspaceId])).rows[0]?.count || 0,
+        webhook: { attempted: Boolean(token) },
+      };
+      if (token) {
+        try {
+          const live = await getTelegramWebhook({ botToken: token });
+          report.webhook = { ...report.webhook, ok: true, ...live, pointsAtOrbit: live.url.includes('/webhooks/telegram') };
+        } catch (err) {
+          report.webhook = { ...report.webhook, ok: false, error: String(err.message).slice(0, 200) };
+        }
+      }
+      res.json(report);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Discord diagnostics: gateway listener state, bot identity, intake
+  // history, and inbox persistence. No tokens are returned.
+  r.get('/api/v1/workspaces/:workspaceId/channels/discord/diagnostics', requireWorkspace, async (req, res) => {
+    try {
+      const account = (await pool.query(
+        "SELECT * FROM channel_accounts WHERE workspace_id=$1 AND channel='discord' ORDER BY updated_at DESC LIMIT 1",
+        [req.workspaceId]
+      )).rows[0];
+      if (!account) return res.status(404).json({ error: 'discord account not connected' });
+      const credential = account.credential_id
+        ? (await pool.query('SELECT encrypted_secret FROM credentials WHERE id=$1', [account.credential_id])).rows[0]
+        : null;
+      const token = credential ? decryptSecret(credential.encrypted_secret) : null;
+      const report = {
+        account: { id: account.external_account_id, status: account.status, flowId: account.micromind_flow_id },
+        listener: { running: isDiscordListening(account.id) },
+        webhookEvents: (await pool.query("SELECT status, COUNT(*)::int AS count FROM webhook_events WHERE provider='discord' GROUP BY status ORDER BY status")).rows,
+        conversations: (await pool.query("SELECT COUNT(*)::int AS count FROM conversations WHERE workspace_id=$1 AND channel='discord'", [req.workspaceId])).rows[0]?.count || 0,
+        bot: { attempted: Boolean(token) },
+      };
+      if (token) {
+        try {
+          const me = await discoverDiscordBot(token);
+          report.bot = { ...report.bot, ok: Boolean(me), username: me?.username || null, botId: me?.id || null };
+        } catch (err) {
+          report.bot = { ...report.bot, ok: false, error: String(err.message).slice(0, 200) };
+        }
+      }
+      res.json(report);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
   // { displayName, username, externalAccountId, pageAccessToken|botToken|secret,
   //   phoneNumberId (whatsapp), verifyToken?, micromindFlowId?, flowKey?,
   //   autoProvision? }
