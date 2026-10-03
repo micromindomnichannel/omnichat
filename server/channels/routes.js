@@ -9,16 +9,19 @@ import { testFlowLink, recordLinkTest } from '../micromind/linktest.js';
 import { assertCanConnectChannel } from '../billing/plans.js';
 import { requireAuth, requireWorkspace, workspaceFor } from '../auth/middleware.js';
 import { graphGet, publishPagePost, publishInstagramMedia } from '../meta/graph.js';
+import { discoverDiscordBot } from '../integrations/discord.js';
+import { startDiscordAccount, stopDiscordAccount } from '../integrations/discordGateway.js';
 import { buildMetaAuthUrl, discoverMetaAssets, exchangeMetaCode, metaConfigured, metaRedirectUri, subscribePage } from '../meta/oauth.js';
 
-const FULL = ['messenger', 'instagram']; // verified template + auto-provision
-const BYOF = ['whatsapp', 'telegram', 'gmail']; // wiring done, template pending -> micromindFlowId required
+const FULL = ['messenger', 'instagram', 'telegram', 'discord']; // verified template + auto-provision
+const BYOF = ['whatsapp', 'gmail']; // wiring done, template pending -> micromindFlowId required
 const NOT_STARTED = ['tiktok'];
 const PROVIDER = {
   messenger: 'meta_messenger',
   instagram: 'meta_instagram',
   whatsapp: 'meta_whatsapp',
   telegram: 'telegram_bot',
+  discord: 'discord_bot',
   gmail: 'google_oauth',
 };
 
@@ -174,7 +177,7 @@ export function channelsRouter(pool) {
   //   autoProvision? }
   // flowKey = pasted MicroMind prediction key for the linked flow. Vaulted
   // (never returned), linked to the flow row, and exercised by an automatic
-  // harmless test ping. whatsapp|telegram|gmail are BYOF until their template
+  // harmless test ping. whatsapp|gmail are BYOF until their template
   // lands: micromindFlowId required.
   r.post('/api/v1/workspaces/:workspaceId/channels/:channel/connect', requireWorkspace, async (req, res) => {
     const { channel } = req.params;
@@ -189,6 +192,18 @@ export function channelsRouter(pool) {
     const { displayName, username, externalAccountId, pageAccessToken, botToken, secret,
       phoneNumberId, verifyToken, micromindFlowId, flowKey, autoProvision = true } = req.body || {};
     const credentialSecret = pageAccessToken || botToken || secret;
+    // Discord: resolve the bot's user id from the token (best-effort, never
+    // fails connect) so the account has a stable external identity even when
+    // the operator pastes only the token.
+    let resolvedExternalId = externalAccountId || null;
+    let resolvedUsername = username || null;
+    if (channel === 'discord' && credentialSecret && !resolvedExternalId) {
+      const me = await discoverDiscordBot(credentialSecret).catch(() => null);
+      if (me?.id) {
+        resolvedExternalId = me.id;
+        if (!resolvedUsername && me.username) resolvedUsername = me.username;
+      }
+    }
     if (BYOF.includes(channel) && !micromindFlowId) {
       return res.status(400).json({ code: 'template_pending', error: `No verified ${channel} template yet — supply micromindFlowId (bring-your-own-flow)` });
     }
@@ -232,14 +247,14 @@ export function channelsRouter(pool) {
            display_name = EXCLUDED.display_name, username = EXCLUDED.username,
            credential_id = COALESCE(EXCLUDED.credential_id, channel_accounts.credential_id),
            status = 'connecting', updated_at = CURRENT_TIMESTAMP`,
-        [accountId, workspaceId, channel, externalAccountId || username || channel, displayName || username || channel,
-         username || null, credentialId, micromindFlowId || null,
+        [accountId, workspaceId, channel, resolvedExternalId || resolvedUsername || channel, displayName || resolvedUsername || channel,
+         resolvedUsername || null, credentialId, micromindFlowId || null,
          JSON.stringify({ verify_token: finalVerify, webhook_name: channel, ...extraMeta })]
       );
       const accId = (
         await pool.query(
           'SELECT id FROM channel_accounts WHERE workspace_id=$1 AND channel=$2 AND external_account_id=$3',
-          [workspaceId, channel, externalAccountId || username || channel]
+          [workspaceId, channel, resolvedExternalId || resolvedUsername || channel]
         )
       ).rows[0].id;
 
@@ -295,6 +310,17 @@ export function channelsRouter(pool) {
       if (status === 'active') {
         await pool.query('UPDATE channel_accounts SET status=$1, micromind_flow_id=$2, updated_at=CURRENT_TIMESTAMP WHERE id=$3',
           [status, flowId, accId]);
+      }
+      // Discord intake is gateway-based: start (or restart) this account's
+      // listener now that the token is vaulted. Best-effort — a dead token
+      // kills only its listener, never the connect.
+      if (channel === 'discord' && status === 'active') {
+        try {
+          const full = (await pool.query('SELECT * FROM channel_accounts WHERE id=$1', [accId])).rows[0];
+          if (full) await startDiscordAccount(pool, full);
+        } catch (err) {
+          console.error(`[channel:discord] gateway start failed:`, err.message);
+        }
       }
       // Automatic link validation (fixed harmless ping). Records the result on
       // the flow row; a failed test never fails the connect itself.
@@ -518,6 +544,9 @@ export function channelsRouter(pool) {
         [req.params.id, workspaceId]
       );
       if (!rows.length) return res.status(404).json({ error: 'channel not found' });
+      if (rows[0].channel === 'discord') {
+        try { await stopDiscordAccount(rows[0].id); } catch { /* listener already dead */ }
+      }
       await audit(pool, workspaceId, 'channel.disconnect', rows[0].channel + ':' + rows[0].id, {}, req.user.email);
       res.json({ channel: rows[0].channel, status: 'disconnected' });
     } catch (err) {
@@ -535,6 +564,9 @@ export function channelsRouter(pool) {
         [req.params.id, workspaceId]
       );
       if (!rows.length) return res.status(404).json({ error: 'channel not found or missing credential — reconnect with a fresh token' });
+      if (rows[0].channel === 'discord') {
+        try { await startDiscordAccount(pool, rows[0]); } catch { /* dead token kills only its listener */ }
+      }
       await audit(pool, workspaceId, 'channel.reconnect', rows[0].channel + ':' + rows[0].id, {}, req.user.email);
       res.json({ channel: rows[0].channel, status: 'active' });
     } catch (err) {

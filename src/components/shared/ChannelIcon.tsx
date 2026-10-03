@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Channel } from '../../state/mockData';
 import { CHANNEL_COLORS } from '../../state/mockData';
-import { Instagram, MessageCircle, Facebook, MessagesSquare, Send, Mail, Music, Globe } from 'lucide-react';
+import { Instagram, MessageCircle, Facebook, MessagesSquare, Send, Bot, Mail, Music, Globe } from 'lucide-react';
 
 const iconMap: Record<Channel, React.ElementType> = {
   instagram: Instagram,
@@ -9,6 +9,7 @@ const iconMap: Record<Channel, React.ElementType> = {
   facebook: Facebook,
   messenger: MessagesSquare,
   telegram: Send,
+  discord: Bot,
   gmail: Mail,
   tiktok: Music,
   website: Globe

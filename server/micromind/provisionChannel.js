@@ -46,6 +46,7 @@ export const CHANNELS = {
   // but no verified template export yet. provisionChannelFlow throws template_pending.
   // NOTE: gmail stays manual/BYOF permanently — each merchant's gmailOAuth2
   // credential can only be granted by that merchant inside MicroMind GUI.
+  // (telegram + discord graduated to verified v1; whatsapp still draft.)
   whatsapp: {
     templateFile: 'whatsapp.json',
     templateVersion: 'v1-draft',
@@ -55,10 +56,17 @@ export const CHANNELS = {
   },
   telegram: {
     templateFile: 'telegram.json',
-    templateVersion: 'v1-draft',
+    templateVersion: 'v1',
     defaultVerifyToken: null, // telegram uses webhook_secret instead
     sessionPrefix: 'telegram',
     runtimeVars: (senderId, text) => ({ senderTgId: senderId, input: text }),
+  },
+  discord: {
+    templateFile: 'discord.json',
+    templateVersion: 'v1',
+    defaultVerifyToken: null, // discord uses the gateway listener, no webhook secret
+    sessionPrefix: 'discord',
+    runtimeVars: (senderId, text) => ({ senderDiscordId: senderId, input: text }),
   },
   gmail: {
     templateFile: null,
@@ -77,6 +85,7 @@ export const CHANNELS = {
 // placeholder token it just burns a failing tool call on every turn.
 const STRIP_SEND_TOOLS = {
   telegram: ['telegramTool', 'telegramBot'],
+  discord: ['discordBotTool'],
   messenger: ['facebookMessengerTool'],
   instagram: ['instagramMessenger'],
 };
@@ -163,6 +172,35 @@ export function orbitBackendPublicUrl() {
 // MicroMind-pointing instructions that steered every tenant into the bypass:
 // Meta → MicroMind direct, empty ORBIT inbox, placeholder-token send failures.
 export function orbitSetupGuide(channel, backendUrl = orbitBackendPublicUrl()) {
+  if (channel === 'telegram' || channel === 'discord') {
+    const isTg = channel === 'telegram';
+    const title = isTg ? '## ✈️ Telegram Setup — ORBIT-managed' : '## 🟣 Discord Setup — ORBIT-managed';
+    const step2 = isTg
+      ? `### Step 2: Point Telegram at ORBIT (ONE webhook per bot)
+1. ORBIT returned a webhook secret at connect time (Settings → Channels → telegram shows it once).
+2. Register it: \`https://api.telegram.org/bot<TOKEN>/setWebhook?url=${backendUrl}/webhooks/telegram&secret_token=<SECRET>\`
+3. ORBIT routes each update to the right business by secret — no per-tenant callback is ever needed.`
+      : `### Step 2: Discord gateway (no webhook to register)
+1. Nothing to register: ORBIT runs a gateway listener for your bot (needs the Message Content Intent, enabled at connect time).
+2. Make sure the bot is a member of your server with View Channel + Read History + Send Messages in the channels it should answer.`;
+    const talk = isTg ? 'a Telegram message to your bot' : 'a message in your Discord channel';
+    return `${title}
+
+> Do NOT let this flow talk to ${isTg ? 'Telegram' : 'Discord'} directly. ORBIT owns the whole loop:
+> ${isTg ? 'Telegram' : 'Discord'} → ORBIT backend → AI prediction → ORBIT sends the reply.
+> Token fields left filled would hijack updates away from ORBIT (empty inbox, no tenant isolation).
+
+### Step 1: Connect in ORBIT (tokens live in ORBIT, never in this flow)
+1. In ORBIT go to Settings → Channels → ${channel} → Connect.
+2. Paste the ${isTg ? 'bot token from @BotFather' : 'bot token from the Discord Developer Portal → Bot'} there. ORBIT encrypts it, provisions your dedicated flow + prediction key.
+3. Leave token fields in THIS flow EMPTY. Clones must never hold tenant secrets — the backend sends every reply itself.
+
+${step2}
+
+### Step 3: Activate & Test Live
+1. Toggle the workflow to ACTIVE in the canvas header!
+2. Send ${talk} — the AI reply arrives via ORBIT and shows in the ORBIT inbox.`;
+  }
   const cfg = CHANNELS[channel] || {};
   const path = channel === 'instagram' ? 'instagram' : channel === 'whatsapp' ? 'whatsapp' : 'messenger';
   const verify = cfg.defaultVerifyToken || '(see ORBIT channel settings)';
@@ -217,6 +255,17 @@ export function buildTenantFlowData(channel, template, { verifyToken, businessNa
       inputs.botToken = '';
     }
     if (node.data.name === 'telegramBot' && 'botToken' in inputs) {
+      inputs.botToken = '';
+    }
+    // Discord: same policy — bot token + channel id stay EMPTY (ORBIT gateway
+    // + REST send own the connection). Strip just in case.
+    if (node.data.name === 'discordTrigger' && 'botToken' in inputs) {
+      inputs.botToken = '';
+    }
+    if (node.data.name === 'discordTrigger' && 'channelId' in inputs) {
+      inputs.channelId = '';
+    }
+    if (node.data.name === 'discordBotTool' && 'botToken' in inputs) {
       inputs.botToken = '';
     }
     // Backend-send policy: remove channel send-tools from agent tool lists so

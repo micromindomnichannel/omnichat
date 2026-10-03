@@ -15,6 +15,8 @@ import { decryptSecret } from './credentials/crypto.js';
 import { sendTextMessage } from './meta/graph.js';
 import { sendWhatsAppText } from './meta/whatsapp.js';
 import { sendTelegramText } from './integrations/telegram.js';
+import { sendDiscordText } from './integrations/discord.js';
+import { startDiscordGateway } from './integrations/discordGateway.js';
 import { replyLimit } from './middleware/rateLimit.js';
 import { askAnalyst } from './micromind/analyst.js';
 import { authRouter } from './auth/routes.js';
@@ -696,6 +698,8 @@ app.post('/api/v1/conversations/:id/reply', replyLimit, requireAuth, async (req,
             await sendWhatsAppText({ token: secret, phoneNumberId, to: senderId, text });
           } else if (acc.channel === 'telegram') {
             await sendTelegramText({ botToken: secret, chatId: senderId, text });
+          } else if (acc.channel === 'discord') {
+            await sendDiscordText({ botToken: secret, channelId: senderId, text });
           } else {
             throw new Error(`${acc.channel} send not implemented`);
           }
@@ -721,6 +725,14 @@ try {
   await migrate();
 } catch (err) {
   console.warn('⚠️ Migration skipped (DB unreachable):', err.message);
+}
+
+// Discord gateway listeners (one client per active discord account).
+// Best-effort: a dead token kills only its own listener, never boot.
+try {
+  await startDiscordGateway(pool);
+} catch (err) {
+  console.warn('⚠️ Discord gateway skipped:', err.message);
 }
 
 // Production guards: refuse to serve strangers without vault key + CORS allowlist.

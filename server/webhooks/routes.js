@@ -22,6 +22,7 @@ import { verifyMetaSignature } from '../meta/verify.js';
 import { webhookLimit } from '../middleware/rateLimit.js';
 import { parseWhatsAppWebhook, sendWhatsAppText } from '../meta/whatsapp.js';
 import { parseTelegramUpdate, sendTelegramText } from '../integrations/telegram.js';
+import { sendDiscordText } from '../integrations/discord.js';
 import { gmailPending } from '../integrations/gmail.js';
 
 const META_HANDSHAKE = ['messenger', 'instagram', 'whatsapp'];
@@ -153,8 +154,10 @@ async function handleMetaMessaging(pool, provider, account, item) {
 }
 
 // Shared persist -> AI -> send pipeline. Workspace comes from the ACCOUNT
-// (tenants share webhook URLs; the account is the trust anchor).
-async function handleNormalized(pool, provider, account, { senderId, text, mid }, extra = {}) {
+// (tenants share webhook URLs; the account is the trust anchor). Exported for
+// the Discord gateway listener — the ONLY non-webhook caller (Discord offers
+// no per-message inbound webhook). Same pipeline, same isolation, no fork.
+export async function handleNormalized(pool, provider, account, { senderId, text, mid }, extra = {}) {
   // Idempotency first (workspace unknown until account resolves — journal, then bind).
   const ins = await pool.query(
     'INSERT INTO webhook_events (id, provider, external_event_id, payload, status) VALUES ($1,$2,$3,$4,\'received\') ON CONFLICT (external_event_id) DO NOTHING RETURNING id',
@@ -282,6 +285,9 @@ async function sendProviderReply(provider, account, cred, secret, senderId, text
   }
   if (provider === 'telegram') {
     return sendTelegramText({ botToken: secret, chatId: senderId, text });
+  }
+  if (provider === 'discord') {
+    return sendDiscordText({ botToken: secret, channelId: senderId, text });
   }
   throw gmailPending('Gmail send');
 }

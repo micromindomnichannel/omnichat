@@ -4,7 +4,7 @@
 import type { Channel, Conversation, Message, Customer, Product, Service, Order, Appointment, FAQ, Automation } from '../state/mockData';
 import { getAvatar } from '../state/mockData';
 
-const VALID_CHANNELS: Channel[] = ['instagram', 'whatsapp', 'facebook', 'messenger', 'telegram', 'gmail', 'tiktok', 'website'];
+const VALID_CHANNELS: Channel[] = ['instagram', 'whatsapp', 'facebook', 'messenger', 'telegram', 'discord', 'gmail', 'tiktok', 'website'];
 
 export function toChannel(v: any): Channel {
   return (VALID_CHANNELS as string[]).includes(v) ? v : 'website';

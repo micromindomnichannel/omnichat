@@ -1,69 +1,133 @@
 {
   "nodes": [
     {
-      "id": "stickyNote_3",
+      "id": "toolAgent_1",
       "position": {
-        "x": -433.48366667288303,
-        "y": -740.5027284708204
+        "x": 47.690369411686476,
+        "y": -566.1774411490493
       },
-      "type": "stickyNote",
+      "type": "customNode",
       "data": {
-        "label": "Sticky Note",
-        "name": "stickyNote",
+        "label": "Tool Agent",
+        "name": "toolAgent",
         "version": 2,
-        "type": "StickyNote",
-        "icon": "C:/AI MicroMind/Projects/MicroMind-Core/packages/server/node_modules/micromind-components/dist/nodes/utilities/StickyNote/stickyNote.svg",
-        "category": "Utilities",
-        "tags": [
-          "Utilities"
-        ],
-        "description": "Add a sticky note",
-        "inputs": {
-          "note": "Sticky Note — leave EMPTY. ORBIT owns the connection; tenant secrets live in the ORBIT vault, never in this flow."
-        },
+        "type": "AgentExecutor",
+        "category": "Agents",
+        "icon": "C:/AI MicroMind/Projects/MicroMind-Core/packages/server/node_modules/micromind-components/dist/nodes/agents/ToolAgent/toolAgent.png",
+        "description": "Agent that uses Function Calling to pick the tools and args to call",
         "baseClasses": [
-          "StickyNote"
+          "AgentExecutor",
+          "BaseChain",
+          "Runnable"
         ],
-        "filePath": "C:\\AI MicroMind\\Projects\\MicroMind-Core\\packages\\server\\node_modules\\micromind-components\\dist\\nodes\\utilities\\StickyNote\\StickyNote.js",
-        "inputAnchors": [],
+        "inputs": {
+          "tools": [],
+          "memory": "{{bufferMemory_0.data.instance}}",
+          "model": "{{chatOpenRouter_0.data.instance}}",
+          "chatPromptTemplate": "{{chatPromptTemplate_0.data.instance}}",
+          "systemMessage": "You are a helpful AI assistant.",
+          "inputModeration": "",
+          "maxIterations": "",
+          "enableDetailedStreaming": ""
+        },
+        "filePath": "C:\\AI MicroMind\\Projects\\MicroMind-Core\\packages\\server\\node_modules\\micromind-components\\dist\\nodes\\agents\\ToolAgent\\ToolAgent.js",
+        "inputAnchors": [
+          {
+            "label": "Tools",
+            "name": "tools",
+            "type": "Tool",
+            "list": true,
+            "id": "toolAgent_1-input-tools-Tool"
+          },
+          {
+            "label": "Memory",
+            "name": "memory",
+            "type": "BaseChatMemory",
+            "id": "toolAgent_1-input-memory-BaseChatMemory"
+          },
+          {
+            "label": "Tool Calling Chat Model",
+            "name": "model",
+            "type": "BaseChatModel",
+            "description": "Only compatible with models that are capable of function calling: ChatOpenAI, ChatMistral, ChatAnthropic, GoogleGenerativeAI, ChatVertexAI, GroqChat",
+            "id": "toolAgent_1-input-model-BaseChatModel"
+          },
+          {
+            "label": "Chat Prompt Template",
+            "name": "chatPromptTemplate",
+            "type": "ChatPromptTemplate",
+            "description": "Override existing prompt with Chat Prompt Template. Human Message must includes {input} variable",
+            "optional": true,
+            "id": "toolAgent_1-input-chatPromptTemplate-ChatPromptTemplate"
+          },
+          {
+            "label": "Input Moderation",
+            "description": "Detect text that could generate harmful output and prevent it from being sent to the language model",
+            "name": "inputModeration",
+            "type": "Moderation",
+            "optional": true,
+            "list": true,
+            "id": "toolAgent_1-input-inputModeration-Moderation"
+          }
+        ],
         "inputParams": [
           {
-            "label": "",
-            "name": "note",
+            "label": "System Message",
+            "name": "systemMessage",
             "type": "string",
-            "rows": 1,
-            "placeholder": "Type something here",
+            "default": "You are a helpful AI assistant.",
+            "description": "If Chat Prompt Template is provided, this will be ignored",
+            "rows": 4,
             "optional": true,
-            "id": "stickyNote_3-input-note-string"
+            "additionalParams": true,
+            "id": "toolAgent_1-input-systemMessage-string"
+          },
+          {
+            "label": "Max Iterations",
+            "name": "maxIterations",
+            "type": "number",
+            "optional": true,
+            "additionalParams": true,
+            "id": "toolAgent_1-input-maxIterations-number"
+          },
+          {
+            "label": "Enable Detailed Streaming",
+            "name": "enableDetailedStreaming",
+            "type": "boolean",
+            "default": false,
+            "description": "Stream detailed intermediate steps during agent execution",
+            "optional": true,
+            "additionalParams": true,
+            "id": "toolAgent_1-input-enableDetailedStreaming-boolean"
           }
         ],
         "outputs": {},
         "outputAnchors": [
           {
-            "id": "stickyNote_3-output-stickyNote-StickyNote",
-            "name": "stickyNote",
-            "label": "StickyNote",
-            "description": "Add a sticky note",
-            "type": "StickyNote"
+            "id": "toolAgent_1-output-toolAgent-AgentExecutor|BaseChain|Runnable",
+            "name": "toolAgent",
+            "label": "AgentExecutor",
+            "description": "Agent that uses Function Calling to pick the tools and args to call",
+            "type": "AgentExecutor | BaseChain | Runnable"
           }
         ],
-        "id": "stickyNote_3",
+        "id": "toolAgent_1",
         "selected": false
       },
       "width": 320,
-      "height": 143,
-      "selected": false,
+      "height": 510,
       "positionAbsolute": {
-        "x": -433.48366667288303,
-        "y": -740.5027284708204
+        "x": 47.690369411686476,
+        "y": -566.1774411490493
       },
+      "selected": false,
       "dragging": false
     },
     {
       "id": "chatOpenRouter_0",
       "position": {
-        "x": -1280.8645183028254,
-        "y": 262.481564388074
+        "x": -1414.5503445498312,
+        "y": -441.8410415244739
       },
       "type": "customNode",
       "data": {
@@ -246,18 +310,18 @@
       },
       "width": 320,
       "height": 789,
-      "selected": true,
+      "selected": false,
       "dragging": false,
       "positionAbsolute": {
-        "x": -1280.8645183028254,
-        "y": 262.481564388074
+        "x": -1414.5503445498312,
+        "y": -441.8410415244739
       }
     },
     {
       "id": "bufferMemory_0",
       "position": {
-        "x": -1279.7047003293997,
-        "y": -102.4770442686031
+        "x": -1389.6833448938105,
+        "y": -886.0544529085686
       },
       "type": "customNode",
       "data": {
@@ -316,16 +380,16 @@
       "height": 342,
       "selected": false,
       "positionAbsolute": {
-        "x": -1279.7047003293997,
-        "y": -102.4770442686031
+        "x": -1389.6833448938105,
+        "y": -886.0544529085686
       },
       "dragging": false
     },
     {
       "id": "chatPromptTemplate_0",
       "position": {
-        "x": -916.1100296490346,
-        "y": -71.18954635721263
+        "x": -1408.6624609651485,
+        "y": 410.4711464366876
       },
       "type": "customNode",
       "data": {
@@ -345,7 +409,7 @@
         "inputs": {
           "systemMessagePrompt": "You are ORBIT, a helpful and professional AI customer assistant for a business. Answer customer questions clearly, naturally, and concisely. Use the business knowledge, tools, and context provided to you. Never invent prices, stock availability, policies, or other business information. If you do not know something or need human assistance, say so and hand the conversation over to a human agent. Maintain a friendly, professional brand tone. Respond in the same language as the customer whenever possible.",
           "humanMessagePrompt": "{input}",
-          "promptValues": "",
+          "promptValues": "{\"input\":\"{{question}}\"}",
           "messageHistory": "messageHistoryCode"
         },
         "filePath": "C:\\AI MicroMind\\Projects\\MicroMind-Core\\packages\\server\\node_modules\\micromind-components\\dist\\nodes\\prompts\\ChatPromptTemplate\\ChatPromptTemplate.js",
@@ -413,175 +477,140 @@
         "selected": false
       },
       "width": 320,
-      "height": 879,
+      "height": 878,
       "selected": false,
       "positionAbsolute": {
-        "x": -916.1100296490346,
-        "y": -71.18954635721263
+        "x": -1408.6624609651485,
+        "y": 410.4711464366876
       },
       "dragging": false
     },
     {
-      "id": "toolAgent_0",
+      "id": "stickyNote_0",
       "position": {
-        "x": -77.32146170002454,
-        "y": 83.06956014103974
+        "x": -2050.8018700681228,
+        "y": -785.9531345081783
       },
-      "type": "customNode",
+      "type": "stickyNote",
       "data": {
-        "label": "Tool Agent",
-        "name": "toolAgent",
+        "label": "Sticky Note",
+        "name": "stickyNote",
         "version": 2,
-        "type": "AgentExecutor",
-        "category": "Agents",
-        "icon": "C:/AI MicroMind/Projects/MicroMind-Core/packages/server/node_modules/micromind-components/dist/nodes/agents/ToolAgent/toolAgent.png",
-        "description": "Agent that uses Function Calling to pick the tools and args to call",
-        "baseClasses": [
-          "AgentExecutor",
-          "BaseChain",
-          "Runnable"
+        "type": "StickyNote",
+        "icon": "C:/AI MicroMind/Projects/MicroMind-Core/packages/server/node_modules/micromind-components/dist/nodes/utilities/StickyNote/stickyNote.svg",
+        "category": "Utilities",
+        "tags": [
+          "Utilities"
         ],
+        "description": "Add a sticky note",
         "inputs": {
-          "tools": [],
-          "memory": "{{bufferMemory_0.data.instance}}",
-          "model": "{{chatOpenRouter_0.data.instance}}",
-          "chatPromptTemplate": "{{chatPromptTemplate_0.data.instance}}",
-          "systemMessage": "You are a helpful AI assistant.",
-          "inputModeration": "",
-          "maxIterations": "",
-          "enableDetailedStreaming": ""
+          "note": "Sticky Note — leave EMPTY. ORBIT owns the connection; tenant secrets live in the ORBIT vault, never in this flow."
         },
-        "filePath": "C:\\AI MicroMind\\Projects\\MicroMind-Core\\packages\\server\\node_modules\\micromind-components\\dist\\nodes\\agents\\ToolAgent\\ToolAgent.js",
-        "inputAnchors": [
-          {
-            "label": "Tools",
-            "name": "tools",
-            "type": "Tool",
-            "list": true,
-            "id": "toolAgent_0-input-tools-Tool"
-          },
-          {
-            "label": "Memory",
-            "name": "memory",
-            "type": "BaseChatMemory",
-            "id": "toolAgent_0-input-memory-BaseChatMemory"
-          },
-          {
-            "label": "Tool Calling Chat Model",
-            "name": "model",
-            "type": "BaseChatModel",
-            "description": "Only compatible with models that are capable of function calling: ChatOpenAI, ChatMistral, ChatAnthropic, GoogleGenerativeAI, ChatVertexAI, GroqChat",
-            "id": "toolAgent_0-input-model-BaseChatModel"
-          },
-          {
-            "label": "Chat Prompt Template",
-            "name": "chatPromptTemplate",
-            "type": "ChatPromptTemplate",
-            "description": "Override existing prompt with Chat Prompt Template. Human Message must includes {input} variable",
-            "optional": true,
-            "id": "toolAgent_0-input-chatPromptTemplate-ChatPromptTemplate"
-          },
-          {
-            "label": "Input Moderation",
-            "description": "Detect text that could generate harmful output and prevent it from being sent to the language model",
-            "name": "inputModeration",
-            "type": "Moderation",
-            "optional": true,
-            "list": true,
-            "id": "toolAgent_0-input-inputModeration-Moderation"
-          }
+        "baseClasses": [
+          "StickyNote"
         ],
+        "filePath": "C:\\AI MicroMind\\Projects\\MicroMind-Core\\packages\\server\\node_modules\\micromind-components\\dist\\nodes\\utilities\\StickyNote\\StickyNote.js",
+        "inputAnchors": [],
         "inputParams": [
           {
-            "label": "System Message",
-            "name": "systemMessage",
+            "label": "",
+            "name": "note",
             "type": "string",
-            "default": "You are a helpful AI assistant.",
-            "description": "If Chat Prompt Template is provided, this will be ignored",
-            "rows": 4,
+            "rows": 1,
+            "placeholder": "Type something here",
             "optional": true,
-            "additionalParams": true,
-            "id": "toolAgent_0-input-systemMessage-string"
-          },
-          {
-            "label": "Max Iterations",
-            "name": "maxIterations",
-            "type": "number",
-            "optional": true,
-            "additionalParams": true,
-            "id": "toolAgent_0-input-maxIterations-number"
-          },
-          {
-            "label": "Enable Detailed Streaming",
-            "name": "enableDetailedStreaming",
-            "type": "boolean",
-            "default": false,
-            "description": "Stream detailed intermediate steps during agent execution",
-            "optional": true,
-            "additionalParams": true,
-            "id": "toolAgent_0-input-enableDetailedStreaming-boolean"
+            "id": "stickyNote_0-input-note-string"
           }
         ],
         "outputs": {},
         "outputAnchors": [
           {
-            "id": "toolAgent_0-output-toolAgent-AgentExecutor|BaseChain|Runnable",
-            "name": "toolAgent",
-            "label": "AgentExecutor",
-            "description": "Agent that uses Function Calling to pick the tools and args to call",
-            "type": "AgentExecutor | BaseChain | Runnable"
+            "id": "stickyNote_0-output-stickyNote-StickyNote",
+            "name": "stickyNote",
+            "label": "StickyNote",
+            "description": "Add a sticky note",
+            "type": "StickyNote"
           }
         ],
-        "id": "toolAgent_0",
+        "id": "stickyNote_0",
         "selected": false
       },
       "width": 320,
-      "height": 510,
+      "height": 183,
       "selected": false,
       "positionAbsolute": {
-        "x": -77.32146170002454,
-        "y": 83.06956014103974
+        "x": -2050.8018700681228,
+        "y": -785.9531345081783
       },
       "dragging": false
     },
     {
-      "id": "telegramTrigger_1",
+      "id": "discordTrigger_1",
       "position": {
-        "x": -2012.9042194425758,
-        "y": 28.990574292230207
+        "x": -2001.2308015569538,
+        "y": -484.19104989556536
       },
       "type": "customNode",
       "data": {
-        "label": "Telegram Trigger",
-        "name": "telegramTrigger",
-        "version": 1,
-        "type": "TelegramTrigger",
-        "icon": "C:/AI MicroMind/Projects/MicroMind-Core/packages/server/node_modules/micromind-components/dist/nodes/triggers/TelegramTrigger/telegram-icon.svg",
+        "label": "Discord Trigger",
+        "name": "discordTrigger",
+        "version": 1.2,
+        "type": "DiscordTrigger",
+        "icon": "C:/AI MicroMind/Projects/MicroMind-Core/packages/server/node_modules/micromind-components/dist/nodes/triggers/DiscordTrigger/discord-icon.svg",
         "category": "Triggers",
-        "description": "Real-time Telegram Bot trigger — auto-registers a webhook with Telegram and replies to incoming messages instantly",
+        "description": "Live real-time Discord Bot trigger (connects via Gateway WebSocket to auto-answer incoming channel messages)",
         "baseClasses": [
-          "TelegramTrigger",
+          "DiscordTrigger",
           "triggers",
           "json",
           "string"
         ],
         "inputs": {
           "botToken": "",
+          "channelId": "",
+          "webhookName": "discord",
+          "ignoreBots": true,
           "howToUse": ""
         },
         "outputs": {
           "output": "fullData"
         },
-        "filePath": "C:\\AI MicroMind\\Projects\\MicroMind-Core\\packages\\server\\node_modules\\micromind-components\\dist\\nodes\\triggers\\TelegramTrigger\\TelegramTrigger.js",
+        "filePath": "C:\\AI MicroMind\\Projects\\MicroMind-Core\\packages\\server\\node_modules\\micromind-components\\dist\\nodes\\triggers\\DiscordTrigger\\DiscordTrigger.js",
         "inputAnchors": [],
         "inputParams": [
           {
             "label": "Bot Token",
             "name": "botToken",
             "type": "password",
-            "placeholder": "e.g. 123456789:AABBccdd...",
-            "description": "Your Telegram Bot Token from @BotFather. Keep this secret!",
-            "id": "telegramTrigger_1-input-botToken-password"
+            "placeholder": "e.g. Bot Token from Discord Developer Portal",
+            "description": "Optional: Your Discord Bot Token for direct channel polling without third-party apps.",
+            "optional": true,
+            "id": "discordTrigger_1-input-botToken-password"
+          },
+          {
+            "label": "Channel ID",
+            "name": "channelId",
+            "type": "string",
+            "placeholder": "e.g. 123456789012345678",
+            "description": "Optional: Discord Channel ID to monitor when using Bot Token.",
+            "optional": true,
+            "id": "discordTrigger_1-input-channelId-string"
+          },
+          {
+            "label": "Webhook Path",
+            "name": "webhookName",
+            "type": "string",
+            "default": "discord",
+            "description": "The unique path for your Discord webhook URL.",
+            "id": "discordTrigger_1-input-webhookName-string"
+          },
+          {
+            "label": "Ignore Bot Messages",
+            "name": "ignoreBots",
+            "type": "boolean",
+            "default": true,
+            "description": "Ignore messages sent by Discord bots to prevent infinite response loops.",
+            "id": "discordTrigger_1-input-ignoreBots-boolean"
           },
           {
             "label": "How to Use",
@@ -591,11 +620,11 @@
             "optional": true,
             "additionalParams": true,
             "hint": {
-              "label": "Setup Guide",
-              "value": "\n## ✈️ Telegram Bot Setup & Token Guide\n\n### Step 1: Get Bot Token from @BotFather\n1. Open Telegram app and search for **@BotFather**.\n2. Send `/newbot` and follow the prompts to choose a bot name and username.\n3. Copy the **HTTP API Bot Token** provided (e.g. `123456789:ABCdefGhIJKlmNo...`).\n4. Paste the token into the **Bot Token** field below.\n\n### Step 2: Activate & Auto-Register Webhook\n1. Toggle the workflow to **ACTIVE** in the canvas header!\n2. MicroMind automatically registers your Webhook (`https://core.aimicromind.com/telegram-webhook/{chatflowId}`) with Telegram's API via `setWebhook`.\n\n### Step 3: Test Live\n1. Open your new bot in Telegram and click **Start** or send a message.\n2. The bot will answer in real-time!\n\n*(Note: For group chats, disable privacy in @BotFather via `/setprivacy` ➔ `Disable`)*\n"
+              "label": "Usage Guide",
+              "value": "\n## 🎮 Discord Bot Setup & Token Guide\n\n### Step 1: Create Discord Bot & Get Token\n1. Go to [Discord Developer Portal](https://discord.com/developers/applications).\n2. Click **New Application** ➔ enter a name ➔ go to **Bot** tab on the left menu.\n3. Click **Reset Token** (or Copy Token) and paste it into the **Bot Token** field below.\n4. **ENABLE INTENT**: Under **Privileged Gateway Intents**, turn **ON** `MESSAGE CONTENT INTENT` and click **Save Changes**.\n\n### Step 2: Get Channel ID & Invite Bot\n1. In Discord app Settings ➔ **Advanced** ➔ turn **ON** `Developer Mode`.\n2. Right-click your target Discord channel ➔ click **Copy Channel ID** ➔ paste into **Channel ID** field below.\n3. In Discord Developer Portal ➔ **OAuth2** ➔ **URL Generator**:\n   - Check `bot` under Scopes.\n   - Check `Send Messages` and `Read Message History` under Bot Permissions.\n   - Copy the generated URL and paste it in your browser to invite the bot to your Discord server!\n\n### Step 3: Activate & Test Live\n1. Toggle the workflow to **ACTIVE** in the canvas header!\n2. MicroMind connects via live WebSocket Gateway and auto-replies to any message typed in the channel!\n"
             },
-            "description": "Open \"Additional Parameters\" to see the full setup guide.",
-            "id": "telegramTrigger_1-input-howToUse-string"
+            "description": "Open \"Additional Parameters\" to see the setup guide.",
+            "id": "discordTrigger_1-input-howToUse-string"
           }
         ],
         "outputAnchors": [
@@ -603,42 +632,42 @@
             "name": "output",
             "label": "Output",
             "type": "options",
-            "description": "The text content of the incoming Telegram message.",
+            "description": "The text content of the message sent in Discord.",
             "options": [
               {
-                "id": "telegramTrigger_1-output-text-string",
-                "name": "text",
-                "label": "Message Text",
-                "description": "The text content of the incoming Telegram message.",
+                "id": "discordTrigger_1-output-content-string",
+                "name": "content",
+                "label": "Message Content",
+                "description": "The text content of the message sent in Discord.",
                 "type": "string"
               },
               {
-                "id": "telegramTrigger_1-output-chatId-string",
-                "name": "chatId",
-                "label": "Chat ID",
-                "description": "The Telegram Chat ID where the message was sent.",
+                "id": "discordTrigger_1-output-channelId-string",
+                "name": "channelId",
+                "label": "Channel ID",
+                "description": "The Discord channel ID where the message was posted.",
                 "type": "string"
               },
               {
-                "id": "telegramTrigger_1-output-fullData-json",
+                "id": "discordTrigger_1-output-fullData-json",
                 "name": "fullData",
                 "label": "Full Data (Smart Object)",
-                "description": "Full object with input, chatId, fromName, messageId for prompt mapping.",
+                "description": "Returns object with input, channelId, author, and messageId for easy prompt mapping.",
                 "type": "json"
               }
             ],
-            "default": "text"
+            "default": "content"
           }
         ],
-        "id": "telegramTrigger_1",
+        "id": "discordTrigger_1",
         "selected": false
       },
       "width": 320,
-      "height": 669,
-      "selected": false,
+      "height": 988,
+      "selected": true,
       "positionAbsolute": {
-        "x": -2012.9042194425758,
-        "y": 28.990574292230207
+        "x": -2001.2308015569538,
+        "y": -484.19104989556536
       },
       "dragging": false
     }
@@ -653,26 +682,11 @@
         "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
       },
       "animated": false,
-      "source": "chatPromptTemplate_0",
-      "sourceHandle": "chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable",
-      "target": "toolAgent_0",
-      "targetHandle": "toolAgent_0-input-chatPromptTemplate-ChatPromptTemplate",
-      "id": "chatPromptTemplate_0-chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable-toolAgent_0-toolAgent_0-input-chatPromptTemplate-ChatPromptTemplate"
-    },
-    {
-      "type": "buttonedge",
-      "style": {
-        "stroke": "#E0AA3E",
-        "strokeWidth": 2.5,
-        "opacity": 0.65,
-        "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
-      },
-      "animated": false,
       "source": "chatOpenRouter_0",
       "sourceHandle": "chatOpenRouter_0-output-chatOpenRouter-ChatOpenRouter|ChatOpenAI|BaseChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable",
-      "target": "toolAgent_0",
-      "targetHandle": "toolAgent_0-input-model-BaseChatModel",
-      "id": "chatOpenRouter_0-chatOpenRouter_0-output-chatOpenRouter-ChatOpenRouter|ChatOpenAI|BaseChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable-toolAgent_0-toolAgent_0-input-model-BaseChatModel"
+      "target": "toolAgent_1",
+      "targetHandle": "toolAgent_1-input-model-BaseChatModel",
+      "id": "chatOpenRouter_0-chatOpenRouter_0-output-chatOpenRouter-ChatOpenRouter|ChatOpenAI|BaseChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable-toolAgent_1-toolAgent_1-input-model-BaseChatModel"
     },
     {
       "type": "buttonedge",
@@ -685,14 +699,29 @@
       "animated": false,
       "source": "bufferMemory_0",
       "sourceHandle": "bufferMemory_0-output-bufferMemory-BufferMemory|BaseChatMemory|BaseMemory",
-      "target": "toolAgent_0",
-      "targetHandle": "toolAgent_0-input-memory-BaseChatMemory",
-      "id": "bufferMemory_0-bufferMemory_0-output-bufferMemory-BufferMemory|BaseChatMemory|BaseMemory-toolAgent_0-toolAgent_0-input-memory-BaseChatMemory"
+      "target": "toolAgent_1",
+      "targetHandle": "toolAgent_1-input-memory-BaseChatMemory",
+      "id": "bufferMemory_0-bufferMemory_0-output-bufferMemory-BufferMemory|BaseChatMemory|BaseMemory-toolAgent_1-toolAgent_1-input-memory-BaseChatMemory"
+    },
+    {
+      "type": "buttonedge",
+      "style": {
+        "stroke": "#E0AA3E",
+        "strokeWidth": 2.5,
+        "opacity": 0.65,
+        "filter": "drop-shadow(0 0 4px rgba(224, 170, 62, 0.2))"
+      },
+      "animated": false,
+      "source": "chatPromptTemplate_0",
+      "sourceHandle": "chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable",
+      "target": "toolAgent_1",
+      "targetHandle": "toolAgent_1-input-chatPromptTemplate-ChatPromptTemplate",
+      "id": "chatPromptTemplate_0-chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable-toolAgent_1-toolAgent_1-input-chatPromptTemplate-ChatPromptTemplate"
     }
   ],
   "viewport": {
-    "x": 2484.8748107239317,
-    "y": 207.76885435875937,
-    "zoom": 0.9303281230333044
+    "x": 1814.0270464987698,
+    "y": 568.916601696435,
+    "zoom": 0.7396277179561753
   }
 }

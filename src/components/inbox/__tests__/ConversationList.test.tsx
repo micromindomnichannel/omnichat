@@ -122,6 +122,61 @@ describe('Inbox channel separation', () => {
     expect(screen.getByText('Is the leather bag in stock?')).toBeInTheDocument();
   });
 
+describe('Inbox channel separation — Telegram & Discord', () => {
+  const customers5 = [
+    ...customers,
+    { id: 'c3', name: 'Omar Farouk', phone: '01000000003', channels: ['telegram', 'discord'] },
+  ];
+  const conversations5 = [
+    ...conversations,
+    {
+      id: 'conv_t1', customer_id: 'c3', channel: 'telegram', status: 'ai_handling',
+      intent: 'support', last_message: 'Where is the group order?', last_message_time: '10:15',
+      unread_count: 0, ai_context: {},
+    },
+    {
+      id: 'conv_d1', customer_id: 'c3', channel: 'discord', status: 'human',
+      intent: 'support', last_message: 'Ping from the guild hall', last_message_time: '10:20',
+      unread_count: 0, ai_context: {},
+    },
+  ];
+
+  it('All view labels all five identities; Telegram/Discord isolate cleanly', async () => {
+    mockBackend(conversations5);
+    (globalThis as any).fetch = vi.fn(async (url: string) => {
+      if (String(url).includes('/bootstrap')) {
+        return { ok: true, json: async () => ({ ...bootstrap, customers: customers5, conversations: conversations5 }) };
+      }
+      return { ok: true, json: async () => [] };
+    });
+    renderList();
+    await waitFor(() => expect(screen.getByText('Ping from the guild hall')).toBeInTheDocument());
+    expect(screen.getAllByText('Telegram').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText('Discord').length).toBeGreaterThanOrEqual(2);
+    fireEvent.click(within(channelGroup()).getByRole('button', { name: 'Telegram' }));
+    expect(screen.getByText('Where is the group order?')).toBeInTheDocument();
+    expect(screen.queryByText('Ping from the guild hall')).not.toBeInTheDocument();
+    expect(screen.queryByText('Hi, where is my order?')).not.toBeInTheDocument();
+    fireEvent.click(within(channelGroup()).getByRole('button', { name: 'Discord' }));
+    expect(screen.getByText('Ping from the guild hall')).toBeInTheDocument();
+    expect(screen.queryByText('Where is the group order?')).not.toBeInTheDocument();
+  });
+
+  it('same customer keeps one row per channel across all five', async () => {
+    (globalThis as any).fetch = vi.fn(async (url: string) => {
+      if (String(url).includes('/bootstrap')) {
+        return { ok: true, json: async () => ({ ...bootstrap, customers: customers5, conversations: conversations5 }) };
+      }
+      return { ok: true, json: async () => [] };
+    });
+    renderList();
+    await waitFor(() => expect(screen.getByText('Ping from the guild hall')).toBeInTheDocument());
+    expect(screen.getAllByText('Omar Farouk')).toHaveLength(2);
+    fireEvent.click(within(channelGroup()).getByRole('button', { name: 'Discord' }));
+    expect(screen.getAllByText('Omar Farouk')).toHaveLength(1);
+  });
+  });
+
   it('preserves search, unread counts, and conversation opening', async () => {
     mockBackend();
     const onSelect = vi.fn();

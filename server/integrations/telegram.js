@@ -1,8 +1,8 @@
 // Telegram provider (bot-based).
 // PLACEHOLDERS (runtime): bot token from @BotFather. Credential secret = bot token.
 // Webhook: set via setWebhook with secret_token; stored per account in
-// metadata.webhook_secret and checked on inbound. Template auto-provisioning is
-// PENDING — connect works bring-your-own-flow (micromindFlowId) until then.
+// metadata.webhook_secret and checked on inbound. Template v1 verified —
+// connect auto-provisions the tenant flow (no micromindFlowId needed).
 
 // Pure: Bot API update -> [{ chatId, fromId, text, updateId }] (text messages only)
 export function parseTelegramUpdate(body) {

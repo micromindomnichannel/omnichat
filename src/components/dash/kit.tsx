@@ -118,6 +118,7 @@ const CHANNEL_COLORS: Record<string, string> = {
   instagram: '#E4405F',
   whatsapp: '#25D366',
   telegram: '#229ED9',
+  discord: '#5865F2',
   gmail: '#A8A29E',
   facebook: '#1877F2',
 };

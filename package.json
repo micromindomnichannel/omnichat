@@ -19,6 +19,7 @@
     "@types/pg": "^8.23.1",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
+    "discord.js": "^14.27.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "lucide-react": "^0.294.0",

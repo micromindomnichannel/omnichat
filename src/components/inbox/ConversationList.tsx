@@ -14,6 +14,8 @@ const channelFilters = [
   { id: 'messenger', label: 'Messenger' },
   { id: 'instagram', label: 'Instagram' },
   { id: 'whatsapp', label: 'WhatsApp' },
+  { id: 'telegram', label: 'Telegram' },
+  { id: 'discord', label: 'Discord' },
 ] as const;
 
 type ChannelFilter = typeof channelFilters[number]['id'];
@@ -23,6 +25,8 @@ const channelNames: Record<ChannelFilter, string> = {
   messenger: 'Messenger',
   instagram: 'Instagram',
   whatsapp: 'WhatsApp',
+  telegram: 'Telegram',
+  discord: 'Discord',
 };
 
 interface Props {

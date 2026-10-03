@@ -51,6 +51,28 @@ describe('ChannelsPanel matrix', () => {
     expect(screen.getByPlaceholderText(/micromind flow id/i)).toBeInTheDocument();
   });
 
+  it('offers Discord + auto-provision Telegram forms (no flow id required)', async () => {
+    (globalThis as any).fetch = vi.fn(async (url: string) => {
+      if (String(url).includes('/channels')) {
+        return { ok: true, json: async () => [] };
+      }
+      return { ok: true, json: async () => ({}) };
+    });
+
+    render(<ChannelsPanel showToast={showToast} local={{}} onToggleLocal={onToggleLocal} />);
+
+    // Discord card exists with a bot-token-first form.
+    const dcCard = screen.getByText('Discord').closest('div[style*="padding: 16px"]')!;
+    fireEvent.click(dcCard.querySelector('button')!);
+    expect(screen.getByPlaceholderText(/bot token \(discord/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/micromind flow id \(optional — auto-provisions/i)).toBeInTheDocument();
+    // Telegram graduated from BYOF: same auto-provision placeholder (one form open at a time).
+    const tgCard = screen.getByText('Telegram').closest('div[style*="padding: 16px"]')!;
+    fireEvent.click(tgCard.querySelector('button')!);
+    expect(screen.getByPlaceholderText(/bot token from @botfather/i)).toBeInTheDocument();
+    expect(screen.getAllByPlaceholderText(/micromind flow id \(optional — auto-provisions/i)).toHaveLength(1);
+  });
+
   it('Meta OAuth opens the backend authorization URL, or explains when unconfigured', async () => {
     (globalThis as any).fetch = vi.fn(async (url: string) => {
       if (String(url).includes('/oauth/start')) {
