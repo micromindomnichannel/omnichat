@@ -107,8 +107,8 @@ export function GridPulse({
           alive = true;
           const a = v * maxAlpha;
           const g = ctx.createRadialGradient(x * cell, y * cell, 0, x * cell, y * cell, cell * 1.4);
-          g.addColorStop(0, `rgba(255,90,54,${a})`);
-          g.addColorStop(1, `rgba(217,76,50,0)`);
+          g.addColorStop(0, `rgba(37,99,235,${a})`);
+          g.addColorStop(1, `rgba(29,78,216,0)`);
           ctx.fillStyle = g;
           ctx.fillRect(x * cell - cell * 1.4, y * cell - cell * 1.4, cell * 2.8, cell * 2.8);
           heat[i] = v * decay;

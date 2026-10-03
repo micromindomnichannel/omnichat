@@ -1,16 +1,16 @@
 /* ORBIT Brand Guidelines - Design Tokens */
 :root {
-  /* ORBIT Primary Color Palette */
+  /* ORBIT Primary Color Palette — blue/white theme */
   --midnight-ink: #171717;
-  --signal-orange: #FF5A36;
-  --signal-orange-hover: #E54926;
-  --signal-orange-subtle: rgba(255, 90, 54, 0.08);
-  --signal-orange-glow: rgba(255, 90, 54, 0.2);
+  --signal-orange: #2563EB;
+  --signal-orange-hover: #1D4ED8;
+  --signal-orange-subtle: rgba(37, 99, 235, 0.08);
+  --signal-orange-glow: rgba(37, 99, 235, 0.2);
 
   /* ORBIT Secondary Colors */
-  --warm-sand: #F3E8D6;
-  --warm-sand-light: #FBF7F0;
-  --burnt-coral: #D94C32;
+  --warm-sand: #EFF4FE;
+  --warm-sand-light: #F7FAFF;
+  --burnt-coral: #2563EB;
 
   /* Supporting Neutrals */
   --graphite: #343434;
@@ -28,8 +28,8 @@
   --ink-400: #A8A29E;
 
   /* Core Brand Tokens */
-  --brand: #FF5A36;
-  --brand-hover: #E54926;
+  --brand: #2563EB;
+  --brand-hover: #1D4ED8;
   --brand-appt: #52D8A4;
 
   /* Optional Digital Accent */
@@ -40,8 +40,8 @@
   --warning-bg: rgba(217, 76, 50, 0.1);
   --danger: #D94C32;
   --danger-bg: rgba(217, 76, 50, 0.1);
-  --info: #FF5A36;
-  --info-bg: rgba(255, 90, 54, 0.08);
+  --info: #2563EB;
+  --info-bg: rgba(37, 99, 235, 0.08);
 
   /* Channel colors */
   --instagram: #E4405F;
@@ -62,7 +62,7 @@
 
   /* Shadows */
   --shadow-card: 0 2px 8px rgba(23, 23, 23, 0.04);
-  --shadow-hover: 0 8px 24px rgba(255, 90, 54, 0.12);
+  --shadow-hover: 0 8px 24px rgba(37, 99, 235, 0.12);
   --shadow-modal: 0 16px 40px rgba(23, 23, 23, 0.16);
 
   --sidebar-width: 240px;

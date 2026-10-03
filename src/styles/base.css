@@ -60,7 +60,7 @@ html, body, #root {
   font-weight: 600;
   background: var(--signal-orange-subtle);
   color: var(--signal-orange);
-  border: 1px solid rgba(255, 90, 54, 0.2);
+  border: 1px solid rgba(37, 99, 235, 0.2);
 }
 
 .orbit-badge-mint {
@@ -125,7 +125,7 @@ html, body, #root {
 }
 .btn-primary:hover:not(:disabled) {
   background: var(--signal-orange-hover);
-  box-shadow: 0 4px 12px rgba(255, 90, 54, 0.25);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 .btn-dark {
   background: var(--midnight-ink);

@@ -612,17 +612,33 @@ app.get('/api/settings', async (req, res) => {
 });
 
 app.put('/api/settings', async (req, res) => {
-  const { business_name, industry, description, ai_enabled, ai_tone, ai_language, confidence_threshold } = req.body;
+  const { business_name, industry, description, ai_enabled, ai_tone, ai_language, confidence_threshold, logo_url, country } = req.body;
   try {
     const result = await pool.query(
       `UPDATE business_settings
        SET business_name = COALESCE($1, business_name), industry = COALESCE($2, industry),
            description = COALESCE($3, description), ai_enabled = COALESCE($4, ai_enabled),
            ai_tone = COALESCE($5, ai_tone), ai_language = COALESCE($6, ai_language),
-           confidence_threshold = COALESCE($7, confidence_threshold), updated_at = CURRENT_TIMESTAMP
+           confidence_threshold = COALESCE($7, confidence_threshold),
+           logo_url = COALESCE($8, logo_url), country = COALESCE($9, country),
+           updated_at = CURRENT_TIMESTAMP
        WHERE id = 1 RETURNING *`,
-      [business_name, industry, description, ai_enabled, ai_tone, ai_language, confidence_threshold]
+      [business_name, industry, description, ai_enabled, ai_tone, ai_language, confidence_threshold, logo_url, country]
     );
+    // Keep the per-workspace mirror in sync (provisioning reads workspace_settings,
+    // not the legacy singleton). Single row per workspace — never duplicates.
+    const wid = req.workspaceId || 'default';
+    if (business_name || industry) {
+      await pool.query(
+        `INSERT INTO workspace_settings (workspace_id, business_name, business_type, updated_at)
+         VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+         ON CONFLICT (workspace_id) DO UPDATE SET
+           business_name = COALESCE(EXCLUDED.business_name, workspace_settings.business_name),
+           business_type = COALESCE(EXCLUDED.business_type, workspace_settings.business_type),
+           updated_at = CURRENT_TIMESTAMP`,
+        [wid, business_name || null, industry || null]
+      ).catch(() => {});
+    }
     res.json(result.rows[0] || req.body);
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -66,11 +66,11 @@ export function AnimatedBeam({
           {inbound.map(({ ch }, i) => (
             <linearGradient key={ch.id} id={`${beamClass}-g${i}`} x1="0" y1="0" x2="1" y2="0">
               <stop offset="0%" stopColor={ch.color} stopOpacity="0.1" />
-              <stop offset="100%" stopColor="#FF5A36" stopOpacity="0.9" />
+              <stop offset="100%" stopColor="#2563EB" stopOpacity="0.9" />
             </linearGradient>
           ))}
           <linearGradient id={`${beamClass}-out`} x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#FF5A36" stopOpacity="0.9" />
+            <stop offset="0%" stopColor="#2563EB" stopOpacity="0.9" />
             <stop offset="100%" stopColor="#52D8A4" stopOpacity="0.9" />
           </linearGradient>
           <radialGradient id={`${beamClass}-core`} cx="50%" cy="42%" r="65%">
@@ -113,18 +113,18 @@ export function AnimatedBeam({
 
         {/* ORBIT core */}
         <circle cx={CORE.x} cy={CORE.y} r={CORE.r} fill={`url(#${beamClass}-core)`} />
-        <circle cx={CORE.x} cy={CORE.y} r={CORE.r} fill="none" stroke="#FF5A36" strokeWidth={2.5} opacity={0.85} />
-        <circle cx={CORE.x - 24} cy={CORE.y - 20} r={6} fill="#FF5A36" />
-        <circle cx={CORE.x - 30} cy={CORE.y} r={6} fill="#FF5A36" />
-        <circle cx={CORE.x - 24} cy={CORE.y + 20} r={6} fill="#FF5A36" />
+        <circle cx={CORE.x} cy={CORE.y} r={CORE.r} fill="none" stroke="#2563EB" strokeWidth={2.5} opacity={0.85} />
+        <circle cx={CORE.x - 24} cy={CORE.y - 20} r={6} fill="#2563EB" />
+        <circle cx={CORE.x - 30} cy={CORE.y} r={6} fill="#2563EB" />
+        <circle cx={CORE.x - 24} cy={CORE.y + 20} r={6} fill="#2563EB" />
         <path d={`M ${CORE.x - 24} ${CORE.y - 20} C ${CORE.x - 5} ${CORE.y - 20}, ${CORE.x} ${CORE.y - 8}, ${CORE.x + 12} ${CORE.y - 4}`}
-          stroke="#FF5A36" strokeWidth={5} strokeLinecap="round" fill="none" />
+          stroke="#2563EB" strokeWidth={5} strokeLinecap="round" fill="none" />
         <path d={`M ${CORE.x - 30} ${CORE.y} L ${CORE.x + 2} ${CORE.y}`}
-          stroke="#FF5A36" strokeWidth={5} strokeLinecap="round" fill="none" />
+          stroke="#2563EB" strokeWidth={5} strokeLinecap="round" fill="none" />
         <path d={`M ${CORE.x - 24} ${CORE.y + 20} C ${CORE.x - 8} ${CORE.y + 18}, ${CORE.x + 2} ${CORE.y + 8}, ${CORE.x + 8} ${CORE.y}`}
-          stroke="#FF5A36" strokeWidth={5} strokeLinecap="round" fill="none" />
+          stroke="#2563EB" strokeWidth={5} strokeLinecap="round" fill="none" />
         <path d={`M ${CORE.x + 30} ${CORE.y - 28} A 30 30 0 1 1 ${CORE.x + 28} ${CORE.y - 6}`}
-          stroke="#FF5A36" strokeWidth={5} strokeLinecap="round" fill="none" />
+          stroke="#2563EB" strokeWidth={5} strokeLinecap="round" fill="none" />
         <text x={CORE.x} y={CORE.y + CORE.r + 20} textAnchor="middle" fontSize={12} fontWeight={800} letterSpacing={2} fill="#171717" fontFamily="Inter, sans-serif">
           ORBIT
         </text>

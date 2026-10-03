@@ -5,7 +5,6 @@ import { useVertical } from './state/verticalContext';
 import { Sidebar } from './app/shell/Sidebar';
 import { TopBar } from './app/shell/TopBar';
 import { VerticalSelect } from './app/onboarding/VerticalSelect';
-import { BusinessInfo } from './app/onboarding/BusinessInfo';
 import { ConnectChannels } from './app/onboarding/ConnectChannels';
 import { KnowledgeSetup } from './app/onboarding/KnowledgeSetup';
 import { AIReview } from './app/onboarding/AIReview';
@@ -142,19 +141,20 @@ function App() {
 
   if (isOnboarding) {
 
+    // Business profile is collected once at signup (merged step 3) — onboarding
+    // starts at channels, so profile data is never asked twice.
     const steps = [
-      <BusinessInfo key="0" data={onboardingData} onNext={(d) => { setOnboardingData(d); setOnboardingStep(1); }} onBack={() => navigate('/signup')} />,
-      <ConnectChannels key="1" data={onboardingData} onNext={(d) => { setOnboardingData(d); setOnboardingStep(2); }} onBack={() => setOnboardingStep(0)} />,
-      <KnowledgeSetup key="2" data={onboardingData} onNext={(d) => { setOnboardingData(d); setOnboardingStep(3); }} onBack={() => setOnboardingStep(1)} />,
-      <AIReview key="3" data={onboardingData} onNext={() => setOnboardingStep(4)} onBack={() => setOnboardingStep(2)} />,
-      <Finish key="4" data={onboardingData} onComplete={() => {
+      <ConnectChannels key="0" data={onboardingData} onNext={(d) => { setOnboardingData(d); setOnboardingStep(1); }} onBack={() => navigate('/signup')} />,
+      <KnowledgeSetup key="1" data={onboardingData} onNext={(d) => { setOnboardingData(d); setOnboardingStep(2); }} onBack={() => setOnboardingStep(0)} />,
+      <AIReview key="2" data={onboardingData} onNext={() => setOnboardingStep(3)} onBack={() => setOnboardingStep(1)} />,
+      <Finish key="3" data={onboardingData} onComplete={() => {
         const name = onboardingData.businessName || 'My Business';
         dispatch({ type: 'UPDATE_BUSINESS', field: 'businessName', value: name });
         // Best-effort backend sync (offline-safe — onboarding completes regardless).
         api.updateSettings({ business_name: name, industry: onboardingData.industry });
         dispatch({ type: 'COMPLETE_ONBOARDING' });
         navigate('/overview');
-      }} onBack={() => setOnboardingStep(3)} />
+      }} onBack={() => setOnboardingStep(2)} />
     ];
 
     return (

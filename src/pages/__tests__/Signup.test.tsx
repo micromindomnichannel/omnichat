@@ -4,6 +4,12 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { Signup } from '../Signup';
 
+const assignSpy = vi.fn();
+Object.defineProperty(window, 'location', {
+  value: { assign: assignSpy },
+  writable: true,
+});
+
 function mockFetchOnce(impl: (url: any, opts: any) => any) {
   (globalThis as any).fetch = vi.fn(impl);
   return (globalThis as any).fetch;
@@ -127,5 +133,88 @@ describe('Signup OTP verify', () => {
     await reachOtpStep();
     const btn = screen.getByRole('button', { name: /resend in 30s/i });
     expect(btn).toBeDisabled();
+  });
+});
+
+describe('Signup step 3: merged business form (single writer)', () => {
+  async function reachBusinessStep() {
+    const mockOk = (body: any) => {
+      (globalThis as any).fetch = vi.fn(async () => ({ ok: true, json: async () => body }));
+    };
+    // Step 1 → OTP: request-code returns success (no user yet).
+    mockOk({ success: true });
+    render(
+      <MemoryRouter initialEntries={['/signup']}>
+        <Signup />
+      </MemoryRouter>
+    );
+    fireEvent.change(screen.getByPlaceholderText('Ahmed Hassan'), { target: { value: 'Ann Nour' } });
+    fireEvent.change(screen.getByPlaceholderText('ahmed@mybusiness.com'), { target: { value: 'a@b.c' } });
+    fireEvent.change(screen.getByPlaceholderText('Create a secure password'), { target: { value: 'supersecret12' } });
+    fireEvent.submit(document.querySelectorAll('form')[0]);
+    await waitFor(() => expect(screen.getByPlaceholderText('••••••')).toBeInTheDocument());
+    // OTP → business: verify returns the session.
+    mockOk({ user: { email: 'a@b.c' }, memberships: [] });
+    fireEvent.change(screen.getByPlaceholderText('••••••'), { target: { value: '123456' } });
+    fireEvent.submit(document.querySelectorAll('form')[0]);
+    await waitFor(() => expect(screen.getByText('Set up your business')).toBeInTheDocument());
+  }
+
+  beforeEach(() => {
+    assignSpy.mockClear();
+  });
+
+  it('renders every merged field exactly once (no duplicate inputs)', async () => {
+    await reachBusinessStep();
+    expect(screen.getByPlaceholderText('e.g. Cairo Fashion Store')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Briefly describe what you sell or offer...')).toBeInTheDocument();
+    expect(screen.getByText('Business Type *')).toBeInTheDocument();
+    expect(screen.getByText('Country / Region')).toBeInTheDocument();
+    expect(screen.getByText('Logo')).toBeInTheDocument();
+    // Exactly one business-name input across the whole page.
+    expect(screen.getAllByPlaceholderText('e.g. Cairo Fashion Store')).toHaveLength(1);
+  });
+
+  it('gates empty business name without network', async () => {
+    const f = vi.fn();
+    await reachBusinessStep();
+    (globalThis as any).fetch = f;
+    const forms = document.querySelectorAll('form');
+    fireEvent.submit(forms[forms.length - 1]);
+    expect(screen.getByText('Please enter your business name.')).toBeInTheDocument();
+    expect(f).not.toHaveBeenCalled();
+  });
+
+  it('guards logo type and size with exact messages', async () => {
+    await reachBusinessStep();
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const pdf = new File(['x'], 'doc.pdf', { type: 'application/pdf' });
+    Object.defineProperty(fileInput, 'files', { value: [pdf], configurable: true });
+    fireEvent.change(fileInput);
+    expect(screen.getByText('Logo must be an image file (PNG, JPG, WEBP).')).toBeInTheDocument();
+    const big = new File([new ArrayBuffer(6 * 1024 * 1024)], 'big.png', { type: 'image/png' });
+    Object.defineProperty(fileInput, 'files', { value: [big], configurable: true });
+    fireEvent.change(fileInput);
+    expect(screen.getByText('Logo must be smaller than 5MB.')).toBeInTheDocument();
+  });
+
+  it('submit posts the full profile once and navigates to onboarding', async () => {
+    await reachBusinessStep();
+    const f = vi.fn(async () => ({ ok: true, json: async () => ({ business_name: 'Cairo Fashion Store' }) }));
+    (globalThis as any).fetch = f;
+    fireEvent.change(screen.getByPlaceholderText('e.g. Cairo Fashion Store'), { target: { value: 'Cairo Fashion Store' } });
+    fireEvent.change(screen.getByPlaceholderText('Briefly describe what you sell or offer...'), { target: { value: 'Fashion retail' } });
+    const forms = document.querySelectorAll('form');
+    fireEvent.submit(forms[forms.length - 1]);
+    await waitFor(() => expect(assignSpy).toHaveBeenCalledWith('/onboarding'));
+    const settingsCalls = f.mock.calls.filter(([u]: any[]) => String(u).includes('/settings'));
+    expect(settingsCalls).toHaveLength(1);
+    expect(JSON.parse(settingsCalls[0][1].body)).toEqual({
+      business_name: 'Cairo Fashion Store',
+      industry: 'Retail & E-Commerce',
+      description: 'Fashion retail',
+      logo_url: undefined,
+      country: 'Egypt',
+    });
   });
 });

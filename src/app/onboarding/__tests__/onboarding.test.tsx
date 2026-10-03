@@ -6,7 +6,6 @@ import { StoreProvider } from '../../../state/store';
 import { VerticalProvider } from '../../../state/verticalContext';
 import { Toast } from '../../../components/shared/Toast';
 import { VerticalSelect } from '../VerticalSelect';
-import { BusinessInfo } from '../BusinessInfo';
 import { ConnectChannels } from '../ConnectChannels';
 import { KnowledgeSetup } from '../KnowledgeSetup';
 import { AIReview } from '../AIReview';
@@ -40,7 +39,7 @@ beforeEach(() => {
   (globalThis as any).fetch = vi.fn(async () => ({ ok: true, json: async () => ({}) }));
 });
 
-describe('Onboarding Step 1: VerticalSelect', () => {
+describe('Onboarding entry: VerticalSelect', () => {
   it('selects commerce and navigates to /onboarding', () => {
     renderWithProviders(<VerticalSelect />);
     const commerceBtn = screen.getByRole('button', { name: /use commerce/i });
@@ -63,70 +62,7 @@ describe('Onboarding Step 1: VerticalSelect', () => {
   });
 });
 
-describe('Onboarding Step 2: BusinessInfo', () => {
-  it('gates continue button when required fields are missing', () => {
-    const onNext = vi.fn();
-    renderWithProviders(<BusinessInfo data={{}} onNext={onNext} onBack={vi.fn()} />);
-
-    const continueBtn = screen.getByRole('button', { name: /continue/i });
-    expect(continueBtn).toBeDisabled();
-
-    // Fill business name only
-    const nameInput = screen.getByPlaceholderText(/cairo fashion store/i);
-    fireEvent.change(nameInput, { target: { value: 'My Fashion Shop' } });
-    expect(continueBtn).toBeDisabled();
-
-    // Select 'other' industry without entering other description
-    const industrySelect = screen.getByRole('combobox');
-    fireEvent.change(industrySelect, { target: { value: 'other' } });
-    expect(continueBtn).toBeDisabled();
-
-    // Fill other description
-    const otherInput = screen.getByPlaceholderText(/tell us your business type/i);
-    fireEvent.change(otherInput, { target: { value: 'Boutique Studio' } });
-    expect(continueBtn).not.toBeDisabled();
-  });
-
-  it('guards logo file type and file size with exact toast messages', async () => {
-    renderWithProviders(<BusinessInfo data={{}} onNext={vi.fn()} onBack={vi.fn()} />);
-
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-
-    // Non-image file
-    const textFile = new File(['hello'], 'doc.pdf', { type: 'application/pdf' });
-    Object.defineProperty(fileInput, 'files', { value: [textFile], configurable: true });
-    fireEvent.change(fileInput);
-    expect(await screen.findByText('Choose a PNG, JPEG, GIF, or WEBP image')).toBeInTheDocument();
-
-    // Large file > 5MB
-    const largeFile = new File([new ArrayBuffer(6 * 1024 * 1024)], 'large.png', { type: 'image/png' });
-    Object.defineProperty(fileInput, 'files', { value: [largeFile], configurable: true });
-    fireEvent.change(fileInput);
-    expect(await screen.findByText('Logo must be smaller than 5MB')).toBeInTheDocument();
-  });
-
-  it('offline continue warns but advances onNext', async () => {
-    const onNext = vi.fn();
-    (globalThis as any).fetch = vi.fn(async (url: string) => {
-      if (String(url).includes('/settings')) return null;
-      return { ok: true, json: async () => ({}) };
-    });
-
-    renderWithProviders(<BusinessInfo data={{ businessName: 'Cairo Shop', industry: 'fashion' }} onNext={onNext} onBack={vi.fn()} />);
-
-    const continueBtn = screen.getByRole('button', { name: /continue/i });
-    expect(continueBtn).not.toBeDisabled();
-    fireEvent.click(continueBtn);
-
-    expect(await screen.findByText('Backend unreachable — continuing locally')).toBeInTheDocument();
-    await waitFor(() => expect(onNext).toHaveBeenCalledWith(expect.objectContaining({
-      businessName: 'Cairo Shop',
-      industry: 'fashion'
-    })));
-  });
-});
-
-describe('Onboarding Step 3: ConnectChannels', () => {
+describe('Onboarding Step 1: ConnectChannels', () => {
   it('falls back to local channel toggles when backend returns null', async () => {
     (globalThis as any).fetch = vi.fn(async () => ({ ok: false, status: 500 }));
     renderWithProviders(<ConnectChannels data={{}} onNext={vi.fn()} onBack={vi.fn()} />);
@@ -179,7 +115,7 @@ describe('Onboarding Step 3: ConnectChannels', () => {
   });
 });
 
-describe('Onboarding Step 4: KnowledgeSetup', () => {
+describe('Onboarding Step 2: KnowledgeSetup', () => {
   it('enforces 8MB file size limit on zone upload', async () => {
     renderWithProviders(<KnowledgeSetup data={{}} onNext={vi.fn()} onBack={vi.fn()} />);
 
@@ -249,7 +185,7 @@ describe('Onboarding Step 4: KnowledgeSetup', () => {
   });
 });
 
-describe('Onboarding Step 5: AIReview', () => {
+describe('Onboarding Step 3: AIReview', () => {
   it('renders all 7 behavior rows and shows offline fallback copy when backend is unreachable', async () => {
     (globalThis as any).fetch = vi.fn(async () => null);
     renderWithProviders(<AIReview data={{}} onNext={vi.fn()} onBack={vi.fn()} />);
@@ -267,7 +203,7 @@ describe('Onboarding Step 5: AIReview', () => {
   });
 });
 
-describe('Onboarding Step 6: Finish', () => {
+describe('Onboarding Step 4: Finish', () => {
   it('renders checklist, allows going back, and completes dashboard onboarding', () => {
     const onComplete = vi.fn();
     const onBack = vi.fn();

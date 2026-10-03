@@ -18,11 +18,11 @@ export function OrbitLogo({
   onClick
 }: OrbitLogoProps) {
   // Determine color palette based on mode
-  let symbolColor = '#FF5A36'; // Signal Orange default
+  let symbolColor = '#2563EB'; // Signal Orange default
   let textColor = '#171717';   // Midnight Ink default
 
   if (colorMode === 'dark') {
-    symbolColor = '#FF5A36';
+    symbolColor = '#2563EB';
     textColor = '#FAFAF9';
   } else if (colorMode === 'monochrome-black') {
     symbolColor = '#171717';
@@ -83,9 +83,9 @@ export function OrbitLogo({
 
   // Standalone App Icon
   if (variant === 'icon') {
-    const bg = colorMode === 'dark' ? '#171717' : '#FF5A36';
+    const bg = colorMode === 'dark' ? '#171717' : '#2563EB';
     // Symbol must contrast the tile: white on the orange tile, orange on dark.
-    const mark = bg === '#FF5A36' ? '#FFFFFF' : symbolColor;
+    const mark = bg === '#2563EB' ? '#FFFFFF' : symbolColor;
     return (
       <div
         onClick={onClick}
@@ -98,7 +98,7 @@ export function OrbitLogo({
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 2px 8px rgba(255, 90, 54, 0.25)',
+          boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)',
           cursor: onClick ? 'pointer' : 'default',
           flexShrink: 0
         }}

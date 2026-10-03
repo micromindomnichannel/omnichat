@@ -215,11 +215,11 @@ export function Products() {
 
                 <td style={{ padding: '14px 18px' }}>
                   {p.stock <= 0 ? (
-                    <span className="orbit-badge" style={{ background: 'var(--danger-bg)', color: 'var(--burnt-coral)', borderColor: 'rgba(217,76,50,0.3)' }}>
+                    <span className="orbit-badge" style={{ background: 'var(--danger-bg)', color: 'var(--danger)', borderColor: 'rgba(217,76,50,0.3)' }}>
                       Out of Stock
                     </span>
                   ) : p.stock <= 5 ? (
-                    <span className="orbit-badge" style={{ background: 'rgba(255, 90, 54, 0.1)', color: 'var(--signal-orange)', borderColor: 'rgba(255, 90, 54, 0.3)' }}>
+                    <span className="orbit-badge" style={{ background: 'rgba(37, 99, 235, 0.1)', color: 'var(--signal-orange)', borderColor: 'rgba(37, 99, 235, 0.3)' }}>
                       Low Stock ({p.stock})
                     </span>
                   ) : (
@@ -232,7 +232,7 @@ export function Products() {
                     <button onClick={() => handleOpenEdit(p)} className="btn btn-outline btn-sm">
                       <Edit2 size={14} /> Edit
                     </button>
-                    <button onClick={() => handleDeleteProduct(p.id, p.name)} className="btn btn-ghost btn-sm" style={{ color: 'var(--burnt-coral)' }}>
+                    <button onClick={() => handleDeleteProduct(p.id, p.name)} className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }}>
                       <Trash2 size={14} />
                     </button>
                   </div>

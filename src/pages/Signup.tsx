@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { OrbitLogo } from '../components/shared/OrbitLogo';
 import {
-  Eye, EyeOff, ArrowRight, Mail, Lock, User, Building2, Sparkles, CheckCircle2
+  Eye, EyeOff, ArrowRight, Mail, Lock, User, Phone, Building2, Sparkles, CheckCircle2, Upload
 } from 'lucide-react';
 import { api } from '../services/api';
 
@@ -16,6 +16,7 @@ export function Signup() {
   // Step 1: Account
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
 
   // Step 2: Email OTP
@@ -24,10 +25,16 @@ export function Signup() {
   const [resendIn, setResendIn] = useState(0);
   const [devCode, setDevCode] = useState('');
 
-  // Step 3: Business
+  // Step 3: Business (single merged profile form — the ONLY place business
+  // data is collected; onboarding no longer asks it again)
   const [businessName, setBusinessName] = useState('');
   const [industry, setIndustry] = useState<'commerce' | 'appointments'>('commerce');
   const [country, setCountry] = useState('Egypt');
+  const [logo, setLogo] = useState('');
+  const [logoBusy, setLogoBusy] = useState(false);
+  const [sector, setSector] = useState('Retail & E-Commerce');
+  const [description, setDescription] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const apiError = (res: any, fallback: string) =>
     res?._timeout
@@ -96,20 +103,65 @@ export function Signup() {
     return () => clearTimeout(t);
   }, [resendIn]);
 
-  const handleSignup = (e: React.FormEvent) => {
-    // Account already exists (created at OTP verification) — business details
-    // ride into onboarding state and sync from the onboarding flow.
+  const handleLogoFile = async (file: File | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setError('Logo must be an image file (PNG, JPG, WEBP).');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Logo must be smaller than 5MB.');
+      return;
+    }
+    setLogoBusy(true);
+    setError('');
+    try {
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result || ''));
+        r.onerror = () => reject(new Error('read failed'));
+        r.readAsDataURL(file);
+      });
+      const saved = await api.uploadImage(dataUrl);
+      setLogo(saved?.url || dataUrl);
+    } catch {
+      setError('Could not read the logo file.');
+    } finally {
+      setLogoBusy(false);
+    }
+  };
+
+  const handleSignup = async (e: React.FormEvent) => {
+    // Account already exists (created at OTP verification). This merged form
+    // is the single writer of the business profile: one PUT (idempotent
+    // COALESCE merge, single row) so data can never duplicate. Best-effort —
+    // onboarding Finish re-syncs the same payload if offline now.
     e.preventDefault();
-    if (!businessName) {
+    if (!businessName.trim()) {
       setError('Please enter your business name.');
       return;
     }
     setError('');
-    const userData = { name: fullName, email, businessName, industry, country, avatar: '' };
+    setSaving(true);
+    const profile = {
+      business_name: businessName.trim(),
+      industry: sector,
+      description: description.trim() || undefined,
+      logo_url: logo || undefined,
+      country,
+    };
+    try {
+      await api.updateSettings(profile);
+    } catch {
+      // Offline: Finish step re-syncs. Never block onboarding on network.
+    }
+    const userData = {
+      name: fullName, email, phone, businessName: profile.business_name,
+      industry, industrySector: sector, description: profile.description,
+      logo, country, avatar: logo,
+    };
     localStorage.setItem('orbit_user', JSON.stringify(userData));
-    // Hard navigation (not client-side navigate): the account + session cookie
-    // were created at OTP verification, but App's session guard resolved once on
-    // mount. Reload so the guard re-runs with the fresh cookie (see Login.tsx).
+    setSaving(false);
     window.location.assign('/onboarding');
   };
 
@@ -122,7 +174,7 @@ export function Signup() {
       {/* Left Branding Panel */}
       <div style={{
         flex: 1,
-        background: 'linear-gradient(145deg, var(--midnight-ink) 0%, #1A1A1A 60%, #2A2A2A 100%)',
+        background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 60%, #1E40AF 100%)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
@@ -140,7 +192,7 @@ export function Signup() {
           left: '50%',
           width: 600,
           height: 600,
-          background: 'radial-gradient(circle, rgba(255, 90, 54, 0.1) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(37, 99, 235, 0.1) 0%, transparent 70%)',
           pointerEvents: 'none'
         }} />
 
@@ -349,7 +401,7 @@ export function Signup() {
                 className="btn btn-primary btn-lg"
                 style={{
                   width: '100%', height: 48, fontSize: 15, background: 'var(--signal-orange)',
-                  boxShadow: '0 4px 14px rgba(255, 90, 54, 0.25)',
+                  boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)',
                   opacity: loading ? 0.7 : 1
                 }}
               >
@@ -383,7 +435,7 @@ export function Signup() {
             </form>
           )}
 
-          {/* STEP 3: Business Info */}
+          {/* STEP 3: Business Info (merged single form) */}
           {step === 3 && (
             <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
@@ -394,13 +446,77 @@ export function Signup() {
                   <Building2 size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--stone-gray)' }} />
                   <input
                     className="input"
-                    placeholder="e.g. Luxe Fashion Egypt"
+                    placeholder="e.g. Cairo Fashion Store"
                     value={businessName}
                     onChange={e => setBusinessName(e.target.value)}
                     style={{ paddingLeft: 40, height: 46 }}
                     required
                   />
                 </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>
+                  Logo
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <label
+                    style={{
+                      width: 72, height: 72, borderRadius: '50%', flexShrink: 0,
+                      border: '1px dashed var(--stone-gray)', background: 'var(--surface-0)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer', overflow: 'hidden',
+                    }}
+                  >
+                    {logo ? (
+                      <img src={logo} alt="Business logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <Upload size={20} color="var(--stone-gray)" />
+                    )}
+                    <input
+                      type="file" accept="image/png,image/jpeg,image/gif,image/webp"
+                      style={{ display: 'none' }}
+                      onChange={e => { handleLogoFile(e.target.files?.[0]); e.target.value = ''; }}
+                    />
+                  </label>
+                  <span style={{ fontSize: 12, color: 'var(--stone-gray)' }}>
+                    {logoBusy ? 'Uploading…' : logo ? 'Logo attached — click the circle to replace.' : 'PNG, JPG, GIF or WEBP, max 5MB.'}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>
+                  Industry *
+                </label>
+                <select
+                  className="input"
+                  value={sector}
+                  onChange={e => setSector(e.target.value)}
+                  style={{ height: 46 }}
+                >
+                  <option>Retail &amp; E-Commerce</option>
+                  <option>Healthcare &amp; Clinics</option>
+                  <option>Food &amp; Beverage</option>
+                  <option>Fashion &amp; Apparel</option>
+                  <option>Electronics &amp; Tech</option>
+                  <option>Beauty &amp; Cosmetics</option>
+                  <option>Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--midnight-ink)', marginBottom: 6, display: 'block' }}>
+                  Description
+                </label>
+                <textarea
+                  className="input"
+                  rows={3}
+                  placeholder="Briefly describe what you sell or offer..."
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
+                  style={{ resize: 'vertical' }}
+                />
               </div>
 
               <div>
@@ -458,25 +574,34 @@ export function Signup() {
                 </select>
               </div>
 
-              {/* Account is final after OTP verification — no back navigation
-                  (editing details here would desync from the created account). */}
+              {/* Account is final after OTP verification — Back only revisits
+                  the verify screen (no data desync: business fields are free). */}
               <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
                 <button
+                  type="button"
+                  onClick={() => { setError(''); setStep(2); }}
+                  className="btn btn-outline btn-lg"
+                  style={{ flex: 1, height: 48, fontSize: 15 }}
+                >
+                  ← Back
+                </button>
+                <button
                   type="submit"
+                  disabled={saving || logoBusy}
                   className="btn btn-primary btn-lg"
                   style={{
                     flex: 2, height: 48, fontSize: 15, background: 'var(--signal-orange)',
-                    boxShadow: '0 4px 14px rgba(255, 90, 54, 0.25)',
-                    opacity: loading ? 0.7 : 1
+                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)',
+                    opacity: saving ? 0.7 : 1
                   }}
                 >
-                  {loading ? (
+                  {saving ? (
                     <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span className="animate-spin" style={{ width: 16, height: 16, border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block' }} />
                       Saving...
                     </span>
                   ) : (
-                    <>Continue to Onboarding <ArrowRight size={18} /></>
+                    <>Continue <ArrowRight size={18} /></>
                   )}
                 </button>
               </div>

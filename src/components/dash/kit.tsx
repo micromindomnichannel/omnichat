@@ -39,7 +39,7 @@ export function PageHeader({
 export function LiveDot({ label }: { label?: string }) {
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-      <style>{`@keyframes orbit-live-ping { 0% { box-shadow: 0 0 0 0 rgba(255,90,54,0.45); } 70% { box-shadow: 0 0 0 7px rgba(255,90,54,0); } 100% { box-shadow: 0 0 0 0 rgba(255,90,54,0); } }`}</style>
+      <style>{`@keyframes orbit-live-ping { 0% { box-shadow: 0 0 0 0 rgba(37,99,235,0.45); } 70% { box-shadow: 0 0 0 7px rgba(37,99,235,0); } 100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); } }`}</style>
       <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--signal-orange)', animation: 'orbit-live-ping 1.8s ease-out infinite' }} />
       {label ? <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--signal-orange)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>{label}</span> : null}
     </span>

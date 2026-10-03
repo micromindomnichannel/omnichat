@@ -309,7 +309,7 @@ export function Settings() {
                     <div key={rule} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 6, background: 'var(--surface-0)', border: '1px solid var(--border)' }}>
                       <span style={{ flex: 1, fontSize: 13, color: 'var(--midnight-ink)' }}>{rule}</span>
                       <button onClick={() => handleRemoveRule(rule)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-                        <Trash2 size={15} color="var(--burnt-coral)" />
+                        <Trash2 size={15} color="var(--danger)" />
                       </button>
                     </div>
                   ))}
@@ -470,7 +470,7 @@ export function Settings() {
                         <span style={{ padding: '4px 10px', borderRadius: 4, background: 'var(--surface-0)', fontSize: 12, fontWeight: 650, color: 'var(--midnight-ink)', border: '1px solid var(--border)', textTransform: 'capitalize' }}>{member.role}</span>
                       </td>
                       <td style={{ padding: '12px 16px' }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: member.status === 'Pending' ? 'var(--burnt-coral)' : '#0F8357' }}>● {member.status || 'Active'}</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: member.status === 'Pending' ? 'var(--danger)' : '#0F8357' }}>● {member.status || 'Active'}</span>
                       </td>
                     </tr>
                   ))}
