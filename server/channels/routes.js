@@ -39,8 +39,11 @@ function oauthCallbackPage(res, status, payload, returnTo) {
   const target = new URL(oauthReturnTarget(returnTo));
   target.searchParams.set('meta_oauth', status >= 200 && status < 300 ? 'connected' : 'error');
   const title = status >= 200 && status < 300 ? 'Meta connected' : 'Meta connection needs attention';
+  const syncSummary = Array.isArray(payload?.linked)
+    ? payload.linked.map((item) => `${item.channel}: ${item.historySync?.status || 'not reported'}${item.historySync?.error ? ` — ${item.historySync.error}` : ''}`).join(' | ')
+    : '';
   const message = status >= 200 && status < 300
-    ? 'Your Messenger and Instagram accounts were connected successfully.'
+    ? `Your Messenger and Instagram accounts were connected successfully.${syncSummary ? ` Historical sync: ${syncSummary}.` : ''}`
     : String(payload?.error || 'Meta connection failed');
   const safe = (text) => String(text).replace(/[&<>\"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', "'": '&#39;' }[c]));
   return res.status(status).type('html').send(`<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="3;url=${safe(target.toString())}"><title>${safe(title)}</title><style>body{font-family:system-ui,sans-serif;display:grid;place-items:center;min-height:100vh;color:#172033}main{max-width:560px;padding:32px;text-align:center;border:1px solid #eee;border-radius:16px}p{color:#667085}</style></head><body><main><h1>${safe(title)}</h1><p>${safe(message)}</p><p>You will be redirected to Orbit in <strong>3 seconds</strong>.</p><a href="${safe(target.toString())}">Return to Orbit now</a></main><script>setTimeout(()=>location.href=${JSON.stringify(target.toString())},3000)</script></body></html>`);
