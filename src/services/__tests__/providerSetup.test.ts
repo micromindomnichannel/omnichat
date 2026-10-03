@@ -8,6 +8,7 @@ import {
   setTelegramWebhook,
   deleteTelegramWebhook,
   getTelegramWebhook,
+  getTelegramMe,
 // @ts-ignore — untyped server module (covered by these very tests)
 // eslint-disable-next-line
 } from '../../../server/integrations/telegram.js';
@@ -15,6 +16,7 @@ import {
   parseDiscordMessage,
   sendDiscordText,
   discoverDiscordBot,
+  getDiscordMe,
 // @ts-ignore — untyped server module (covered by these very tests)
 // eslint-disable-next-line
 } from '../../../server/integrations/discord.js';
@@ -79,6 +81,16 @@ describe('telegram intake', () => {
     await expect(sendTelegramText({ botToken: '', chatId: '1', text: 'hi' })).rejects.toThrow(/bot token required/);
     expect(spy).not.toHaveBeenCalled();
   });
+
+  it('getTelegramMe resolves bot identity, rejects bad tokens fast', async () => {
+    (globalThis as any).fetch = vi.fn(async () => ({
+      ok: true, json: async () => ({ ok: true, result: { id: 987654321, username: 'luna_store_bot', first_name: 'Luna' } }),
+    }));
+    expect(await getTelegramMe({ botToken: 'GOOD' })).toEqual({ botId: '987654321', username: 'luna_store_bot', displayName: 'Luna' });
+    (globalThis as any).fetch = vi.fn(async () => ({ ok: false, status: 401, json: async () => ({ ok: false, description: 'Unauthorized' }) }));
+    await expect(getTelegramMe({ botToken: 'BAD' })).rejects.toThrow(/invalid/);
+    await expect(getTelegramMe({ botToken: '' })).rejects.toThrow(/bot token required/);
+  });
 });
 
 describe('discord intake', () => {
@@ -114,5 +126,15 @@ describe('discord intake', () => {
     expect(await discoverDiscordBot('BAD')).toBeNull();
     (globalThis as any).fetch = vi.fn(async () => { throw new Error('net down'); });
     expect(await discoverDiscordBot('TOK')).toBeNull();
+  });
+
+  it('getDiscordMe throws invalid_bot_token on 401/403, null on outage', async () => {
+    (globalThis as any).fetch = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ id: '456', username: 'orbitbot' }) }));
+    expect(await getDiscordMe('GOOD')).toEqual({ id: '456', username: 'orbitbot', bot: true });
+    (globalThis as any).fetch = vi.fn(async () => ({ ok: false, status: 401, json: async () => ({ message: 'Unauthorized' }) }));
+    await expect(getDiscordMe('BAD')).rejects.toMatchObject({ code: 'invalid_bot_token' });
+    (globalThis as any).fetch = vi.fn(async () => { throw new Error('net down'); });
+    expect(await getDiscordMe('GOOD')).toBeNull();
+    await expect(getDiscordMe('')).rejects.toThrow(/bot token required/);
   });
 });

@@ -754,7 +754,22 @@ if (process.env.NODE_ENV === 'production') {
   }
 }
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`📡 ORBIT Omnichannel API Server running on port ${PORT}`);
-  console.log(`🗄️ PostgreSQL Host: ${process.env.DB_HOST || '148.251.171.147'}:${process.env.DB_PORT || '5432'} (Database: ${process.env.DB_NAME || 'omnichannel'})`);
+  // Report the ACTUAL connection target (DATABASE_URL wins when set) — the
+  // old line printed DB_HOST defaults and misled triage during incidents.
+  const t = dbTarget();
+  console.log(`🗄️ PostgreSQL (${t.via}): ${t.host}:${t.port} (Database: ${t.name})`);
 });
+
+// Graceful shutdown: Railway SIGTERMs containers on every redeploy/scale
+// event. Dying mid-request is what strands webhook rows in 'received' (the
+// journal insert lands, the persist half never runs). Stop accepting new
+// connections but let in-flight webhook/AI work finish before exiting.
+function shutdown(sig) {
+  console.log(`[shutdown] ${sig} — draining in-flight requests…`);
+  server.close(() => process.exit(0));
+  setTimeout(() => process.exit(0), 10000).unref();
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));

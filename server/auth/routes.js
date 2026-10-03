@@ -171,7 +171,7 @@ export function authRouter(pool) {
           );
           if (process.env.SMTP_HOST) {
             console.log(`[auth] password reset for ${email} (SMTP not wired to a mailer yet — token withheld)`);
-          } else {
+          } else if (process.env.NODE_ENV !== 'production') {
             console.log(`[auth] DEV-ONLY password reset token for ${email}: ${token}`);
           }
           if (process.env.ALLOW_DEBUG_RESET === '1') return res.json({ success: true, debugToken: token });

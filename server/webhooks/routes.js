@@ -93,7 +93,13 @@ export function webhooksRouter(pool) {
             try {
               await handleMetaMessaging(pool, provider, account, item);
             } catch (err) {
-              console.error(`[webhook:${provider}] handle error:`, err.message);
+              // Stage context (ids only — never message text): triage needs to
+              // know WHICH event died, since the row stays 'received' on failure.
+              console.error(`[webhook:${provider}] handle error:`, err.message, JSON.stringify({
+                entry: entry?.id != null ? String(entry.id) : null,
+                sender: item?.sender?.id != null ? String(item.sender.id) : null,
+                mid: item?.message?.mid != null ? String(item.message.mid) : null,
+              }));
             }
           }
         }
@@ -105,7 +111,7 @@ export function webhooksRouter(pool) {
               (a.external_account_id && m.phoneNumberId && a.external_account_id === m.phoneNumberId));
             await handleNormalized(pool, provider, account, { senderId: m.from, text: m.text, mid: m.mid });
           } catch (err) {
-            console.error('[webhook:whatsapp] handle error:', err.message);
+            console.error('[webhook:whatsapp] handle error:', err.message, JSON.stringify({ sender: m?.from, mid: m?.mid }));
           }
         }
       } else if (provider === 'telegram') {
@@ -117,7 +123,7 @@ export function webhooksRouter(pool) {
           try {
             await handleNormalized(pool, provider, account, { senderId: u.chatId, text: u.text, mid: u.updateId }, { telegramFrom: u.fromId });
           } catch (err) {
-            console.error('[webhook:telegram] handle error:', err.message);
+            console.error('[webhook:telegram] handle error:', err.message, JSON.stringify({ chat: u?.chatId, update: u?.updateId }));
           }
         }
       }
@@ -255,7 +261,7 @@ export async function handleNormalized(pool, provider, account, { senderId, text
       }
     }
   } catch (err) {
-    console.error(`[webhook:${provider}] AI reply failed:`, err.message);
+    console.error(`[webhook:${provider}] AI reply failed:`, err.message, JSON.stringify({ mid }));
     await pool.query(
       "INSERT INTO messages (id, workspace_id, conversation_id, sender, content, timestamp, source) VALUES ($1,$2,$3,'system',$4,$5,'webhook')",
       [rid('m'), workspaceId, conv.id, `AI reply failed: ${String(err.message).slice(0, 200)}`, new Date().toISOString()]
