@@ -68,3 +68,39 @@ describe('api.me / fetchJson', () => {
     expect(await api.me()).toBeNull();
   });
 });
+
+describe('inbox refresh (stale-304 guard)', () => {
+  it('getConversations bypasses the HTTP cache', async () => {
+    const f = mockFetchOnce(async () => ({ ok: true, status: 200, json: async () => [] }));
+    await api.getConversations();
+    expect(f).toHaveBeenCalledOnce();
+    expect(f.mock.calls[0][1].cache).toBe('no-store');
+  });
+
+  it('getThreadMessages bypasses the HTTP cache', async () => {
+    const f = mockFetchOnce(async () => ({ ok: true, status: 200, json: async () => [] }));
+    await api.getThreadMessages('conv_1');
+    expect(f).toHaveBeenCalledOnce();
+    const [url, opts] = f.mock.calls[0];
+    expect(String(url)).toContain('/v1/conversations/conv_1/messages');
+    expect(opts.cache).toBe('no-store');
+  });
+
+  it('retries once with no-store when a 304 surfaces, returning fresh data', async () => {
+    const calls: any[] = [];
+    mockFetchOnce(async (url: string, opts: any) => {
+      calls.push(opts?.cache);
+      if (calls.length === 1) return { ok: false, status: 304, json: async () => { throw new Error('no body'); } };
+      return { ok: true, status: 200, json: async () => [{ id: 'conv_new' }] };
+    });
+    const res = await api.me();
+    expect(res).toEqual([{ id: 'conv_new' }]);
+    expect(calls).toEqual([undefined, 'no-store']);
+  });
+
+  it('returns null (keeps last state) when the no-store retry also fails', async () => {
+    const f = mockFetchOnce(async () => ({ ok: false, status: 304, json: async () => null }));
+    expect(await api.me()).toBeNull();
+    expect(f).toHaveBeenCalledTimes(2);
+  });
+});

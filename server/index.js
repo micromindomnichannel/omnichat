@@ -286,6 +286,9 @@ app.delete('/api/services/:id', async (req, res) => {
 });
 
 // 5. Messages & Conversations API
+// Realtime Inbox data must never hide behind a stale cache entry: mark both
+// read endpoints no-store (scoped — every other endpoint keeps Express
+// defaults, including ETags, so conditional requests elsewhere still work).
 app.get('/api/conversations', async (req, res) => {
   try {
     const result = await pool.query(`
@@ -295,6 +298,7 @@ app.get('/api/conversations', async (req, res) => {
       WHERE c.workspace_id = $1
       ORDER BY c.updated_at DESC
     `, [req.workspaceId]);
+    res.set('Cache-Control', 'no-store');
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -659,6 +663,7 @@ app.get('/api/v1/conversations/:id/messages', requireAuth, async (req, res) => {
       'SELECT * FROM messages WHERE conversation_id=$1 AND workspace_id=$2 ORDER BY created_at ASC LIMIT $3',
       [req.params.id, workspaceId, limit]
     );
+    res.set('Cache-Control', 'no-store');
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });

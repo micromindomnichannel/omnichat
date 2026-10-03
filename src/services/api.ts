@@ -9,12 +9,33 @@ async function fetchJson(url: string, options?: RequestInit) {
       credentials: 'include', // session cookie (httpOnly, set by backend)
       ...options
     });
+    if (res.status === 304) {
+      // Stale-ETag guard: a 304 must never hide new data. Bypass the HTTP
+      // cache once and read the fresh body (single retry; other endpoints
+      // keep their default caching — this path only triggers on a 304).
+      const retry = await fetch(`${API_BASE}${url}`, {
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        ...options,
+        cache: 'no-store',
+      });
+      if (!retry.ok) throw new Error(`HTTP ${retry.status}`);
+      return await retry.json();
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (err) {
     console.warn(`[DB Sync Warning] Request to ${url} failed, using local sync state.`, err);
     return null;
   }
+}
+
+// Fresh GETs for realtime Inbox polling: bypass the HTTP cache entirely so a
+// newly arrived webhook/message can never hide behind a stale entry or 304.
+// Scoped to the Inbox refresh path only — every other endpoint keeps default
+// caching behavior.
+function fetchFresh(url: string) {
+  return fetchJson(url, { cache: 'no-store' });
 }
 
 // Raw auth calls: surface server error bodies (invalid credentials, closed
@@ -66,9 +87,9 @@ export const api = {
   updateService: (service: any) => fetchJson(`/services/${service.id}`, { method: 'PUT', body: JSON.stringify(service) }),
   deleteService: (id: string) => fetchJson(`/services/${id}`, { method: 'DELETE' }),
 
-  // Messages & Conversations
-  getConversations: () => fetchJson('/conversations'),
-  getThreadMessages: (id: string) => fetchJson(`/v1/conversations/${id}/messages`),
+  // Messages & Conversations (realtime Inbox path: always fresh, never cached)
+  getConversations: () => fetchFresh('/conversations'),
+  getThreadMessages: (id: string) => fetchFresh(`/v1/conversations/${id}/messages`),
   addMessage: (conversationId: string, message: any) => fetchJson('/messages', { method: 'POST', body: JSON.stringify({ conversationId, message }) }),
   updateConversationStatus: (id: string, status: string) => fetchJson(`/conversations/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
 
