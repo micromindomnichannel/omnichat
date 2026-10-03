@@ -59,7 +59,7 @@ export function Login() {
       {/* Left Branding Panel */}
       <div style={{
         flex: 1,
-        background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 60%, #1E40AF 100%)',
+        background: 'linear-gradient(145deg, var(--midnight-ink) 0%, #1A1A1A 60%, #2A2A2A 100%)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
@@ -77,7 +77,7 @@ export function Login() {
           left: '40%',
           width: 500,
           height: 500,
-          background: 'radial-gradient(circle, rgba(37, 99, 235, 0.12) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(255, 90, 54, 0.12) 0%, transparent 70%)',
           pointerEvents: 'none'
         }} />
 
@@ -100,7 +100,7 @@ export function Login() {
             {['24/7 AI-powered omnichannel inbox', 'Live PostgreSQL database sync', 'Dual Commerce & Appointment modes'].map((item, idx) => (
               <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{
-                  width: 28, height: 28, borderRadius: '50%', background: 'rgba(37, 99, 235, 0.15)',
+                  width: 28, height: 28, borderRadius: '50%', background: 'rgba(255, 90, 54, 0.15)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
                 }}>
                   <Sparkles size={14} color="var(--signal-orange)" />
@@ -210,7 +210,7 @@ export function Login() {
               className="btn btn-primary btn-lg"
               style={{
                 width: '100%', height: 48, fontSize: 15, background: 'var(--signal-orange)',
-                boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)',
+                boxShadow: '0 4px 14px rgba(255, 90, 54, 0.25)',
                 opacity: loading ? 0.7 : 1, cursor: loading ? 'not-allowed' : 'pointer',
                 marginTop: 8
               }}

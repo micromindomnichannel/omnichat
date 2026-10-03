@@ -193,7 +193,7 @@ export function ChannelsPanel({ showToast, local, onToggleLocal, workspaceId }: 
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {primary && primary.status === 'active'
-              ? <button className="btn" disabled={busy} onClick={() => act(primary.id, 'disconnect')} style={{ height: 32, padding: '0 16px', fontSize: 12.5, fontWeight: 700, background: 'var(--danger-bg)', color: 'var(--danger)' }}>Disconnect</button>
+              ? <button className="btn" disabled={busy} onClick={() => act(primary.id, 'disconnect')} style={{ height: 32, padding: '0 16px', fontSize: 12.5, fontWeight: 700, background: 'var(--danger-bg)', color: 'var(--burnt-coral)' }}>Disconnect</button>
               : primary && primary.status !== 'active'
                 ? <button className="btn" disabled={busy} onClick={() => act(primary.id, 'reconnect')} style={{ height: 32, padding: '0 16px', fontSize: 12.5, fontWeight: 700, background: 'var(--signal-orange)', color: 'white' }}>Reconnect</button>
                 : (key === 'messenger' || key === 'instagram')
@@ -256,7 +256,7 @@ export function ChannelsPanel({ showToast, local, onToggleLocal, workspaceId }: 
                 <span style={{ fontSize: 11, color: 'var(--stone-gray)' }}>{connected ? '🟢 Local preview' : '⚪ Slice not built yet'}</span>
               </div>
             </div>
-            <button onClick={() => onToggleLocal(k)} className="btn" style={{ height: 32, padding: '0 16px', fontSize: 12.5, fontWeight: 700, background: connected ? 'var(--danger-bg)' : 'var(--signal-orange)', color: connected ? 'var(--danger)' : 'white' }}>
+            <button onClick={() => onToggleLocal(k)} className="btn" style={{ height: 32, padding: '0 16px', fontSize: 12.5, fontWeight: 700, background: connected ? 'var(--danger-bg)' : 'var(--signal-orange)', color: connected ? 'var(--burnt-coral)' : 'white' }}>
               {connected ? 'Disconnect' : 'Connect'}
             </button>
           </div>

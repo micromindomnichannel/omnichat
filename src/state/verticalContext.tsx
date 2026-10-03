@@ -25,10 +25,10 @@ export function VerticalProvider({ children }: { children: React.ReactNode }) {
   const setVertical = useCallback((v: Vertical) => {
     setVerticalState(v);
     // Update CSS variable for accent
-    document.documentElement.style.setProperty('--brand-active', v === 'commerce' ? '#2F5CFF' : '#0F9D77');
+    document.documentElement.style.setProperty('--brand-active', v === 'commerce' ? '#FF5A36' : '#0F9D77');
   }, []);
 
-  const accentColor = vertical === 'commerce' ? '#2F5CFF' : '#0F9D77';
+  const accentColor = vertical === 'commerce' ? '#FF5A36' : '#0F9D77';
   const accentBg = vertical === 'commerce' ? 'rgba(47, 92, 255, 0.08)' : 'rgba(15, 157, 119, 0.08)';
 
   return (

@@ -53,7 +53,7 @@ export function Inbox() {
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
         {state.dbOnline === false && (
-          <div style={{ padding: '8px 16px', background: 'var(--danger-bg)', color: 'var(--danger)', fontSize: 12, fontWeight: 600, textAlign: 'center' }}>
+          <div style={{ padding: '8px 16px', background: 'var(--danger-bg)', color: 'var(--burnt-coral)', fontSize: 12, fontWeight: 600, textAlign: 'center' }}>
             Backend unreachable — showing last synced state. New messages will appear once reconnected.
           </div>
         )}

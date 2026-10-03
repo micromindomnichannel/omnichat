@@ -150,7 +150,7 @@ export function Scheduler() {
                   fontSize: 11,
                   background: post.status === 'published' ? 'rgba(82, 216, 164, 0.15)' : post.status === 'failed' ? 'var(--danger-bg)' : 'var(--signal-orange-subtle)',
                   color: post.status === 'published' ? '#0F8357' : post.status === 'failed' ? 'var(--danger)' : 'var(--signal-orange)',
-                  borderColor: post.status === 'published' ? 'rgba(82, 216, 164, 0.3)' : post.status === 'failed' ? 'var(--danger)' : 'rgba(37, 99, 235, 0.2)'
+                  borderColor: post.status === 'published' ? 'rgba(82, 216, 164, 0.3)' : post.status === 'failed' ? 'var(--danger)' : 'rgba(255, 90, 54, 0.2)'
                 }}>
                   {post.status === 'published' ? '● Published' : post.status === 'failed' ? '● Failed' : '⏱️ Scheduled'}
                 </span>
@@ -205,7 +205,7 @@ export function Scheduler() {
                   onClick={() => handleDeletePost(post.id)}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
                 >
-                  <Trash2 size={16} color="var(--danger)" />
+                  <Trash2 size={16} color="var(--burnt-coral)" />
                 </button>
               </div>
             </div>

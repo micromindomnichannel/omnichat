@@ -75,8 +75,8 @@ export function VerticalSelect({ onSelect }: VerticalSelectProps) {
             display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <Package size={32} color="#2F5CFF" />
-              <ShoppingCart size={24} color="#2F5CFF" />
+              <Package size={32} color="#FF5A36" />
+              <ShoppingCart size={24} color="#FF5A36" />
             </div>
           </div>
           <div>
@@ -105,7 +105,7 @@ export function VerticalSelect({ onSelect }: VerticalSelectProps) {
           <button
             onClick={() => handleSelect('commerce')}
             className="btn btn-primary"
-            style={{ width: '100%', marginTop: 'auto', background: '#2F5CFF' }}
+            style={{ width: '100%', marginTop: 'auto', background: '#FF5A36' }}
           >
             Use Commerce
           </button>

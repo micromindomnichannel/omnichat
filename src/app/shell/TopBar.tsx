@@ -458,7 +458,7 @@ export function TopBar() {
                   style={{
                     width: '100%', padding: '8px 12px', borderRadius: 6, border: 'none',
                     background: 'transparent', display: 'flex', alignItems: 'center', gap: 8,
-                    cursor: 'pointer', fontSize: 13, color: 'var(--danger)'
+                    cursor: 'pointer', fontSize: 13, color: 'var(--burnt-coral)'
                   }}
                 >
                   <LogOut size={16} /> Log out

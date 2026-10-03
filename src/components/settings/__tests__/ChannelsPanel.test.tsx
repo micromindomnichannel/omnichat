@@ -32,6 +32,44 @@ describe('ChannelsPanel matrix', () => {
     expect(onToggleLocal).toHaveBeenCalledWith('website');
   });
 
+  it('offers Meta OAuth for messenger/instagram and a manual form for BYOF channels', async () => {
+    (globalThis as any).fetch = vi.fn(async (url: string) => {
+      if (String(url).includes('/channels')) {
+        return { ok: true, json: async () => [] };
+      }
+      return { ok: true, json: async () => ({}) };
+    });
+
+    render(<ChannelsPanel showToast={showToast} local={{}} onToggleLocal={onToggleLocal} />);
+
+    // Messenger/Instagram connect exclusively via Meta OAuth now.
+    expect(screen.getByRole('button', { name: /meta oauth messenger/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /meta oauth instagram/i })).toBeInTheDocument();
+    // WhatsApp (BYOF) still opens a manual token/flow form.
+    const waCard = screen.getByText('WhatsApp').closest('div[style*="padding: 16px"]')!;
+    fireEvent.click(waCard.querySelector('button')!);
+    expect(screen.getByPlaceholderText(/micromind flow id/i)).toBeInTheDocument();
+  });
+
+  it('Meta OAuth opens the backend authorization URL, or explains when unconfigured', async () => {
+    (globalThis as any).fetch = vi.fn(async (url: string) => {
+      if (String(url).includes('/oauth/start')) {
+        return { ok: true, json: async () => ({ authUrl: 'https://meta.example/oauth?state=abc' }) };
+      }
+      if (String(url).includes('/channels')) {
+        return { ok: true, json: async () => [] };
+      }
+      return { ok: true, json: async () => ({}) };
+    });
+    const assignSpy = vi.fn();
+    Object.defineProperty(window, 'location', { value: { assign: assignSpy, href: 'http://localhost/' }, writable: true });
+
+    render(<ChannelsPanel showToast={showToast} local={{}} onToggleLocal={onToggleLocal} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /meta oauth messenger/i }));
+    await waitFor(() => expect(assignSpy).toHaveBeenCalledWith('https://meta.example/oauth?state=abc'));
+  });
+
   it('enforces token or flow ID validation on channel connect', async () => {
     (globalThis as any).fetch = vi.fn(async (url: string) => {
       if (String(url).includes('/channels')) {
@@ -42,14 +80,10 @@ describe('ChannelsPanel matrix', () => {
 
     render(<ChannelsPanel showToast={showToast} local={{}} onToggleLocal={onToggleLocal} />);
 
-    // Click Connect on Messenger
-    const messengerCard = screen.getByText('Messenger').closest('div[style*="padding: 16px"]')!;
-    const connectBtn = messengerCard.querySelector('button')!;
-    fireEvent.click(connectBtn);
-
-    // Form expands
-    const submitBtn = screen.getByRole('button', { name: /connect messenger/i });
-    fireEvent.click(submitBtn);
+    // Expand the WhatsApp manual form and submit it empty.
+    const waCard = screen.getByText('WhatsApp').closest('div[style*="padding: 16px"]')!;
+    fireEvent.click(waCard.querySelector('button')!);
+    fireEvent.click(screen.getByRole('button', { name: /^connect whatsapp$/i }));
 
     expect(showToast).toHaveBeenCalledWith('Paste a Page access token or a MicroMind flow id', 'danger');
   });
@@ -60,7 +94,7 @@ describe('ChannelsPanel matrix', () => {
         return {
           ok: true,
           json: async () => ({
-            account: { id: 'acc_1', channel: 'messenger', status: 'active' },
+            account: { id: 'acc_1', channel: 'whatsapp', status: 'active' },
             status: 'active',
             test: { status: 'test_ok' }
           })
@@ -74,18 +108,16 @@ describe('ChannelsPanel matrix', () => {
 
     render(<ChannelsPanel showToast={showToast} local={{}} onToggleLocal={onToggleLocal} />);
 
-    const messengerCard = screen.getByText('Messenger').closest('div[style*="padding: 16px"]')!;
-    const connectBtn = messengerCard.querySelector('button')!;
-    fireEvent.click(connectBtn);
+    const waCard = screen.getByText('WhatsApp').closest('div[style*="padding: 16px"]')!;
+    fireEvent.click(waCard.querySelector('button')!);
 
-    const tokenInput = screen.getByPlaceholderText(/page access token/i);
-    fireEvent.change(tokenInput, { target: { value: 'EAAB...' } });
+    const flowInput = screen.getByPlaceholderText(/micromind flow id/i);
+    fireEvent.change(flowInput, { target: { value: 'flow_123' } });
 
-    const submitBtn = screen.getByRole('button', { name: /connect messenger/i });
-    fireEvent.click(submitBtn);
+    fireEvent.click(screen.getByRole('button', { name: /^connect whatsapp$/i }));
 
     await waitFor(() => {
-      expect(showToast).toHaveBeenCalledWith('messenger active — test test ok', 'success');
+      expect(showToast).toHaveBeenCalledWith('whatsapp active — test test ok', 'success');
     });
   });
 
@@ -95,7 +127,7 @@ describe('ChannelsPanel matrix', () => {
         return {
           ok: true,
           json: async () => ({
-            error: 'Invalid Meta App ID or token'
+            error: 'Invalid bot token'
           })
         };
       }
@@ -104,17 +136,16 @@ describe('ChannelsPanel matrix', () => {
 
     render(<ChannelsPanel showToast={showToast} local={{}} onToggleLocal={onToggleLocal} />);
 
-    const instagramCard = screen.getByText('Instagram').closest('div[style*="padding: 16px"]')!;
-    fireEvent.click(instagramCard.querySelector('button')!);
+    const tgCard = screen.getByText('Telegram').closest('div[style*="padding: 16px"]')!;
+    fireEvent.click(tgCard.querySelector('button')!);
 
-    const tokenInput = screen.getByPlaceholderText(/page access token/i);
-    fireEvent.change(tokenInput, { target: { value: 'IGQV...' } });
+    const tokenInput = screen.getByPlaceholderText(/bot token/i);
+    fireEvent.change(tokenInput, { target: { value: '123:ABC' } });
 
-    const submitBtn = screen.getByRole('button', { name: /connect instagram/i });
-    fireEvent.click(submitBtn);
+    fireEvent.click(screen.getByRole('button', { name: /^connect telegram$/i }));
 
     await waitFor(() => {
-      expect(showToast).toHaveBeenCalledWith('Invalid Meta App ID or token', 'danger');
+      expect(showToast).toHaveBeenCalledWith('Invalid bot token', 'danger');
     });
   });
 

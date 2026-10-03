@@ -116,7 +116,7 @@ export function Landing() {
           transform: 'translateX(-50%)',
           width: 800,
           height: 400,
-          background: 'radial-gradient(circle, rgba(37,99,235,0.08) 0%, rgba(243,232,214,0.3) 50%, transparent 80%)',
+          background: 'radial-gradient(circle, rgba(255,90,54,0.08) 0%, rgba(243,232,214,0.3) 50%, transparent 80%)',
           pointerEvents: 'none',
           zIndex: 0
         }} />
@@ -455,7 +455,7 @@ export function Landing() {
                   <div style={{ background: 'white', padding: '10px 14px', borderRadius: '10px 10px 10px 2px', border: '1px solid var(--border)' }}>
                     Customer: "هو الشنطة السودا الجلد دي بكام؟"
                   </div>
-                  <div style={{ background: 'var(--signal-orange-subtle)', color: 'var(--midnight-ink)', padding: '10px 14px', borderRadius: '10px 10px 2px 10px', border: '1px solid rgba(37,99,235,0.2)' }}>
+                  <div style={{ background: 'var(--signal-orange-subtle)', color: 'var(--midnight-ink)', padding: '10px 14px', borderRadius: '10px 10px 2px 10px', border: '1px solid rgba(255,90,54,0.2)' }}>
                     ORBIT AI: "The Black Leather Bag is 850 EGP. Size M and L are in stock! Shall I create an order for you?"
                   </div>
                 </div>
@@ -485,7 +485,7 @@ export function Landing() {
                 <button
                   onClick={() => navigate('/appointments')}
                   className="btn btn-primary mt-24"
-                  style={{ background: 'var(--signal-orange)' }}
+                  style={{ background: 'var(--midnight-ink)' }}
                 >
                   Explore Appointments Agenda <ChevronRight size={16} />
                 </button>
@@ -601,7 +601,7 @@ export function Landing() {
             { n: '03', id: 'whatsapp', name: 'WhatsApp', color: '#25D366', desc: 'Bookings, reminders, and support on the channel your customers live in.' },
             { n: '04', id: 'telegram', name: 'Telegram', color: '#229ED9', desc: 'Bot-powered support and alerts with human takeover on demand.' },
             { n: '05', id: 'gmail', name: 'Gmail', color: '#A8A29E', desc: 'Email threads triaged and drafted alongside every chat channel.' },
-            { n: '06', id: 'scheduler', name: 'Scheduler', color: '#2563EB', desc: 'Broadcasts that actually publish: Facebook feed + Instagram media, tracked live.' },
+            { n: '06', id: 'scheduler', name: 'Scheduler', color: '#FF5A36', desc: 'Broadcasts that actually publish: Facebook feed + Instagram media, tracked live.' },
           ].map((s) => (
             <button
               key={s.id}
@@ -702,7 +702,7 @@ export function Landing() {
 
       {/* 9. Call to Action Banner */}
       <section style={{
-        background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 60%, #1E40AF 100%)',
+        background: 'var(--midnight-ink)',
         color: 'var(--cloud-white)',
         padding: '70px 32px',
         textAlign: 'center',
