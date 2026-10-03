@@ -9,7 +9,7 @@ import { testFlowLink, recordLinkTest } from '../micromind/linktest.js';
 import { assertCanConnectChannel } from '../billing/plans.js';
 import { requireAuth, requireWorkspace, workspaceFor } from '../auth/middleware.js';
 import { graphGet, publishPagePost, publishInstagramMedia } from '../meta/graph.js';
-import { discoverDiscordBot } from '../integrations/discord.js';
+import { discoverDiscordBot, getDiscordMe } from '../integrations/discord.js';
 import { startDiscordAccount, stopDiscordAccount, isDiscordListening } from '../integrations/discordGateway.js';
 import { setTelegramWebhook, deleteTelegramWebhook, getTelegramWebhook, getTelegramMe } from '../integrations/telegram.js';
 import { buildMetaAuthUrl, discoverMetaAssets, exchangeMetaCode, metaConfigured, metaRedirectUri, subscribePage } from '../meta/oauth.js';
@@ -255,16 +255,29 @@ export function channelsRouter(pool) {
     const { displayName, username, externalAccountId, pageAccessToken, botToken, secret,
       phoneNumberId, verifyToken, micromindFlowId, flowKey, autoProvision = true } = req.body || {};
     const credentialSecret = pageAccessToken || botToken || secret;
-    // Discord: resolve the bot's user id from the token (best-effort, never
-    // fails connect) so the account has a stable external identity even when
-    // the operator pastes only the token.
+    // Discord: validate the pasted bot token (fail fast on 401/403) and
+    // resolve the bot's user id, so the account has a stable external
+    // identity even when the operator pastes only the token. Outages stay
+    // best-effort: getDiscordMe returns null and the old discovery path runs.
     let resolvedExternalId = externalAccountId || null;
     let resolvedUsername = username || null;
     if (channel === 'discord' && credentialSecret && !resolvedExternalId) {
-      const me = await discoverDiscordBot(credentialSecret).catch(() => null);
-      if (me?.id) {
-        resolvedExternalId = me.id;
-        if (!resolvedUsername && me.username) resolvedUsername = me.username;
+      try {
+        const me = await getDiscordMe(credentialSecret);
+        if (me?.id) {
+          resolvedExternalId = me.id;
+          if (!resolvedUsername && me.username) resolvedUsername = me.username;
+        } else {
+          const fallback = await discoverDiscordBot(credentialSecret).catch(() => null);
+          if (fallback?.id) {
+            resolvedExternalId = fallback.id;
+            if (!resolvedUsername && fallback.username) resolvedUsername = fallback.username;
+          }
+        }
+      } catch (err) {
+        if (err?.code === 'invalid_bot_token') {
+          return res.status(400).json({ code: 'invalid_bot_token', error: String(err.message).slice(0, 200) });
+        }
       }
     }
     // Telegram: validate the pasted bot token via getMe (fail fast on typos)

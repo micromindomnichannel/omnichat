@@ -7,6 +7,30 @@
 
 const API = 'https://discord.com/api/v10';
 
+// Strict identity + token validation for the guided connect wizard.
+// Throws invalid_bot_token ONLY on 401/403 (wrong token) — network errors
+// and Discord outages return null so connect stays best-effort as before.
+export async function getDiscordMe(botToken) {
+  if (!botToken) throw new Error('getDiscordMe: bot token required');
+  let res;
+  try {
+    res = await fetch(`${API}/users/@me`, {
+      headers: { Authorization: `Bot ${botToken}` },
+    });
+  } catch {
+    return null; // outage/DNS: caller falls back to best-effort
+  }
+  if (res.status === 401 || res.status === 403) {
+    const err = new Error('Discord token invalid (unauthorized) — reset the token in the Developer Portal → Bot and paste the fresh value');
+    err.code = 'invalid_bot_token';
+    throw err;
+  }
+  if (!res.ok) return null;
+  const me = await res.json().catch(() => ({}));
+  if (!me?.id) return null;
+  return { id: String(me.id), username: me.username || null, bot: me.bot !== false };
+}
+
 // Bot identity discovery (best-effort at connect): token -> { id, username }.
 // Never throws — connect must survive a Discord outage.
 export async function discoverDiscordBot(botToken) {

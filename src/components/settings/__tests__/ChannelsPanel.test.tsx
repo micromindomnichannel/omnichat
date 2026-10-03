@@ -60,11 +60,12 @@ describe('ChannelsPanel matrix', () => {
 
     render(<ChannelsPanel showToast={showToast} local={{}} onToggleLocal={onToggleLocal} />);
 
-    // Discord card exists with a bot-token-first form.
+    // Discord card uses the guided Developer Portal wizard.
     const dcCard = screen.getByText('Discord').closest('div[style*="padding: 16px"]')!;
     fireEvent.click(dcCard.querySelector('button')!);
-    expect(screen.getByPlaceholderText(/bot token \(discord/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/micromind flow id \(optional — auto-provisions/i)).toBeInTheDocument();
+    expect(screen.getByText('Connect Discord Bot')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /open developer portal/i })).toBeInTheDocument();
+    expect(screen.getByText(/message content intent/i)).toBeInTheDocument();
     // Telegram graduated from BYOF: the guided BotFather wizard (one form open at a time).
     const tgCard = screen.getByText('Telegram').closest('div[style*="padding: 16px"]')!;
     fireEvent.click(tgCard.querySelector('button')!);
