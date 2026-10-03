@@ -420,8 +420,11 @@ export function channelsRouter(pool) {
               [existing.micromind_flow_id, accountId]
             );
             await pool.query("UPDATE micromind_flows SET status='active', updated_at=CURRENT_TIMESTAMP WHERE id=$1", [flowRow.id]);
-            await syncMetaConversations(pool, { workspaceId: oauthState.workspace_id, accountId, channel: asset.channel, pageId: asset.pageId, businessId: asset.channel === 'instagram' ? asset.instagramBusinessId : asset.pageId, pageAccessToken: asset.pageAccessToken }).catch(() => {});
-            linked.push({ channel: asset.channel, id: asset.externalAccountId, status: 'active', reused: true });
+            let historySync = { status: 'synced' };
+            try { historySync = { status: 'synced', ...(await syncMetaConversations(pool, { workspaceId: oauthState.workspace_id, accountId, channel: asset.channel, pageId: asset.pageId, businessId: asset.channel === 'instagram' ? asset.instagramBusinessId : asset.pageId, pageAccessToken: asset.pageAccessToken })) }; }
+            catch (syncErr) { historySync = { status: 'failed', error: String(syncErr.message).slice(0, 240) }; }
+            await pool.query("UPDATE channel_accounts SET metadata=metadata || $1 WHERE id=$2", [JSON.stringify({ history_sync: historySync }), accountId]);
+            linked.push({ channel: asset.channel, id: asset.externalAccountId, status: 'active', reused: true, historySync });
             continue;
           }
         }
@@ -435,8 +438,11 @@ export function channelsRouter(pool) {
           await pool.query("INSERT INTO micromind_flows (id, workspace_id, channel_account_id, external_flow_id, template, template_version, purpose, label, source, prediction_key_credential_id, status) VALUES ($1,$2,$3,$4,$5,$6,'channel',$7,'provisioned',$8,'active')",
             [flowRowId, oauthState.workspace_id, accountId, out.flow.id, asset.channel, await templateVersionForAsync(pool, asset.channel), `ORBIT ${asset.channel} - ${asset.displayName}`, out.credentialId]);
           await pool.query("UPDATE channel_accounts SET status='active', micromind_flow_id=$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2", [out.flow.id, accountId]);
-          await syncMetaConversations(pool, { workspaceId: oauthState.workspace_id, accountId, channel: asset.channel, pageId: asset.pageId, businessId: asset.channel === 'instagram' ? asset.instagramBusinessId : asset.pageId, pageAccessToken: asset.pageAccessToken }).catch(() => {});
-          linked.push({ channel: asset.channel, id: asset.externalAccountId, status: 'active' });
+          let historySync = { status: 'synced' };
+          try { historySync = { status: 'synced', ...(await syncMetaConversations(pool, { workspaceId: oauthState.workspace_id, accountId, channel: asset.channel, pageId: asset.pageId, businessId: asset.channel === 'instagram' ? asset.instagramBusinessId : asset.pageId, pageAccessToken: asset.pageAccessToken })) }; }
+          catch (syncErr) { historySync = { status: 'failed', error: String(syncErr.message).slice(0, 240) }; }
+          await pool.query("UPDATE channel_accounts SET metadata=metadata || $1 WHERE id=$2", [JSON.stringify({ history_sync: historySync }), accountId]);
+          linked.push({ channel: asset.channel, id: asset.externalAccountId, status: 'active', historySync });
         } catch (err) {
           await pool.query("UPDATE channel_accounts SET status='error', metadata=metadata || $1 WHERE id=$2", [JSON.stringify({ provision_error: String(err.message).slice(0, 300) }), accountId]);
           linked.push({ channel: asset.channel, id: asset.externalAccountId, status: 'error', error: String(err.message).slice(0, 160) });
