@@ -9,14 +9,22 @@
 //      analyst_key_credential_id (vaulted tenant key). Set when a workspace
 //      links its own analyst flow; NULL = not overridden.
 //   2. Shared env link: MICROMIND_ANALYST_FLOW_ID + MICROMIND_ANALYST_API_KEY.
-//   3. Legacy fallback: MICROMIND_MESSENGER_FLOW_ID (no key).
+//   3. Built-in default: the ORBIT Core flow (serves all core tasks unless
+//      overridden above). Its key still comes from MICROMIND_ANALYST_API_KEY.
+//   4. Legacy fallback: MICROMIND_MESSENGER_FLOW_ID (no key).
+// When MicroMind is unreachable/misconfigured, callers MUST fall back to local
+// logic — never 500 an AI feature because the model is down.
 // When MicroMind is unreachable/misconfigured, callers MUST fall back to local
 // logic — never 500 an AI feature because the model is down.
 import { predict, config } from './client.js';
 import { tenantKeyMaterial } from './keys.js';
 
+// ORBIT Core: default flow for all core (non-channel) tasks. Flow IDs are
+// not secrets; the KEY stays in MICROMIND_ANALYST_API_KEY (env/vault only).
+const ORBIT_CORE_FLOW_ID = '3b2e8550-0f20-4a3e-ab5b-408b92349e2f';
+
 export function analystFlowId() {
-  return process.env.MICROMIND_ANALYST_FLOW_ID || process.env.MICROMIND_MESSENGER_FLOW_ID || null;
+  return process.env.MICROMIND_ANALYST_FLOW_ID || ORBIT_CORE_FLOW_ID || process.env.MICROMIND_MESSENGER_FLOW_ID || null;
 }
 
 export function analystConfigured() {
