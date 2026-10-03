@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { Instagram, Facebook, MessageCircle, Send, Bot, Mail, Globe } from 'lucide-react';
 import { api } from '../../services/api';
 import { getMemberships } from '../../services/session';
+import { TelegramWizard } from './TelegramWizard';
 
 const SLICE: Record<string, { label: string; Icon: React.ElementType; color: string; tokenHint: string; byof?: boolean; guide: string[] }> = {
   messenger: { label: 'Messenger', Icon: Facebook, color: '#0099FF', tokenHint: 'Page access token (encrypted server-side)', guide: ['Meta Developers → your app → Messenger → generate a Page access token (pages_messaging).', 'Paste it below — ORBIT encrypts it, provisions your AI flow, and gives you the webhook URL.', 'In Meta → Webhooks, subscribe with that URL + the verify token shown after connect.'] },
@@ -206,7 +207,7 @@ export function ChannelsPanel({ showToast, local, onToggleLocal, workspaceId }: 
             )}
           </div>
         </div>
-        {forming === key && !primary && key !== 'messenger' && key !== 'instagram' && (
+        {forming === key && !primary && key !== 'messenger' && key !== 'instagram' && key !== 'telegram' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
             {meta.guide && (
               <details style={{ fontSize: 12, color: 'var(--ink-600)', background: 'var(--surface-0)', borderRadius: 8, padding: '8px 12px' }}>
@@ -231,6 +232,14 @@ export function ChannelsPanel({ showToast, local, onToggleLocal, workspaceId }: 
               {busy ? 'Connecting…' : `Connect ${meta.label}`}
             </button>
           </div>
+        )}
+        {/* Telegram uses the guided BotFather wizard instead of the generic form. */}
+        {forming === key && !primary && key === 'telegram' && (
+          <TelegramWizard
+            workspaceId={activeWorkspaceId}
+            showToast={showToast}
+            onDone={() => { setForming(null); refresh(); }}
+          />
         )}
       </div>
     );

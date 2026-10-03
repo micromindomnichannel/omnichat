@@ -57,6 +57,24 @@ export async function deleteTelegramWebhook({ botToken }) {
   }
 }
 
+// Identity + token validation: proves the pasted token is a real bot token and
+// resolves the bot's stable Telegram identity (id + username) so the account
+// row is keyed by the bot, never by a hand-typed guess. Throws on invalid.
+export async function getTelegramMe({ botToken }) {
+  if (!botToken) throw new Error('getTelegramMe: bot token required');
+  const res = await fetch(`https://api.telegram.org/bot${botToken}/getMe`, { method: 'POST' });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data.ok === false || !data.result?.id) {
+    throw new Error(`Telegram token invalid (${data?.description || res.status}) — copy a fresh token from @BotFather`);
+  }
+  const r = data.result;
+  return {
+    botId: String(r.id),
+    username: r.username || null,
+    displayName: r.first_name || r.username || 'Telegram bot',
+  };
+}
+
 // Diagnostics: where does Telegram deliver this bot's updates today?
 // Returns { url, pending, lastError } — url empty means no webhook set.
 export async function getTelegramWebhook({ botToken }) {

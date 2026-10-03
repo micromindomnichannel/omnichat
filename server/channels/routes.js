@@ -11,7 +11,7 @@ import { requireAuth, requireWorkspace, workspaceFor } from '../auth/middleware.
 import { graphGet, publishPagePost, publishInstagramMedia } from '../meta/graph.js';
 import { discoverDiscordBot } from '../integrations/discord.js';
 import { startDiscordAccount, stopDiscordAccount, isDiscordListening } from '../integrations/discordGateway.js';
-import { setTelegramWebhook, deleteTelegramWebhook, getTelegramWebhook } from '../integrations/telegram.js';
+import { setTelegramWebhook, deleteTelegramWebhook, getTelegramWebhook, getTelegramMe } from '../integrations/telegram.js';
 import { buildMetaAuthUrl, discoverMetaAssets, exchangeMetaCode, metaConfigured, metaRedirectUri, subscribePage } from '../meta/oauth.js';
 
 const FULL = ['messenger', 'instagram', 'telegram', 'discord']; // verified template + auto-provision
@@ -265,6 +265,18 @@ export function channelsRouter(pool) {
       if (me?.id) {
         resolvedExternalId = me.id;
         if (!resolvedUsername && me.username) resolvedUsername = me.username;
+      }
+    }
+    // Telegram: validate the pasted bot token via getMe (fail fast on typos)
+    // and resolve the bot's stable identity, so the account row is keyed by
+    // the bot itself even when the operator pastes only the token.
+    if (channel === 'telegram' && credentialSecret && !resolvedExternalId) {
+      try {
+        const me = await getTelegramMe({ botToken: credentialSecret });
+        resolvedExternalId = me.botId;
+        if (!resolvedUsername && me.username) resolvedUsername = me.username;
+      } catch (err) {
+        return res.status(400).json({ code: 'invalid_bot_token', error: String(err.message).slice(0, 200) });
       }
     }
     if (BYOF.includes(channel) && !micromindFlowId) {

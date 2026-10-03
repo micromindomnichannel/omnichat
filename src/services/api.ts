@@ -132,7 +132,15 @@ export const api = {
   // Channel connections (multi-tenant slice; null when backend unreachable -> local fallback)
   getChannels: (workspaceId = 'default') => fetchJson(`/v1/workspaces/${workspaceId}/channels`),
   connectChannel: (workspaceId: string, channel: string, payload: any) =>
-    fetchJson(`/v1/workspaces/${workspaceId}/channels/${channel}/connect`, { method: 'POST', body: JSON.stringify(payload) }),
+    fetchJson(`/v1/workspaces/${workspaceId}/channels/${channel}/connect`, { method: 'POST', body: JSON.stringify({
+      displayName: payload.displayName,
+      username: payload.username,
+      externalAccountId: payload.externalAccountId,
+      pageAccessToken: payload.pageAccessToken,
+      botToken: payload.botToken, // telegram/discord: validated server-side (getMe), vaulted, never returned
+      micromindFlowId: payload.micromindFlowId,
+      flowKey: payload.flowKey,
+    }) }),
   startMetaOAuth: (workspaceId: string, channel: 'messenger' | 'instagram', returnTo?: string) =>
     fetchJson(`/v1/workspaces/${workspaceId}/channels/${channel}/oauth/start`, { method: 'POST', body: JSON.stringify({ returnTo }) }),
   disconnectChannel: (id: string) => fetchJson(`/v1/channels/${id}/disconnect`, { method: 'POST' }),

@@ -65,11 +65,12 @@ describe('ChannelsPanel matrix', () => {
     fireEvent.click(dcCard.querySelector('button')!);
     expect(screen.getByPlaceholderText(/bot token \(discord/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/micromind flow id \(optional — auto-provisions/i)).toBeInTheDocument();
-    // Telegram graduated from BYOF: same auto-provision placeholder (one form open at a time).
+    // Telegram graduated from BYOF: the guided BotFather wizard (one form open at a time).
     const tgCard = screen.getByText('Telegram').closest('div[style*="padding: 16px"]')!;
     fireEvent.click(tgCard.querySelector('button')!);
-    expect(screen.getByPlaceholderText(/bot token from @botfather/i)).toBeInTheDocument();
-    expect(screen.getAllByPlaceholderText(/micromind flow id \(optional — auto-provisions/i)).toHaveLength(1);
+    expect(screen.getByText('Connect Telegram Bot')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /open @botfather/i })).toBeInTheDocument();
+    expect(screen.getByText('/newbot')).toBeInTheDocument();
   });
 
   it('Meta OAuth opens the backend authorization URL, or explains when unconfigured', async () => {
@@ -157,13 +158,15 @@ describe('ChannelsPanel matrix', () => {
 
     render(<ChannelsPanel showToast={showToast} local={{}} onToggleLocal={onToggleLocal} />);
 
+    // Telegram wizard: create step -> token step -> validate & connect.
     const tgCard = screen.getByText('Telegram').closest('div[style*="padding: 16px"]')!;
     fireEvent.click(tgCard.querySelector('button')!);
+    fireEvent.click(screen.getByRole('button', { name: /i have my token/i }));
 
-    const tokenInput = screen.getByPlaceholderText(/bot token/i);
+    const tokenInput = screen.getByPlaceholderText(/bot token from @botfather/i);
     fireEvent.change(tokenInput, { target: { value: '123:ABC' } });
 
-    fireEvent.click(screen.getByRole('button', { name: /^connect telegram$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /validate & connect/i }));
 
     await waitFor(() => {
       expect(showToast).toHaveBeenCalledWith('Invalid bot token', 'danger');
