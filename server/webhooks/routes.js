@@ -12,6 +12,7 @@
 // NOTE (MVP): processing is inline before the 200. Meta tolerates ~20s; move to a
 // queue when volume grows. Secrets are decrypted transiently, never logged.
 import express from 'express';
+import crypto from 'crypto';
 import { decryptSecret } from '../credentials/crypto.js';
 import { CHANNELS, buildSessionId } from '../micromind/provisionChannel.js';
 import { predict } from '../micromind/client.js';
@@ -26,6 +27,8 @@ import { gmailPending } from '../integrations/gmail.js';
 const META_HANDSHAKE = ['messenger', 'instagram', 'whatsapp'];
 const KNOWN = [...META_HANDSHAKE, 'telegram', 'gmail'];
 const rid = (p) => `${p}_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
+const customerKey = (workspaceId, provider, senderId) =>
+  `${provider}_${crypto.createHash('sha256').update(`${workspaceId}:${provider}:${senderId}`).digest('hex').slice(0, 40)}`;
 
 // Workspace is ALWAYS derived from the channel account (verify token / secret),
 // never from the request — this is what keeps tenants isolated on shared URLs.
@@ -170,7 +173,7 @@ async function handleNormalized(pool, provider, account, { senderId, text, mid }
   await pool.query('UPDATE webhook_events SET workspace_id=$1, channel_account_id=$2 WHERE external_event_id=$3',
     [workspaceId, account.id, mid]);
 
-  const customerId = `${workspaceId}:${provider}:${senderId}`;
+  const customerId = customerKey(workspaceId, provider, senderId);
   await pool.query(
     'INSERT INTO customers (id, workspace_id, name, channels, status) VALUES ($1,$2,$3,$4,\'New\') ON CONFLICT (id) DO NOTHING',
     [customerId, workspaceId, extra.profileName || `Customer ${senderId.slice(-6)}`, [provider]]

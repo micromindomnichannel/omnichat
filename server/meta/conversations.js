@@ -1,6 +1,9 @@
 import { graphGet } from './graph.js';
+import crypto from 'crypto';
 
 const rid = (p) => `${p}_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
+const customerKey = (workspaceId, channel, senderId) =>
+  `${channel}_${crypto.createHash('sha256').update(`${workspaceId}:${channel}:${senderId}`).digest('hex').slice(0, 40)}`;
 
 function nameFrom(profile, fallback) {
   return profile?.name || profile?.username || fallback;
@@ -22,7 +25,7 @@ export async function syncMetaConversations(pool, {
     const sender = latest?.from?.id && String(latest.from.id) !== String(businessId || pageId)
       ? latest.from : null;
     const senderId = sender?.id ? String(sender.id) : `conversation-${item.id}`;
-    const customerId = `${workspaceId}:${channel}:${senderId}`;
+    const customerId = customerKey(workspaceId, channel, senderId);
     const customerName = nameFrom(sender, `Customer ${senderId.slice(-6)}`);
     await pool.query(
       "INSERT INTO customers (id, workspace_id, name, channels, status) VALUES ($1,$2,$3,$4,'New') ON CONFLICT (id) DO UPDATE SET name=CASE WHEN customers.name LIKE 'Customer %' THEN EXCLUDED.name ELSE customers.name END",
