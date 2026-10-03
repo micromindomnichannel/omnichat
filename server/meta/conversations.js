@@ -25,7 +25,11 @@ export async function syncMetaConversations(pool, {
     const sender = latest?.from?.id && String(latest.from.id) !== String(businessId || pageId)
       ? latest.from : null;
     const senderId = sender?.id ? String(sender.id) : `conversation-${item.id}`;
-    const customerId = customerKey(workspaceId, channel, senderId);
+    const priorCustomer = (await pool.query(
+      "SELECT customer_id FROM conversations WHERE workspace_id=$1 AND channel=$2 AND ai_context->>'senderId'=$3 ORDER BY updated_at DESC LIMIT 1",
+      [workspaceId, channel, senderId]
+    )).rows[0];
+    const customerId = priorCustomer?.customer_id || customerKey(workspaceId, channel, senderId);
     const customerName = nameFrom(sender, `Customer ${senderId.slice(-6)}`);
     await pool.query(
       "INSERT INTO customers (id, workspace_id, name, channels, status) VALUES ($1,$2,$3,$4,'New') ON CONFLICT (id) DO UPDATE SET name=CASE WHEN customers.name LIKE 'Customer %' THEN EXCLUDED.name ELSE customers.name END",

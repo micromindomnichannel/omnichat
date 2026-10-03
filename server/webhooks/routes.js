@@ -173,7 +173,11 @@ async function handleNormalized(pool, provider, account, { senderId, text, mid }
   await pool.query('UPDATE webhook_events SET workspace_id=$1, channel_account_id=$2 WHERE external_event_id=$3',
     [workspaceId, account.id, mid]);
 
-  const customerId = customerKey(workspaceId, provider, senderId);
+  const priorCustomer = (await pool.query(
+    "SELECT customer_id FROM conversations WHERE workspace_id=$1 AND channel=$2 AND ai_context->>'senderId'=$3 ORDER BY updated_at DESC LIMIT 1",
+    [workspaceId, provider, senderId]
+  )).rows[0];
+  const customerId = priorCustomer?.customer_id || customerKey(workspaceId, provider, senderId);
   await pool.query(
     'INSERT INTO customers (id, workspace_id, name, channels, status) VALUES ($1,$2,$3,$4,\'New\') ON CONFLICT (id) DO NOTHING',
     [customerId, workspaceId, extra.profileName || `Customer ${senderId.slice(-6)}`, [provider]]
