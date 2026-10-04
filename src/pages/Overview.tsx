@@ -20,8 +20,14 @@ export function Overview() {
 
   const orders = state.orders || [];
   const conversations = state.conversations || [];
+  const customers = state.customers || [];
   const appointments = state.appointments || [];
   const products = state.products || [];
+  const customerById = new Map(customers.map((cu: any) => [cu.id, cu]));
+  const customerName = (conversationId: string, fallbackId: string) =>
+    customerById.get(conversationId)?.name || `Thread ${String(fallbackId).slice(-6)}`;
+  const friendlyStatus = (s: string) =>
+    s === 'ai_handling' ? 'AI Handling' : s === 'human' ? 'Human' : s === 'resolved' ? 'Resolved' : (s || '—');
 
   // Live computations over real backend rows — no fallbacks, no demo numbers.
   const totalRevenue = orders.reduce((sum, o) => sum + Number(o.total || 0), 0);
@@ -172,11 +178,11 @@ export function Overview() {
           <tbody>
             {recentConversations.map(c => (
               <tr key={c.id} style={{ borderBottom: '1px solid var(--surface-0)' }}>
-                <td style={{ padding: '12px 12px', fontWeight: 700, color: 'var(--midnight-ink)' }}>Thread #{c.id}</td>
+                <td style={{ padding: '12px 12px', fontWeight: 700, color: 'var(--midnight-ink)' }}>{customerName(c.customerId, c.id)}</td>
                 <td style={{ padding: '12px 12px', textTransform: 'capitalize' }}>{c.channel}</td>
                 <td style={{ padding: '12px 12px' }}>
                   <span className="orbit-badge" style={{ background: c.status === 'ai_handling' ? 'var(--signal-orange-subtle)' : 'var(--surface-0)', color: c.status === 'ai_handling' ? 'var(--signal-orange)' : 'var(--midnight-ink)' }}>
-                    {c.status}
+                    {friendlyStatus(c.status)}
                   </span>
                 </td>
                 <td style={{ padding: '12px 12px', color: 'var(--stone-gray)', maxWidth: 220, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
