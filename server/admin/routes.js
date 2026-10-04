@@ -109,14 +109,70 @@ export function adminRouter(pool) {
 
   r.get('/api/v1/admin/errors', async (req, res) => {
     const limit = Math.min(parseInt(req.query.limit || '50', 10), 200);
+    // Failed intake = explicit failures AND rows stuck in 'received' (>15 min
+    // means the persist half never ran — container killed mid-request, or a
+    // persist error was swallowed by the per-item catch).
     const rows = await q(pool,
       `SELECT id, provider, external_event_id, workspace_id, channel_account_id, status, processed_at, created_at
-       FROM webhook_events WHERE workspace_id=$1 AND status IN ('failed','no_channel') ORDER BY created_at DESC LIMIT $2`,
+       FROM webhook_events WHERE workspace_id=$1 AND (status IN ('failed','no_channel')
+         OR (status='received' AND created_at < CURRENT_TIMESTAMP - INTERVAL '15 minutes'))
+       ORDER BY created_at DESC LIMIT $2`,
       [req.workspaceId, limit]);
     const audit = await q(pool,
       'SELECT id, workspace_id, action, resource, meta, created_at FROM audit_logs WHERE workspace_id=$1 ORDER BY created_at DESC LIMIT $2',
       [req.workspaceId, limit]);
     res.json({ webhooks: rows || [], audit: audit || [] });
+  });
+
+  // Owner/admin-only one-click replay for a stuck intake row. Safe by design:
+  // - processed/duplicate rows are rejected (409) — replay never duplicates.
+  // - if the customer message already persisted (partial first attempt), the
+  //   row is just marked processed — no second message is written.
+  // - otherwise the journal row (childless by schema) is removed and the full
+  //   persist -> AI -> send pipeline re-runs once via handleNormalized.
+  // - the account must exist and be active, or the retry is refused.
+  r.post('/api/v1/admin/webhooks/:id/retry', async (req, res) => {
+    const row = (await pool.query(
+      'SELECT * FROM webhook_events WHERE id=$1 AND workspace_id=$2',
+      [req.params.id, req.workspaceId])).rows[0];
+    if (!row) return res.status(404).json({ error: 'webhook event not found' });
+    if (['processed', 'duplicate'].includes(row.status)) {
+      return res.status(409).json({ error: `already settled (${row.status}) — replay refused` });
+    }
+    const account = row.channel_account_id
+      ? (await pool.query("SELECT * FROM channel_accounts WHERE id=$1 AND status='active'", [row.channel_account_id])).rows[0]
+      : null;
+    if (!account) {
+      return res.status(400).json({ error: 'channel account missing or not active — reconnect first' });
+    }
+    const payload = typeof row.payload === 'string' ? JSON.parse(row.payload || '{}') : (row.payload || {});
+    const senderId = payload.senderId != null ? String(payload.senderId) : '';
+    const text = payload.text != null ? String(payload.text) : '';
+    if (!senderId || !text) {
+      return res.status(400).json({ error: 'event payload has no replayable message — inspect manually' });
+    }
+    const { senderId: _s, text: _t, ...extra } = payload;
+    try {
+      const existing = (await pool.query(
+        'SELECT id FROM messages WHERE workspace_id=$1 AND sender_external_id=$2 AND content=$3 LIMIT 1',
+        [req.workspaceId, senderId, text])).rows[0];
+      if (existing) {
+        await pool.query("UPDATE webhook_events SET status='processed', processed_at=CURRENT_TIMESTAMP WHERE id=$1", [row.id]);
+      } else {
+        await pool.query('DELETE FROM webhook_events WHERE id=$1', [row.id]);
+        const { handleNormalized } = await import('../webhooks/routes.js');
+        await handleNormalized(pool, row.provider, account, { senderId, text, mid: row.external_event_id }, extra);
+      }
+      const after = (await pool.query(
+        'SELECT status FROM webhook_events WHERE external_event_id=$1', [row.external_event_id])).rows[0];
+      await pool.query(
+        'INSERT INTO audit_logs (id, workspace_id, actor, action, resource, meta) VALUES ($1,$2,$3,$4,$5,$6)',
+        [`aud_${Date.now()}`, req.workspaceId, req.user?.email || 'admin', 'webhook.retry',
+         `webhook:${row.id}`, JSON.stringify({ provider: row.provider, status: after?.status || null })]);
+      res.json({ retried: true, status: after?.status || null });
+    } catch (err) {
+      res.status(502).json({ error: `retry failed: ${String(err.message).slice(0, 200)}` });
+    }
   });
 
   r.get('/api/v1/admin/usage', async (req, res) => {

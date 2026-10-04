@@ -25,6 +25,13 @@ export function Admin() {
   const [usage, setUsage] = useState<any[]>([]);
   const [mm, setMm] = useState<any>(null);
   const [templates, setTemplates] = useState<any>(null);
+  const [retrying, setRetrying] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const loadErrors = async () => {
+    const e = await api.adminErrors();
+    if (e) setErrors(e);
+  };
 
   useEffect(() => {
     (async () => {
@@ -41,6 +48,22 @@ export function Admin() {
       if (t) setTemplates(t);
     })();
   }, []);
+
+  // One-click replay for a stuck intake row. The backend refuses
+  // already-settled rows and skips re-persisting partial first attempts,
+  // so a retry can never duplicate a conversation or message.
+  const retryWebhook = async (id: string) => {
+    setRetrying(id);
+    setNotice(null);
+    const res = await api.retryWebhook(id);
+    setRetrying(null);
+    if (res?.retried) {
+      setNotice(`Replayed ${id} → ${res.status}.`);
+      loadErrors();
+    } else {
+      setNotice(res?.error || `Replay of ${id} failed.`);
+    }
+  };
 
   if (!overview) return <div style={{ padding: 8, fontSize: 13, color: 'var(--stone-gray)' }}>Loading admin… (backend unreachable?)</div>;
 
@@ -123,11 +146,34 @@ export function Admin() {
         )}
       </Card>
       <Card style={{ marginBottom: 16 }}>
-        <SectionTitle>Errors (24h)</SectionTitle>
-        <Table
-          cols={['Provider', 'Event', 'Status', 'At']}
-          rows={(errors.webhooks || []).map((w: any) => [w.provider, w.external_event_id, w.status, w.created_at])}
-        />
+        <SectionTitle>Errors (failed intake + stuck longer than 15 min)</SectionTitle>
+        {notice && <div style={{ fontSize: 12, color: 'var(--ink-600)', marginBottom: 8 }}>{notice}</div>}
+        {!(errors.webhooks || []).length ? (
+          <div style={{ fontSize: 12, color: 'var(--stone-gray)' }}>No data.</div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', fontSize: 12, borderCollapse: 'collapse' }}>
+              <thead><tr>{['Provider', 'Event', 'Status', 'At', ''].map((c) => <th key={c} style={{ textAlign: 'left', padding: '6px 8px', borderBottom: '1px solid var(--border)', color: 'var(--stone-gray)' }}>{c}</th>)}</tr></thead>
+              <tbody>{(errors.webhooks || []).map((w: any) => (
+                <tr key={w.id}>
+                  <td style={{ padding: '6px 8px', borderBottom: '1px solid var(--border)' }}>{w.provider}</td>
+                  <td style={{ padding: '6px 8px', borderBottom: '1px solid var(--border)' }}>{String(w.external_event_id || '').slice(0, 24)}…</td>
+                  <td style={{ padding: '6px 8px', borderBottom: '1px solid var(--border)' }}>{w.status}</td>
+                  <td style={{ padding: '6px 8px', borderBottom: '1px solid var(--border)' }}>{w.created_at}</td>
+                  <td style={{ padding: '6px 8px', borderBottom: '1px solid var(--border)' }}>
+                    <button
+                      className="btn" disabled={retrying === w.id}
+                      onClick={() => retryWebhook(w.id)}
+                      style={{ height: 26, padding: '0 10px', fontSize: 11.5, fontWeight: 700 }}
+                    >
+                      {retrying === w.id ? 'Replaying…' : 'Retry'}
+                    </button>
+                  </td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+        )}
       </Card>
       <Card style={{ marginBottom: 16 }}>
         <SectionTitle>Usage (30d)</SectionTitle>

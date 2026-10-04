@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Admin } from '../Admin';
 
 describe('Admin dashboard', () => {
@@ -91,6 +91,7 @@ describe('Admin dashboard', () => {
     const mockErrors = {
       webhooks: [
         {
+          id: 'whe_1',
           provider: 'meta_instagram',
           external_event_id: 'evt_998',
           status: 'signature_mismatch',
@@ -146,8 +147,8 @@ describe('Admin dashboard', () => {
     expect(screen.getByRole('heading', { name: 'MicroMind flows' })).toBeInTheDocument();
     expect(screen.getByText('Commerce Auto-Checkout')).toBeInTheDocument();
 
-    // Table 4: Errors
-    expect(screen.getByRole('heading', { name: 'Errors (24h)' })).toBeInTheDocument();
+    // Table 4: Errors (failed intake + stuck rows, with one-click replay)
+    expect(screen.getByRole('heading', { name: /errors \(failed intake/i })).toBeInTheDocument();
     expect(screen.getByText('signature_mismatch')).toBeInTheDocument();
 
     // Table 5: Usage
@@ -159,5 +160,60 @@ describe('Admin dashboard', () => {
     expect(screen.getByText('telegram')).toBeInTheDocument();
     expect(screen.getByText('discord')).toBeInTheDocument();
     expect(screen.getByText(/v1×2/)).toBeInTheDocument();
+  });
+
+  it('replays a stuck intake row from the Errors table without duplicating', async () => {
+    const calls: Array<[string, any]> = [];
+    (globalThis as any).fetch = vi.fn(async (url: string, opts: any) => {
+      calls.push([url, opts]);
+      if (String(url).includes('/retry')) {
+        return { ok: true, json: async () => ({ retried: true, status: 'processed' }) };
+      }
+      if (String(url).includes('/errors')) {
+        return {
+          ok: true,
+          json: async () => ({
+            webhooks: [{ id: 'whe_stuck', provider: 'messenger', external_event_id: 'm_abc', status: 'received', created_at: '2026-10-03 01:49' }],
+          }),
+        };
+      }
+      if (String(url).includes('/overview')) {
+        return { ok: true, json: async () => ({ dbUp: true, workspaces: [], channels: [], flows: [], messages24h: [], errors24h: 1 }) };
+      }
+      return { ok: true, json: async () => (String(url).includes('/channels') || String(url).includes('/flows') || String(url).includes('/usage') ? [] : {}) };
+    });
+
+    render(<Admin />);
+    const btn = await screen.findByRole('button', { name: /^retry$/i });
+    fireEvent.click(btn);
+
+    await waitFor(() => expect(screen.getByText(/replayed whe_stuck → processed/i)).toBeInTheDocument());
+    const [url, opts] = calls.find(([u]) => String(u).includes('/retry'))!;
+    expect(String(url)).toContain('/v1/admin/webhooks/whe_stuck/retry');
+    expect(opts.method).toBe('POST');
+  });
+
+  it('surfaces replay refusal instead of duplicating', async () => {
+    (globalThis as any).fetch = vi.fn(async (url: string) => {
+      if (String(url).includes('/retry')) {
+        return { ok: true, json: async () => ({ error: 'already settled (processed) — replay refused' }) };
+      }
+      if (String(url).includes('/errors')) {
+        return {
+          ok: true,
+          json: async () => ({
+            webhooks: [{ id: 'whe_done', provider: 'messenger', external_event_id: 'm_xyz', status: 'processed', created_at: '2026-10-03 02:00' }],
+          }),
+        };
+      }
+      if (String(url).includes('/overview')) {
+        return { ok: true, json: async () => ({ dbUp: true, workspaces: [], channels: [], flows: [], messages24h: [], errors24h: 0 }) };
+      }
+      return { ok: true, json: async () => [] };
+    });
+
+    render(<Admin />);
+    fireEvent.click(await screen.findByRole('button', { name: /^retry$/i }));
+    await waitFor(() => expect(screen.getByText(/already settled/i)).toBeInTheDocument());
   });
 });

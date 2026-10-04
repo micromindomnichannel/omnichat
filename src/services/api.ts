@@ -185,7 +185,9 @@ export const api = {
   adminErrors: () => fetchJson('/v1/admin/errors'),
   adminUsage: () => fetchJson('/v1/admin/usage'),
   adminMicromind: () => fetchJson('/v1/admin/micromind'),
-  adminTemplates: () => fetchJson('/v1/admin/templates'),
+  // One-click replay for a stuck intake row (received/failed/no_channel).
+  // Server-side guards refuse already-settled rows — replay never duplicates.
+  retryWebhook: (id: string) => fetchJson(`/v1/admin/webhooks/${id}/retry`, { method: 'POST' }),  adminTemplates: () => fetchJson('/v1/admin/templates'),
   adminUsers: () => fetchJson('/v1/admin/users'),
   adminCreateUser: (payload: { email: string; password: string; displayName?: string; role: string }) =>
     authJson('/v1/admin/users', payload),
