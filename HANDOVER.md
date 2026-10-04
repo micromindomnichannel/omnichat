@@ -1,215 +1,167 @@
-# ORBIT — Team Handover: Multi-Tenant Channel Connections
+# ORBIT — Teammate Handover: Testing, Frontend & Website↔Core Linking
 
-Date: 2026-09-20 | Branch: `main` | Author of record: alisa (with OpenCode agent)
+Date: 2026-10-04 | Branch: `main` (`acaab0e`, pushed, Railway SUCCESS) | Author of record: alisa (with OpenCode agent)
 
-## 1. What we are building
+> **Scope of this document:** testing features + UI, frontend work, and linking
+> the website with the ORBIT backend/Core. **Out of scope (do not touch):**
+> Meta App Review / verifications, Gmail authentication, WhatsApp.
+> (Previous Meta/Gmail/WhatsApp notes were moved out of this handover on purpose.)
 
-Every ORBIT business (workspace) connects its **own** Instagram / WhatsApp /
-Messenger / Telegram / Gmail accounts. Each connection is **isolated** and gets
-an **auto-provisioned MicroMind flow** (one dedicated flow per
-`workspace × channel_account`). Everything is managed from the ORBIT frontend;
-MicroMind/Flowise is never exposed to tenants.
+## 1. What ORBIT is (30-second version)
 
-Target architecture:
+AI omnichannel inbox for merchants: Messenger, Instagram, Telegram, and
+Discord conversations arrive via webhooks/gateway → backend persists them →
+MicroMind AI replies → reply is sent back to the provider → everything shows
+in the web Inbox. The browser **never** talks to MicroMind or Meta directly;
+all tokens live encrypted in the backend vault.
 
-```
-ORBIT Frontend (Vite :3000)
-  → ORBIT Backend (Express :5000, control plane)
-    → PostgreSQL (148.251.171.147:5432/omnichannel)
-    → MicroMind API (https://core.aimicromind.com/api/v1, AI/execution layer)
-      → Channel providers (Meta Graph, WhatsApp Cloud, Telegram Bot API, Gmail)
-```
+Live right now:
 
-Key tenant rules (do not break these):
+| Piece | Where | State |
+|---|---|---|
+| Frontend (Vite) | `https://orbit-xi-one-60.vercel.app` | Deployed from `main` |
+| Backend (Express) | `https://omnichat-production-65a3.up.railway.app` | `online`, commit `acaab0e`, DB connected |
+| Database | Supabase pooler (`aws-1-eu-west-1`, PG 17.6) | 10/10 webhook events `processed` |
+| Messenger / Instagram | 2 workspaces × both channels | Live, AI replies in ~3s |
+| Telegram / Discord | Connected via the new guided wizards (`@ORBIT_EG_Bot` + Discord bot) | Connected, awaiting full message tests |
+| ORBIT Core (analyst flow for reports/knowledge) | MicroMind flow `3b2e8550…` | Prompt retargeted, test pings pass |
 
-- `sessionId = "{workspaceId}:{channel}:{external_customer_id}"`
-  (`buildSessionId()` in `server/micromind/provisionChannel.js`).
-- Per-business context via prompt injection at provision time + `overrideConfig.vars`
-  at runtime (`senderPsid|senderIgsid`, `input`, `business_name`, `ai_tone`, `language`).
-- Flows are created with `deployed=true, isPublic=false`, inside the workspace's
-  MicroMind folder, with a per-tenant prediction key linked (`apikeyid`).
-- **The backend ALWAYS sends replies itself** (Graph / Cloud API / Bot API) with
-  the tenant secret from the ORBIT vault. Cloned flows must never hold tenant
-  channel secrets and must never execute channel send-tools (else: double
-  messages + token leakage into MicroMind).
+## 2. Setup (~30 min)
 
-## 2. Current state (verified live, 2026-09-19/20)
+Assumes Node 20+, git access, and the `.env` file shared securely (never
+committed — ask alisa). Your IP must reach Supabase (pooler, no whitelist
+needed).
 
-### P0 MicroMind verification — COMPLETE (5/5 probe checks PASS)
-
-- `npm run probe:micromind` → prediction + create→get→update→delete all PASS.
-- Reference flow `f4a7c66d-dc4c-4f0b-b12d-4b6ca91fe0c8` answers (OpenRouter
-  credential `orbit` fixed in MicroMind dashboard).
-- Management auth = provisioner login (`MICROMIND_PROVISIONER_EMAIL/PASSWORD`
-  in `.env` → 24h JWT, auto-refresh on 401). No static `MICROMIND_API_KEY` needed.
-- `server/micromind/{client,provisioner}.js` read env **lazily** (dotenv in
-  `server/index.js` runs after hoisted imports — module-level captures were
-  silently empty in local dev; fixed).
-
-### The inbox-silence root cause — FOUND AND PROVEN
-
-Symptom: probe green, but connected Page/IG never answered and ORBIT inbox stayed empty.
-
-1. **Bypass (Meta layer):** both Meta subscriptions (`Orbit` 1677448363989869,
-   `test_ranim_Mess` 1522030056346232) point at MicroMind
-   (`https://core.aimicromind.com/webhook/...`), NOT at ORBIT. Proven via the
-   Meta Social Technologies MCP (relayed through Codex — OpenCode cannot
-   authenticate to it: "Dynamic registration is not available for this client").
-2. **Broken direct path:** the flows carry the sanitized `<PAGE_ACCESS_TOKEN>`
-   placeholder, so MicroMind-side send-tools fail silently.
-3. **Data-layer proof:** `webhook_events` = 0 rows, `channel_accounts` = 0 rows,
-   `micromind_flows` = 0 rows. The pipeline was never fed — all connections were
-   manual-in-MicroMind.
-4. **Permissions landmine:** `Orbit` has `pages_messaging`, `instagram_basic`,
-   `instagram_manage_messages` **Rejected**, dev mode, empty paperwork. The only
-   app with policy artifacts (Drive privacy-policy link + terms) is
-   `test_ranim_Mess` (Live, `messages` field delivering). No submission history
-   exists on any app.
-
-### Track 2 fixes — BUILT, VERIFIED, IN THIS COMMIT
-
-- **App-level verify tokens** (`server/channels/routes.js`): connect stores the
-  stable default (`orbit_messenger_2026` / `orbit_instagram_verify`), no random
-  suffix — Meta holds ONE token per app; routing is per-event via Page ID.
-- **Setup-guide rewrite** (`orbitSetupGuide()` + provision-time stamp in
-  `buildTenantFlowData`; shipped `messenger.json`/`instagram.json` patched):
-  guides now say Meta → `{ORBIT_BACKEND_URL}/webhooks/...` and forbid tokens in
-  flows. URL resolves `ORBIT_BACKEND_URL` → `RAILWAY_PUBLIC_DOMAIN` → placeholder.
-- **Send-tool stripping extended** (`STRIP_SEND_TOOLS`): messenger
-  (`facebookMessengerTool`) + instagram (`instagramMessenger`) join telegram.
-  Clone check passes for both channels (tools empty, token/guide/context present).
-- **Reply-shape hardening** (`extractReplyText()` in `server/webhooks/routes.js`).
-- **Docs/env:** `MICROMIND_API.md` changelog, `ORBIT_BACKEND_URL` in `.env.example`.
-- `scripts/patch-template-guides.mjs` kept for future template re-stamps.
-
-### Database — GATE CLEARED
-
-- `148.251.171.147:5432/omnichannel` reachable after `pg_hba` whitelist of
-  `156.197.40.219`. `test_db.cjs` connects (PG 18.6).
-- Migrations `009/010/011` applied (`npm run db:migrate`); schema complete 001–011.
-- Backend `:5000` boots, `/api/health` → `online` + DB connected; Meta handshake
-  with the app token returns the challenge; unauthenticated connect → 401.
-- Frontend `:3000` serves (200).
-
-### Tooling notes for the teammate
-
-- Meta MCP (`meta_social_technologies` in `opencode.json`, currently
-  `enabled:false`) **cannot authenticate from OpenCode** (Meta rejects dynamic
-  client registration; only Claude/Codex/ChatGPT/Cursor are supported). Meta
-  reads were relayed via Codex CLI (`@openai/codex`, installed globally) with
-  `~/.codex/config.toml` holding the server entry. Relay prompts live in the
-  chat history — ask alisa for the P1–P5 set (rollback baseline, cutover, test-send).
-- Codex CLI shim requires `C:\Users\alisa\AppData\Roaming\npm` on PATH
-  (or full-path invocation); that dir was missing from PATH on this machine.
-- Railway CLI (`@railway/cli`) is installed globally for backend checks.
-
-## 3. Decisions already taken
-
-- Production Meta app: **`test_ranim_Mess` (1522030056346232)**, renamed to
-  `ORBIT` (guideline-safe per P1 check). It is Live, holds the only policy
-  artifacts, and has proven `messages` delivery. `Orbit` stays as backup.
-- Architecture: **ORBIT-owned loop** (Meta → ORBIT → predict → Graph send).
-  MicroMind-direct rejected (no inbox, no isolation, silent failures).
-- One Meta app serves all tenants (routing by Page ID); per-client apps deferred.
-- 2026-09-29 ADDENDUM (supersedes "single app" above for Instagram): Meta
-  holds TWO app entities. FB `test_ranim_Mess` owns Messenger; IG
-  `test_ranim_Mess - IG` (2045560586846925, Business Login product, Live)
-  owns Instagram DMs → `dood - insta`. Review submits per entity (FB:
-  messaging + posting; IG: manage_messages + basic). Cutover moves each
-  topic independently (URL AND token `core` → app-level tokens).
-- `ORBIT Posts` is LOAD-BEARING until the main app absorbs posting (Scheduler
-  was compose-only; publish-now endpoint + migration 012 close the gap).
-  DO NOT DELETE until a scheduled post demonstrably publishes via the main
-  app. Same guard for `Orbit` (post-cutover only).
-
-## 4. Next steps to production (in order)
-
-### A. Portal + paperwork (owner: teammate with Meta admin, ~1–2h + review wait)
-
-1. Rename `test_ranim_Mess` → `ORBIT`; fill category, icon, contact email, DPO.
-2. Host privacy policy + terms on a real URL (NOT the Drive link — rejection
-   predictor); swap into Basic Settings. (Alt: build an ORBIT `/privacy` route.)
-3. Write down the FULL MicroMind callback URLs + verify token (portal GUI only;
-   MCP redacts them) — rollback record, required before cutover.
-4. Create test child app; start **Business Verification** (slowest item, first).
-5. Record screencasts; submit Advanced Access (`pages_messaging` + deps,
-   `instagram_basic`, `instagram_manage_messages`). 2–7 day turnaround.
-
-### B. Backend URL + connect (needs Railway domain from alisa)
-
-6. Set `ORBIT_BACKEND_URL` (Railway dashboard) to the verified-public domain.
-7. Connect Page via ORBIT UI → expect `active` + link test `test_ok`.
-8. Repeat for Instagram (IG Business account linked to the Page).
-
-### C. Cutover day (together)
-
-9. Portal: callback → `{BACKEND}/webhooks/messenger` + `orbit_messenger_2026`
-   (instagram analog). KEEP the MicroMind subscription for now.
-10. Live test (FB + IG): native reply + ORBIT inbox both sides +
-    `webhook_events=processed`. Plus staged Codex P5 test-send.
-11. Only when green: delete the MicroMind-direct subscription (kills double-send).
-    Rollback = step A3 note if anything fails.
-
-### D. Production hardening (code, post-cutover)
-
-12. Set `META_APP_SECRET` (signature verification is warn-only today).
-13. `COOKIE_SAMESITE=None` + `COOKIE_SECURE=1` for split-domain prod.
-14. Confirm Railway DB target (same host → migrate there too; separate → document).
-15. Schedule `GRAPH_VERSION` bump (`v19.0` vs platform `v26.0`).
-16. Full probe + live-message round as acceptance gate.
-
-## 5. Teammate onboarding (do this first, ~30 min)
-
-Assumes: Node 20+, git access to this repo, the `.env` file shared securely
-(never committed — ask alisa), IP whitelisted on the DB (`pg_hba`).
-
-**Step 1 — Read (10 min).**
-Read this file §1–§2. Skim `MICROMIND_API.md` (endpoint contract + tenant
-rules). Do not change anything yet.
-
-**Step 2 — Install + verify MicroMind link (5 min).**
-```
+```bash
 npm install
-npm run probe:micromind
+cp .env.example .env        # then fill from the shared secrets (ask alisa)
+node test_db.cjs            # expect: Supabase connect, migrations ledger ok
+npm run probe:micromind     # expect: 5/5 PASS (prediction + CRUD)
+node server/index.js         # terminal 1 → :5000, /api/health online
+npm run dev                  # terminal 2 → :3000
 ```
-Expect 5/5 PASS (`prediction`, `createFlow`, `getFlow`, `updateFlow`,
-`deleteFlow`). If `prediction` FAILs with 500 OpenRouter key: the
-`orbit` credential in MicroMind needs attention (see §2). If management
-checks SKIP/401: `.env` provisioner credentials are missing or wrong.
 
-**Step 3 — Verify database (5 min).**
+Key checks:
+
+- `GET http://localhost:5000/api/health` → `"status":"online"`, `"connected":true`.
+- `npm test` → 222 tests pass (34 files). `npm run build` → clean.
+- Frontend talks to the backend via `VITE_API_URL` (default `http://localhost:5000/api`).
+
+Rules of the road:
+
+- One dedicated MicroMind flow per `workspace × channel_account` — never
+  hand-edit a tenant flow in the MicroMind GUI (re-provision instead).
+- Secrets live ONLY in the `credentials` vault / Railway vars / `.env`.
+  Never commit `.env`, tokens, keys, or Page credentials. Never paste a
+  secret into chat.
+- Run `npm test` + `npm run build` before every push. `main` auto-deploys to
+  Railway + Vercel on push.
+- Commit style: `feat:` / `fix:` prefix, concise (see `git log`).
+
+## 3. Testing checklist (features + UI)
+
+Work top to bottom. For each item: do the action, note pass/fail + time.
+
+### A. Inbox (highest priority — most recent fixes live here)
+
+- [ ] Open Inbox → conversation list shows **customer names** (never raw `Thread #conv_…` ids) and friendly times (`5m`, `2h`, `Yesterday`).
+- [ ] Click a Telegram row → thread **opens immediately** (fallback `Customer XXXXXX` is acceptable for ~10s, then the real name fills in).
+- [ ] Click a Discord row → same as above.
+- [ ] Click Messenger + Instagram rows → open with history + AI/human styling intact.
+- [ ] With Inbox open, have someone send a new message on any channel → it appears **within ~10s with no manual refresh** (list + thread + unread badge).
+- [ ] Reply from the composer → message sends (toast confirms), appears in thread.
+- [ ] Take over a thread (Human) and return it to AI → status badge + system messages update.
+- [ ] Channel filter pills (All / Messenger / Instagram / Telegram / Discord) hide rows but never merge identities.
+
+### B. Overview dashboard
+
+- [ ] "Recent Customer Threads" shows **customer names**, not `Thread #conv_…` ids; status badges read `AI Handling`/`Human`/`Resolved`.
+- [ ] KPI cards + activity chart render from live data (no demo numbers).
+
+### C. Settings → Channels (the connect wizards)
+
+- [ ] Telegram card → Connect → wizard opens: Step 1 shows **Open @BotFather** (new tab) + exact `/newbot` → name → `bot`-username steps; Step 2 validates + connects; Step 3 shows `Connected as @bot` + webhook status.
+- [ ] Discord card → Connect → wizard opens: Developer Portal steps incl. **Message Content Intent** + invite permissions; validate + connect; gateway-listener confirmation.
+- [ ] Empty token → clear danger toast (no request sent).
+- [ ] Invalid token → backend `invalid_bot_token` error surfaces, wizard stays (no junk account created).
+- [ ] Connected card shows flow link + key link + last test; **Test link** button works.
+- [ ] Disconnect → account inactive; Reconnect → same account/flow reused, **no new flow rows**.
+
+### D. Admin (`/admin`, owner/admin role)
+
+- [ ] Overview stats, MicroMind control plane, Channels table (status/flow/key/last test/convs/last webhook), Flows table, Templates table all load.
+- [ ] Errors card lists failed/stuck intake with a **Retry** button per row; retry reports the outcome and refreshes (never duplicates — refusals say so explicitly).
+- [ ] Usage table renders 30d counts.
+
+### E. Auth + account flows
+
+- [ ] Signup OTP email arrives; verify creates account + session.
+- [ ] Login/logout; forgot-password sends a **real reset link email** (check inbox, link opens `/reset?token=…`); reset sets the new password.
+- [ ] Wrong credentials / unknown email → clean errors, no enumeration (forgot always returns success).
+
+### F. Regression safety after any change
+
+- [ ] `npm test` green, `npm run build` clean, `git diff --stat` shows only related files.
+- [ ] No duplicate conversations/customers/messages after polling for 5 minutes with the Inbox open.
+- [ ] No console errors on Inbox/Overview/Settings/Admin pages.
+
+## 4. Frontend tasks (where things live)
+
 ```
-node test_db.cjs
+src/
+  pages/            Overview, Inbox, Settings, Admin, Analytics, … (one file per page)
+  pages/__tests__/  one test file per page — extend these, don't skip them
+  components/
+    inbox/          ConversationList, ConversationThread (+__tests__)
+    settings/       ChannelsPanel, TelegramWizard, DiscordWizard (+__tests__)
+    dash/kit.tsx    PageHeader, Card, Stat, SectionTitle (shared admin/dashboard UI)
+    shared/         ChannelIcon, ChannelDot/Badge (channel identity — keep separate)
+  services/api.ts   API client (VITE_API_URL, credentials:include, null-on-unreachable)
+  services/normalize.ts  backend snake_case → UI models (+ formatListTime)
+  state/store.tsx   useStore + reducer (SET_* actions; ADD_MESSAGE sync rules)
 ```
-Expect: connect to `omnichannel`, 28 public tables, migrations `001`–`011`.
-If connection fails with `pg_hba`: your public IP
-(`curl ifconfig.me`) must be whitelisted on `148.251.171.147` first.
-If migrations below `011`: run `npm run db:migrate`.
 
-**Step 4 — Boot both servers (5 min).**
-```
-node server/index.js        # terminal 1 → expect /api/health online
-npm run dev                 # terminal 2 → http://localhost:3000/ → 200
-```
-Health check: `curl http://localhost:5000/api/health` must show
-`"status":"online"` and `"connected":true`. Handshake check:
-`GET /webhooks/messenger?hub.mode=subscribe&hub.verify_token=orbit_messenger_2026&hub.challenge=x`
-must echo `x`. Stop both servers when done (do not leave dev servers running).
+Conventions that matter:
 
-**Step 5 — Pick up work.**
-Re-read §4 above and take the next open item. Rules of the road:
-- One dedicated flow per `workspace × channel_account`; never hand-edit a
-  tenant flow in MicroMind GUI (re-provision instead).
-- Tenant secrets live ONLY in the `credentials` vault — never in flows, logs,
-  or chat.
-- Run `npm run probe:micromind` after any `server/micromind/` change.
-- Commit messages: `feat:` / `fix:` prefix, concise, matching repo style.
-- Never commit `.env`, tokens, keys, or Page credentials.
+- API client returns `null` when unreachable → UI shows last-synced/offline states. Never guess data.
+- Inbox polls every 10s with `cache: 'no-store'` (`getConversations`, `getThreadMessages`, `getCustomers`). Don't reintroduce caching on this path.
+- `lastMessageTime` is pre-formatted by `formatListTime` in `normalize.ts` — never render raw ISO in the UI.
+- Channel identity stays separate everywhere (filtering hides, never merges).
+- Tests: vitest + Testing Library, mocked `fetch`. New UI behavior needs a test in the co-located `__tests__` file.
 
-## 6. Standing contacts / secrets map (where things live)
+## 5. Linking the website with the ORBIT Core
 
-- MicroMind ops login: `.env` (`MICROMIND_PROVISIONER_*`, gitignored).
-- Tenant channel tokens: `credentials` table (AES via `CRED_KEY`).
-- Tenant prediction keys: `credentials` (`micromind_prediction`) ↔ `micromind_flows`.
-- Meta app roles: alisa is Admin on all three apps (via Meta MCP reads).
-- Never commit: `.env`, real tokens, prediction keys, Page tokens.
+"The website" = Vercel frontend. "The core" = Railway backend + MicroMind AI layer. The link is three settings + one flow:
+
+1. **API base:** `VITE_API_URL` (Vercel env) must equal `{backend}/api`. Local dev defaults to `http://localhost:5000/api`. If the site loads but all data is empty/offline, check this first.
+2. **Backend health:** `GET {backend}/api/health` → `online` + `connected:true` + current commit hash. The startup log prints the real DB target (`DATABASE_URL` wins).
+3. **CORS + cookies:** backend `CORS_ORIGIN` must list the exact frontend origin; cross-site prod needs `COOKIE_SAMESITE=None` + `COOKIE_SECURE=1` (Railway vars). Symptom of misconfiguration: login succeeds but `/auth/me` 401s.
+4. **ORBIT Core analyst flow** (reports + knowledge answers): shared default flow `3b2e8550…` + `MICROMIND_ANALYST_API_KEY` (Railway vars; per-workspace override possible via `workspace_settings.analyst_flow_id`). Prompt was retargeted from an Instagram-channel prompt to an analyst prompt — do not point it at a channel flow. Verify with:
+   ```
+   node -e "import('dotenv').then(async({default:d})=>{d.config({path:'.env'});const{pool}=await import('./server/db.js');const{askAnalyst}=await import('./server/micromind/analyst.js');console.log(await askAnalyst('Reply with exactly: OK',{pool,workspaceId:'default'}));await pool.end();})"
+   ```
+   Expect `{ text:'OK', source:'micromind', … }`. If `source` falls back or it throws, the flow/key needs attention in MicroMind — ask alisa, don't rewire callers.
+
+## 6. Explicitly out of scope (do not start these)
+
+- **Meta App Review / verifications** — submissions, Advanced Access, Business Verification, permission paperwork (owner's portal work).
+- **Gmail authentication** — placeholder slice (`501 gmail_pending`); needs Google OAuth + Pub/Sub.
+- **WhatsApp** — parser/sender exist but template is draft/BYOF; needs Meta phone assets first.
+
+If you hit anything Meta/Gmail/WhatsApp-shaped while testing, record it and hand it to alisa — don't attempt fixes in those areas.
+
+## 7. Secrets map (where things live)
+
+- Local dev: `.env` (gitignored) — provisioner login, analyst key, DB URL, `CRED_KEY`.
+- Production: Railway variables (same names). Frontend: only `VITE_API_URL` (public, not secret).
+- Tenant channel tokens / prediction keys: `credentials` table (AES via `CRED_KEY`) — never in flows, logs, or chat.
+- MicroMind flows dashboard: `core.aimicromind.com` (ask alisa for access).
+- Supabase dashboard: project tables + SQL (no RLS policies by design — backend connects as `postgres` role).
+
+## 8. Done checklist for your first session
+
+- [ ] Setup boots (§2), health `online`, tests green.
+- [ ] Walk §3A–§3C, file pass/fail + times back to alisa.
+- [ ] Confirm `VITE_API_URL` → Railway backend linkage (§5.1–5.3) from the deployed site.
+- [ ] Run the §5.4 analyst ping, confirm `source:'micromind'`.
+- [ ] Leave Meta/Gmail/WhatsApp alone (§6).
