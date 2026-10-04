@@ -93,8 +93,9 @@ export const api = {
   addMessage: (conversationId: string, message: any) => fetchJson('/messages', { method: 'POST', body: JSON.stringify({ conversationId, message }) }),
   updateConversationStatus: (id: string, status: string) => fetchJson(`/conversations/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
 
-  // Customers
-  getCustomers: () => fetchJson('/customers'),
+  // Customers (directory refresh rides the same realtime poll as the Inbox,
+  // so new-channel threads resolve immediately — always fresh, never cached)
+  getCustomers: () => fetchFresh('/customers'),
   updateCustomer: (customer: any) => fetchJson(`/customers/${customer.id}`, { method: 'PUT', body: JSON.stringify(customer) }),
 
   // Orders

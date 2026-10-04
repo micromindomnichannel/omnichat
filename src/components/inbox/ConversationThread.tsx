@@ -4,6 +4,7 @@ import { api } from '../../services/api';
 import { useVertical } from '../../state/verticalContext';
 import { ChannelIcon } from '../../components/shared/ChannelIcon';
 import { Send, User, Bot, Loader2, Image as ImageIcon, Sparkles } from 'lucide-react';
+import { getAvatar } from '../../state/mockData';
 
 interface Props {
   conversationId: string;
@@ -18,7 +19,13 @@ export function ConversationThread({ conversationId }: Props) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const conversation = state.conversations.find(c => c.id === conversationId);
-  const customer = state.customers.find(c => c.id === conversation?.customerId);
+  // Fallback identity: open the thread even when the customer directory
+  // hasn't synced the record yet (brand-new channel customers) — the poll
+  // fills in the real name/avatar on its next pass.
+  const fallbackName = `Customer ${String(conversation?.customerId || conversationId).slice(-6)}`;
+  const customer = state.customers.find(c => c.id === conversation?.customerId) || (conversation
+    ? { id: conversation.customerId, name: fallbackName, avatar: getAvatar(fallbackName) }
+    : undefined);
   const threadMessages = state.messages[conversationId] || [];
 
   // Gather catalog photos from products and services

@@ -44,6 +44,7 @@ type Action =
   | { type: 'SET_DB_STATUS'; online: boolean }
   | { type: 'SET_SESSION_USER'; name: string; email: string }
   | { type: 'SET_CONVERSATIONS'; conversations: any[] }
+  | { type: 'SET_CUSTOMERS'; customers: any[] }
   | { type: 'SET_THREAD_MESSAGES'; conversationId: string; messages: any[] }
   | { type: 'SET_CONVERSATION_STATUS'; id: string; status: Conversation['status'] }
   | { type: 'ADD_MESSAGE'; conversationId: string; message: Message }
@@ -123,6 +124,11 @@ function reducer(state: AppState, action: Action): AppState {
     // Realtime sync: replace conversation list / single thread with fresh rows.
     case 'SET_CONVERSATIONS':
       return { ...state, conversations: action.conversations.map(normalizeConversation) };
+    // Customer directory refresh (same poll cadence): threads for brand-new
+    // customers (new channels especially) must resolve immediately, or the
+    // thread pane refuses to open for lack of a customer record.
+    case 'SET_CUSTOMERS':
+      return { ...state, customers: action.customers.map(normalizeCustomer) };
     case 'SET_THREAD_MESSAGES': {
       const msgs = action.messages.map(normalizeMessage);
       const last = msgs[msgs.length - 1];

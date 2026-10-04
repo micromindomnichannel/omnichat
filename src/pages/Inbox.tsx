@@ -18,8 +18,9 @@ export function Inbox() {
   useEffect(() => {
     let cancelled = false;
     const sync = async () => {
-      const convs = await api.getConversations();
+      const [convs, custs] = await Promise.all([api.getConversations(), api.getCustomers()]);
       if (!cancelled && convs) dispatch({ type: 'SET_CONVERSATIONS', conversations: convs });
+      if (!cancelled && custs) dispatch({ type: 'SET_CUSTOMERS', customers: custs });
       if (selectedId) {
         const msgs = await api.getThreadMessages(selectedId);
         if (!cancelled && msgs) dispatch({ type: 'SET_THREAD_MESSAGES', conversationId: selectedId, messages: msgs });
