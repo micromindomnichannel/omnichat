@@ -17,6 +17,8 @@ const otpVerifyLimit = rateLimit({ windowMs: 60_000, max: 10 });
 const OTP_TTL_MIN = 10;
 const OTP_MAX_ATTEMPTS = 5;
 const newOtpCode = () => String(Math.floor(100000 + Math.random() * 900000));
+const frontendBase = () =>
+  (process.env.ORBIT_FRONTEND_URL || 'https://orbit-xi-one-60.vercel.app').replace(/\/$/, '');
 
 export function authRouter(pool) {
   const r = express.Router();
@@ -154,8 +156,9 @@ export function authRouter(pool) {
   });
 
   // Self-service password reset. Always returns ok (no account enumeration).
-  // Delivery: SMTP_* env sends the link; otherwise the token is server-logged
-  // for DEV ONLY (set ALLOW_DEBUG_RESET=1 to also return it — never in prod).
+  // Delivery: mailer (Resend preferred, SMTP fallback) sends the link when
+  // configured; otherwise the token is server-logged for DEV ONLY (set
+  // ALLOW_DEBUG_RESET=1 to also return it — never in prod).
   r.post('/api/auth/forgot', rateLimit({ windowMs: 60_000, max: 5 }), async (req, res) => {
     const { email } = req.body || {};
     try {
@@ -169,8 +172,18 @@ export function authRouter(pool) {
             "INSERT INTO password_resets (id, user_id, token_hash, expires_at) VALUES ($1,$2,$3, CURRENT_TIMESTAMP + INTERVAL '1 hour')",
             [`pr_${Date.now()}`, user.id, hash]
           );
-          if (process.env.SMTP_HOST) {
-            console.log(`[auth] password reset for ${email} (SMTP not wired to a mailer yet — token withheld)`);
+          const resetUrl = `${frontendBase()}/reset?token=${token}`;
+          if (mailConfigured()) {
+            try {
+              await sendMail({
+                to: String(email).toLowerCase(),
+                subject: 'Reset your ORBIT password',
+                text: `Someone requested a password reset for this ORBIT account.\n\nSet a new password within 1 hour:\n${resetUrl}\n\nIf you did not request this, ignore this email.`,
+              });
+            } catch (err) {
+              // Response stays uniform (no enumeration); failure is server-side.
+              console.error(`[auth] password reset email failed for ${email}:`, err.message);
+            }
           } else if (process.env.NODE_ENV !== 'production') {
             console.log(`[auth] DEV-ONLY password reset token for ${email}: ${token}`);
           }
