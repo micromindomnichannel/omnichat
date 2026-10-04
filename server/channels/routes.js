@@ -346,6 +346,20 @@ export function channelsRouter(pool) {
         )
       ).rows[0].id;
 
+      // Reuse-before-provision (mirrors the OAuth reconnect path): a repeat
+      // connect for an account that already has a live linked flow must NOT
+      // mint another MicroMind flow — unconditional provisioning is how the
+      // old duplicates were born (one more ACTIVE card per Connect click).
+      const priorLink = (await pool.query(
+        `SELECT f.id AS row_id, f.external_flow_id, f.prediction_key_credential_id, a.micromind_flow_id
+         FROM micromind_flows f JOIN channel_accounts a ON a.id = f.channel_account_id
+         WHERE f.workspace_id=$1 AND f.channel_account_id=$2 AND f.status='active'
+         ORDER BY f.updated_at DESC LIMIT 1`,
+        [workspaceId, accId])).rows[0];
+      const reuseFlow = autoProvision && !micromindFlowId && priorLink &&
+        priorLink.micromind_flow_id && priorLink.micromind_flow_id === priorLink.external_flow_id
+        ? priorLink : null;
+
       // Provision: folder -> tenant key -> flow-in-folder + key link (zero-touch).
       // Falls back to a supplied micromindFlowId (BYOF). A pasted flowKey is
       // vaulted and linked so enforced flows don't 401 at runtime. Any failure
@@ -354,13 +368,26 @@ export function channelsRouter(pool) {
       let keyCredentialId = null;
       let folderId = null;
       let flowRowId = null;
-      const flowLabel = `ORBIT ${channel} - ${displayName || username || workspaceId}`;
+      // Workspace suffix keeps MicroMind-dashboard cards distinguishable when
+      // two businesses share a display name (that is what looked like
+      // "duplicates": same label, different workspace x account).
+      const wsTag = String(workspaceId).slice(-6);
+      const flowLabel = `ORBIT ${channel} - ${displayName || username || workspaceId} [${wsTag}]`;
       let status = micromindFlowId ? 'active' : 'connecting';
-      if (autoProvision && !micromindFlowId) {
+      if (reuseFlow) {
+        flowId = reuseFlow.external_flow_id;
+        keyCredentialId = reuseFlow.prediction_key_credential_id;
+        flowRowId = reuseFlow.row_id;
+        status = 'active';
+        await pool.query("UPDATE channel_accounts SET status='active', micromind_flow_id=$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2",
+          [flowId, accId]);
+        const wfold = (await pool.query('SELECT micromind_folder_id FROM workspaces WHERE id=$1', [workspaceId])).rows[0];
+        if (wfold?.micromind_folder_id) folderId = wfold.micromind_folder_id;
+      } else if (autoProvision && !micromindFlowId) {
         try {
           const ws = (await pool.query('SELECT * FROM workspace_settings WHERE workspace_id=$1', [workspaceId])).rows[0] || {};
           const out = await provisionTenantChannelFlow(pool, workspaceId, channel, {
-            name: `ORBIT ${channel} - ${ws.business_name || workspaceId}`,
+            name: `ORBIT ${channel} - ${ws.business_name || workspaceId} [${wsTag}]`,
             verifyToken: finalVerify,
             businessName: ws.business_name,
             aiTone: ws.ai_tone,
