@@ -61,12 +61,14 @@ export function Landing() {
         backdropFilter: 'blur(12px)',
         borderBottom: '1px solid var(--border)',
         padding: '0 32px',
-        height: 70,
+        height: 74,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
-        <OrbitLogo variant="horizontal" size={32} onClick={() => navigate('/')} />
+        <div style={{ display: 'flex', alignItems: 'center', height: '100%', overflow: 'hidden' }}>
+          <OrbitLogo size={110} onClick={() => navigate('/')} />
+        </div>
 
         <nav className="hide-below-768" style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
           <a href="#concept" style={{ color: 'var(--ink-600)', textDecoration: 'none', fontWeight: 600, fontSize: 13.5 }}>Brand Concept</a>
@@ -293,7 +295,7 @@ export function Landing() {
                 position: 'relative'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
-                  <OrbitLogo variant="primary" colorMode="dark" size={32} />
+                  <OrbitLogo size={40} theme="dark" />
                 </div>
                 <span className="eyebrow" style={{ color: 'var(--signal-orange)', marginBottom: 8, display: 'block' }}>2. Central Engine</span>
                 <p style={{ fontSize: 12.5, color: '#E5E5E3', lineHeight: 1.5, background: 'rgba(255,255,255,0.06)', padding: 12, borderRadius: 8 }}>
@@ -765,7 +767,7 @@ export function Landing() {
         <GridPulse variant="dark" />
         <div style={{ maxWidth: 800, margin: '0 auto', position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-            <OrbitLogo variant="primary" colorMode="dark" size={44} />
+            <OrbitLogo size={56} theme="dark" />
           </div>
           <h2 style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 16 }}>
             Ready to Converge Your Customer Signals into Business Growth?
@@ -802,7 +804,7 @@ export function Landing() {
       }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-            <OrbitLogo variant="horizontal" colorMode="dark" size={28} />
+            <OrbitLogo size={36} theme="dark" />
             <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
               <span onClick={() => navigate('/overview')} style={{ cursor: 'pointer' }}>Overview</span>
               <span onClick={() => navigate('/inbox')} style={{ cursor: 'pointer' }}>Inbox</span>

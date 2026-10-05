@@ -36,7 +36,7 @@ export function ResetPassword() {
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--cloud-white)', padding: 24 }}>
       <div style={{ width: '100%', maxWidth: 400 }}>
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <OrbitLogo variant="horizontal" size={32} />
+          <OrbitLogo size={40} style={{ margin: '0 auto' }} />
         </div>
         <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 8 }}>Set a new password</h2>
         {!token && <p style={{ fontSize: 13, color: 'var(--danger)' }}>Missing reset token — use the full link from your email.</p>}

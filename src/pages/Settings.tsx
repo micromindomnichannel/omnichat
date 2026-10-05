@@ -8,7 +8,6 @@ import { EGYPTIAN_GOVERNORATES } from '../state/mockData';
 import {
   Upload, Check, X, Plus, Trash2, UserPlus, Instagram, MessageCircle, Facebook, Globe, Sparkles, Shield, LogOut
 } from 'lucide-react';
-import { OrbitLogo } from '../components/shared/OrbitLogo';
 import { ChannelsPanel } from '../components/settings/ChannelsPanel';
 import { PageHeader, Card, SectionTitle, ChannelDot } from '../components/dash/kit';
 import { api } from '../services/api';

@@ -74,24 +74,12 @@ export function Sidebar() {
         padding: '20px 16px 16px',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: collapsed ? 'center' : 'space-between'
+        justifyContent: collapsed ? 'center' : 'flex-start'
       }}>
-        {!collapsed ? (
-          <OrbitLogo
-            variant="horizontal"
-            size={28}
-            colorMode="default"
-            showTagline={false}
-            onClick={() => navigate('/')}
-          />
-        ) : (
-          <OrbitLogo
-            variant="icon"
-            size={36}
-            colorMode="default"
-            onClick={() => navigate('/')}
-          />
-        )}
+        <OrbitLogo
+          size={collapsed ? 36 : 40}
+          onClick={() => navigate('/')}
+        />
       </div>
 
       {/* Vertical Switcher */}

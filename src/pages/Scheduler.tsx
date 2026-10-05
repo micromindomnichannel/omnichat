@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Calendar, Clock, Plus, Trash2, CheckCircle2, Instagram, Facebook, MessageCircle, Send, Image, Sparkles
 } from 'lucide-react';
-import { OrbitLogo } from '../components/shared/OrbitLogo';
 import { PageHeader, Card, EmptyState } from '../components/dash/kit';
 import { api } from '../services/api';
 

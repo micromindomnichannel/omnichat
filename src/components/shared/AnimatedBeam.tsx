@@ -1,4 +1,5 @@
 import React, { useId } from 'react';
+import orbitSymbol from '../../assets/orbit-symbol.png';
 
 // AnimatedBeam — ORBIT port of the "beam demonstrates integration" concept.
 // SVG diagram: channel nodes (left) → curved light-beams → ORBIT core → action
@@ -114,17 +115,14 @@ export function AnimatedBeam({
         {/* ORBIT core */}
         <circle cx={CORE.x} cy={CORE.y} r={CORE.r} fill={`url(#${beamClass}-core)`} />
         <circle cx={CORE.x} cy={CORE.y} r={CORE.r} fill="none" stroke="#FF5A36" strokeWidth={2.5} opacity={0.85} />
-        <circle cx={CORE.x - 24} cy={CORE.y - 20} r={6} fill="#FF5A36" />
-        <circle cx={CORE.x - 30} cy={CORE.y} r={6} fill="#FF5A36" />
-        <circle cx={CORE.x - 24} cy={CORE.y + 20} r={6} fill="#FF5A36" />
-        <path d={`M ${CORE.x - 24} ${CORE.y - 20} C ${CORE.x - 5} ${CORE.y - 20}, ${CORE.x} ${CORE.y - 8}, ${CORE.x + 12} ${CORE.y - 4}`}
-          stroke="#FF5A36" strokeWidth={5} strokeLinecap="round" fill="none" />
-        <path d={`M ${CORE.x - 30} ${CORE.y} L ${CORE.x + 2} ${CORE.y}`}
-          stroke="#FF5A36" strokeWidth={5} strokeLinecap="round" fill="none" />
-        <path d={`M ${CORE.x - 24} ${CORE.y + 20} C ${CORE.x - 8} ${CORE.y + 18}, ${CORE.x + 2} ${CORE.y + 8}, ${CORE.x + 8} ${CORE.y}`}
-          stroke="#FF5A36" strokeWidth={5} strokeLinecap="round" fill="none" />
-        <path d={`M ${CORE.x + 30} ${CORE.y - 28} A 30 30 0 1 1 ${CORE.x + 28} ${CORE.y - 6}`}
-          stroke="#FF5A36" strokeWidth={5} strokeLinecap="round" fill="none" />
+        <image
+          href={orbitSymbol}
+          x={CORE.x - 28}
+          y={CORE.y - 21.3}
+          width={56}
+          height={42.6}
+          preserveAspectRatio="xMidYMid meet"
+        />
         <text x={CORE.x} y={CORE.y + CORE.r + 20} textAnchor="middle" fontSize={12} fontWeight={800} letterSpacing={2} fill="#171717" fontFamily="Inter, sans-serif">
           ORBIT
         </text>

@@ -82,7 +82,7 @@ export function Login() {
         }} />
 
         <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: 420 }}>
-          <OrbitLogo variant="primary" colorMode="dark" size={56} />
+          <OrbitLogo size={64} theme="dark" style={{ margin: '0 auto' }} />
 
           <h1 style={{
             fontSize: 36, fontWeight: 800, color: 'white', letterSpacing: '-0.03em',
@@ -124,7 +124,7 @@ export function Login() {
         <div style={{ width: '100%', maxWidth: 400 }}>
           {/* Mobile logo */}
           <div className="show-below-768" style={{ marginBottom: 32, textAlign: 'center' }}>
-            <OrbitLogo variant="horizontal" size={32} />
+            <OrbitLogo size={40} style={{ margin: '0 auto' }} />
           </div>
 
           <div style={{ marginBottom: 32 }}>
