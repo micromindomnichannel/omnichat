@@ -30,9 +30,90 @@ function mapRow(r: any): ScheduledPost {
   };
 }
 
+// Month-grid calendar over REAL scheduled posts (backend rows only).
+// Days without posts render empty — never invented entries.
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function dayKey(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function MonthGrid({ posts, cursor, onPrev, onNext, onToday }: {
+  posts: ScheduledPost[];
+  cursor: { year: number; month: number };
+  onPrev: () => void; onNext: () => void; onToday: () => void;
+}) {
+  const first = new Date(cursor.year, cursor.month, 1);
+  const cells: Date[] = [];
+  for (let i = 0; i < 42; i++) cells.push(new Date(cursor.year, cursor.month, 1 - first.getDay() + i));
+  const byDay = new Map<string, ScheduledPost[]>();
+  for (const p of posts) {
+    const key = String(p.scheduledTime || '').slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) continue;
+    if (!byDay.has(key)) byDay.set(key, []);
+    byDay.get(key)!.push(p);
+  }
+  const today = dayKey(new Date());
+  const dot = (s: string) => s === 'published' ? '#0F8357' : s === 'failed' ? 'var(--danger)' : 'var(--signal-orange)';
+  return (
+    <Card style={{ padding: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+        <button className="btn btn-outline btn-sm" onClick={onPrev} aria-label="Previous month">‹</button>
+        <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--midnight-ink)', minWidth: 140, textAlign: 'center' }}>
+          {first.toLocaleDateString([], { month: 'long', year: 'numeric' })}
+        </span>
+        <button className="btn btn-outline btn-sm" onClick={onNext} aria-label="Next month">›</button>
+        <button className="btn btn-ghost btn-sm" onClick={onToday} style={{ marginLeft: 'auto', color: 'var(--signal-orange)' }}>Today</button>
+      </div>
+      <div style={{ overflowX: 'auto' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(72px, 1fr))', gap: 6, minWidth: 560 }}>
+        {WEEKDAYS.map((d) => (
+          <div key={d} style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-400)', textAlign: 'center', padding: '4px 0' }}>{d}</div>
+        ))}
+        {cells.map((d, i) => {
+          const key = dayKey(d);
+          const inMonth = d.getMonth() === cursor.month;
+          const dayPosts = byDay.get(key) || [];
+          return (
+            <div
+              key={i}
+              style={{
+                minHeight: 84, borderRadius: 8, padding: 6,
+                background: key === today ? 'var(--signal-orange-subtle)' : 'var(--surface-0)',
+                border: key === today ? '1px solid var(--signal-orange)' : '1px solid var(--border)',
+                opacity: inMonth ? 1 : 0.45, overflow: 'hidden',
+              }}
+            >
+              <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--ink-600)', marginBottom: 4 }}>{d.getDate()}</div>
+              {dayPosts.slice(0, 3).map((p) => (
+                <div
+                  key={p.id} title={`${p.title} — ${p.status}`}
+                  style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10.5, fontWeight: 600, color: 'var(--midnight-ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 2 }}
+                >
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: dot(p.status), flexShrink: 0 }} />
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.title}</span>
+                </div>
+              ))}
+              {dayPosts.length > 3 && (
+                <div style={{ fontSize: 10.5, color: 'var(--ink-400)' }}>+{dayPosts.length - 3} more</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      </div>
+    </Card>
+  );
+}
+
 export function Scheduler() {
   const [posts, setPosts] = useState<ScheduledPost[]>([]);
   const [publishBusy, setPublishBusy] = useState<string | null>(null);
+  const [view, setView] = useState<'list' | 'calendar'>('list');
+  const [cursor, setCursor] = useState(() => {
+    const d = new Date();
+    return { year: d.getFullYear(), month: d.getMonth() };
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -131,7 +212,23 @@ export function Scheduler() {
       {/* Post Grid */}
       {/* Honest roadmap strip: drafts, approval queue, and campaign grouping
           have no backend model yet — shown as unavailable, never faked. */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ display: 'flex', background: 'var(--surface-1)', borderRadius: 8, padding: 3, border: '1px solid var(--border)' }}>
+          {(['list', 'calendar'] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              style={{
+                padding: '4px 12px', borderRadius: 6, border: 'none',
+                background: view === v ? 'var(--signal-orange)' : 'transparent',
+                color: view === v ? 'white' : 'var(--ink-600)',
+                fontSize: 12, fontWeight: 650, cursor: 'pointer', textTransform: 'capitalize',
+              }}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
         {['Drafts', 'Approval queue', 'Campaigns'].map((label) => (
           <span
             key={label}
@@ -146,7 +243,16 @@ export function Scheduler() {
           </span>
         ))}
       </div>
-      {posts.length === 0 ? (
+      {view === 'calendar' ? (
+        <MonthGrid
+          posts={posts}
+          cursor={cursor}
+          onPrev={() => setCursor((c) => (c.month === 0 ? { year: c.year - 1, month: 11 } : { year: c.year, month: c.month - 1 }))}
+          onNext={() => setCursor((c) => (c.month === 11 ? { year: c.year + 1, month: 0 } : { year: c.year, month: c.month + 1 }))}
+          onToday={() => { const d = new Date(); setCursor({ year: d.getFullYear(), month: d.getMonth() }); }}
+        />
+      ) : (
+      posts.length === 0 ? (
         <Card>
           <EmptyState
             icon={<Calendar size={24} color="var(--signal-orange)" />}
@@ -232,7 +338,7 @@ export function Scheduler() {
           </Card>
         ))}
       </div>
-      )}
+      ))}
 
       {/* Schedule Modal */}
       {showModal && (

@@ -76,6 +76,7 @@ describe('Analytics page', () => {
     expect(screen.getByText('AI Replies')).toBeInTheDocument();
     expect(screen.getByText('Human Replies')).toBeInTheDocument();
     expect(screen.getByText('Avg First Response')).toBeInTheDocument();
+    expect(screen.getByText('Buying-Intent Threads')).toBeInTheDocument();
     expect(screen.getByText('Unread / Resolved')).toBeInTheDocument();
     // Honest unavailable states, never invented numbers
     expect(screen.getByText('Not available yet')).toBeInTheDocument();

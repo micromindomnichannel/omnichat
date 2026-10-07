@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useStore } from '../state/store';
 import { EmptyState } from '../components/shared/EmptyState';
 import { PageHeader, Card, SectionTitle, Stat } from '../components/dash/kit';
-import { bucketMessagesByDay, countByChannel, countBySender, avgResponseMs, formatDurationMs } from '../services/normalize';
+import { bucketMessagesByDay, countByChannel, countBySender, countLeads, avgResponseMs, formatDurationMs } from '../services/normalize';
 import { api } from '../services/api';
 import {
   BarChart3, TrendingUp, Users, MessageSquare, DollarSign, Clock, Instagram, Facebook, MessageCircle, Globe, FileText, Sparkles, Send, CheckCircle2, Download, Copy, Check
@@ -265,6 +265,11 @@ Strategic notes:
         <Stat
           label="Unread / Resolved"
           value={`${unreadCount.toLocaleString()} / ${resolvedCount.toLocaleString()}`}
+        />
+        <Stat
+          label="Buying-Intent Threads"
+          value={countLeads(conversations as any).toLocaleString()}
+          tone="up"
         />
       </div>
 

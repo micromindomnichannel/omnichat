@@ -31,7 +31,8 @@ describe('AiCorePanel', () => {
   it('degrades honestly for non-admin viewers (no analyst data)', async () => {
     (globalThis as any).fetch = vi.fn(async () => ({ ok: false, status: 403, json: async () => ({ error: 'forbidden' }) }));
     render(<AiCorePanel {...props} />);
-    await waitFor(() => expect(screen.getByText(/owner\/admin only/i)).toBeInTheDocument());
+    // Both the analyst row and the flows block degrade with the same honest copy.
+    await waitFor(() => expect(screen.getAllByText(/owner\/admin only/i)).toHaveLength(2));
   });
 
   it('runs a safe test prompt and badges a local answer honestly', async () => {
@@ -53,5 +54,34 @@ describe('AiCorePanel', () => {
     render(<AiCorePanel {...props} />);
     fireEvent.click(screen.getByRole('button', { name: /^ask$/i }));
     expect(showToast).toHaveBeenCalledWith('Type a test question first', 'danger');
+  });
+
+  it('lists channel flows with last AI test status', async () => {
+    (globalThis as any).fetch = vi.fn(async (url: string) => {
+      if (String(url).includes('/admin/flows')) {
+        return {
+          ok: true,
+          json: async () => ([
+            { id: 'mmf_1', purpose: 'channel', template: 'messenger', label: 'ORBIT messenger', status: 'active', last_test_status: 'test_ok', workspace_id: 'default' },
+          ]),
+        };
+      }
+      return { ok: true, json: async () => [] };
+    });
+    render(<AiCorePanel {...props} />);
+    await waitFor(() => expect(screen.getByText('messenger')).toBeInTheDocument());
+    expect(screen.getByText(/last test: test_ok/i)).toBeInTheDocument();
+  });
+
+  it('offers a workspace selector when the login spans workspaces', async () => {
+    localStorage.setItem('orbit_memberships', JSON.stringify([
+      { workspace_id: 'default', role: 'owner' },
+      { workspace_id: 'ws_shop2', role: 'owner' },
+    ]));
+    (globalThis as any).fetch = vi.fn(async () => ({ ok: true, json: async () => [] }));
+    render(<AiCorePanel {...props} />);
+    expect(await screen.findByLabelText('Workspace')).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'ws_shop2' })).toBeInTheDocument();
+    localStorage.clear();
   });
 });

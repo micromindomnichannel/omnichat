@@ -37,6 +37,23 @@ describe('Scheduler', () => {
     expect(screen.getByText(/campaigns · coming soon/i)).toBeInTheDocument();
   });
 
+  it('renders a month grid from real posts with navigation', async () => {
+    (globalThis as any).fetch = vi.fn(async () => ({
+      ok: true,
+      json: async () => [{
+        id: 'sch_cal', title: 'Eid Promo', content_text: 'Sale', media_url: null,
+        platforms: ['instagram'], scheduled_time: new Date().toISOString().slice(0, 16), status: 'scheduled',
+      }],
+    }));
+    renderScheduler();
+    fireEvent.click(screen.getByRole('button', { name: /^calendar$/i }));
+    const month = new Date().toLocaleDateString([], { month: 'long', year: 'numeric' });
+    await waitFor(() => expect(screen.getByText(month)).toBeInTheDocument());
+    expect(screen.getByTitle(/eid promo — scheduled/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /next month/i }));
+    expect(screen.queryByTitle(/eid promo — scheduled/i)).not.toBeInTheDocument();
+  });
+
   it('renders live rows with a publish action each', async () => {
     (globalThis as any).fetch = vi.fn(async () => ({
       ok: true,

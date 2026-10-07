@@ -69,6 +69,24 @@ export function Overview() {
 
   const recentConversations = conversations.slice(0, 5);
 
+  // Loading state: bootstrap hasn't resolved yet — never flash empty sections.
+  if (!state.hydrated && conversations.length === 0) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <PageHeader
+          eyebrow="Command Center"
+          title="Overview"
+          sub="Loading live business performance…"
+        />
+        <Card>
+          <div style={{ fontSize: 13, color: 'var(--ink-400)' }} aria-live="polite">
+            Loading conversations, messages, and catalog…
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   // Live inbox pulse: every metric below derives from backend rows in range.
   // Anything unmeasurable renders an honest "Not available yet", never a guess.
   const pulseCutoff = Date.now() - (pulseRange === '7d' ? 7 : 30) * 86400000;
