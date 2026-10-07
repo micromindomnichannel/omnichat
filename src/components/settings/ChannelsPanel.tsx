@@ -7,14 +7,15 @@ import { api } from '../../services/api';
 import { getMemberships } from '../../services/session';
 import { TelegramWizard } from './TelegramWizard';
 import { DiscordWizard } from './DiscordWizard';
+import { formatListTime } from '../../services/normalize';
 
-const SLICE: Record<string, { label: string; Icon: React.ElementType; color: string; tokenHint: string; byof?: boolean; guide: string[] }> = {
-  messenger: { label: 'Messenger', Icon: Facebook, color: '#0099FF', tokenHint: 'Page access token (encrypted server-side)', guide: ['Meta Developers → your app → Messenger → generate a Page access token (pages_messaging).', 'Paste it below — ORBIT encrypts it, provisions your AI flow, and gives you the webhook URL.', 'In Meta → Webhooks, subscribe with that URL + the verify token shown after connect.'] },
-  instagram: { label: 'Instagram', Icon: Instagram, color: '#E4405F', tokenHint: 'Page access token (encrypted server-side)', guide: ['Connect your Instagram Business account to a Facebook Page.', 'Generate a Page token with instagram_manage_messages, paste it below.', 'Subscribe the webhook URL in Meta, then send yourself a test DM.'] },
-  whatsapp: { label: 'WhatsApp', Icon: MessageCircle, color: '#25D366', tokenHint: 'System-user token (encrypted server-side)', byof: true, guide: ['Meta app → WhatsApp → API Setup: copy the phone-number ID and a system-user token.', 'In MicroMind: open your flow → assign a prediction key (API protection) → copy the flow id and the key.', 'Paste all three below — ORBIT vaults the key and runs a harmless test ping automatically.'] },
-  telegram: { label: 'Telegram', Icon: Send, color: '#229ED9', tokenHint: 'Bot token from @BotFather (encrypted server-side)', guide: ['Chat @BotFather → /newbot → copy the token.', 'Paste it below and connect — ORBIT encrypts it, provisions your AI flow, and registers its own webhook on your bot automatically.', 'Send your bot a test message. Manual fallback (secret + URL) is shown only if auto-registration fails.'] },
-  discord: { label: 'Discord', Icon: Bot, color: '#5865F2', tokenHint: 'Bot token (Discord Developer Portal → Bot → Token)', guide: ['Developer Portal → your app → Bot → copy the token and turn on Message Content Intent.', 'Invite the bot to your server with View Channel + Read History + Send Messages.', 'Paste the token below — ORBIT encrypts it, provisions your AI flow, and starts listening. No webhook to register.'] },
-  gmail: { label: 'Gmail', Icon: Mail, color: '#EA4335', tokenHint: 'OAuth refresh token (placeholder — slice pending)', byof: true, guide: ['Google Cloud OAuth consent + Pub/Sub watch required — slice pending, connect disabled for now.'] },
+const SLICE: Record<string, { label: string; Icon: React.ElementType; color: string; tokenHint: string; byof?: boolean; intake?: string; guide: string[] }> = {
+  messenger: { label: 'Messenger', Icon: Facebook, color: '#0099FF', tokenHint: 'Page access token (encrypted server-side)', intake: 'Meta webhook → ORBIT (app-level verify token)', guide: ['Meta Developers → your app → Messenger → generate a Page access token (pages_messaging).', 'Paste it below — ORBIT encrypts it, provisions your AI flow, and gives you the webhook URL.', 'In Meta → Webhooks, subscribe with that URL + the verify token shown after connect.'] },
+  instagram: { label: 'Instagram', Icon: Instagram, color: '#E4405F', tokenHint: 'Page access token (encrypted server-side)', intake: 'Meta webhook → ORBIT (app-level verify token)', guide: ['Connect your Instagram Business account to a Facebook Page.', 'Generate a Page token with instagram_manage_messages, paste it below.', 'Subscribe the webhook URL in Meta, then send yourself a test DM.'] },
+  whatsapp: { label: 'WhatsApp', Icon: MessageCircle, color: '#25D366', tokenHint: 'System-user token (encrypted server-side)', byof: true, intake: 'Meta webhook → ORBIT (per-number routing)', guide: ['Meta app → WhatsApp → API Setup: copy the phone-number ID and a system-user token.', 'In MicroMind: open your flow → assign a prediction key (API protection) → copy the flow id and the key.', 'Paste all three below — ORBIT vaults the key and runs a harmless test ping automatically.'] },
+  telegram: { label: 'Telegram', Icon: Send, color: '#229ED9', tokenHint: 'Bot token from @BotFather (encrypted server-side)', intake: 'Telegram webhook → ORBIT (auto-registered, secret-checked)', guide: ['Chat @BotFather → /newbot → copy the token.', 'Paste it below and connect — ORBIT encrypts it, provisions your AI flow, and registers its own webhook on your bot automatically.', 'Send your bot a test message. Manual fallback (secret + URL) is shown only if auto-registration fails.'] },
+  discord: { label: 'Discord', Icon: Bot, color: '#5865F2', tokenHint: 'Bot token (Discord Developer Portal → Bot → Token)', intake: 'Gateway listener (no webhook; auto-starts with the server)', guide: ['Developer Portal → your app → Bot → copy the token and turn on Message Content Intent.', 'Invite the bot to your server with View Channel + Read History + Send Messages.', 'Paste the token below — ORBIT encrypts it, provisions your AI flow, and starts listening. No webhook to register.'] },
+  gmail: { label: 'Gmail', Icon: Mail, color: '#EA4335', tokenHint: 'OAuth refresh token (placeholder — slice pending)', byof: true, intake: 'Pending (Google OAuth + Pub/Sub watch)', guide: ['Google Cloud OAuth consent + Pub/Sub watch required — slice pending, connect disabled for now.'] },
 };
 
 const LOCAL_ONLY: Record<string, { label: string; Icon: React.ElementType; color: string }> = {
@@ -23,7 +24,8 @@ const LOCAL_ONLY: Record<string, { label: string; Icon: React.ElementType; color
 
 type Account = {
   id: string; channel: string; display_name?: string; username?: string;
-  external_account_id?: string; micromind_flow_id?: string; status: string;
+  external_account_id?: string; workspace_id?: string; last_error?: string | null;
+  micromind_flow_id?: string; status: string; metadata?: any;
   tenancy?: { folder: string; folderId: string | null; keyProvisioned: boolean; lastTest?: string | null; lastTestAt?: string | null };
 };
 
@@ -32,11 +34,12 @@ const TEST_LABEL: Record<string, string> = {
   blocked: '🟡 blocked', model_error: '🟡 model error', unreachable: '⚪ unreachable', skipped: '⚪ not tested',
 };
 
-export function ChannelsPanel({ showToast, local, onToggleLocal, workspaceId }: {
+export function ChannelsPanel({ showToast, local, onToggleLocal, workspaceId, threads }: {
   showToast: (msg: string, type?: 'success' | 'warning' | 'danger') => void;
   local: Record<string, boolean>;
   onToggleLocal: (channel: string) => void;
   workspaceId?: string;
+  threads?: any[]; // store conversations (Settings passes them) for per-card last-message
 }) {
   const activeWorkspaceId = workspaceId || getMemberships()[0]?.workspace_id || 'default';
   const [accounts, setAccounts] = useState<Account[] | null>(null);
@@ -127,10 +130,18 @@ export function ChannelsPanel({ showToast, local, onToggleLocal, workspaceId }: 
     else showToast(res?.error || `${op} failed`, 'danger');
   };
 
-  const card = (key: string, meta: { label: string; Icon: React.ElementType; color: string; tokenHint: string; byof?: boolean; guide?: string[] }) => {
+  const card = (key: string, meta: { label: string; Icon: React.ElementType; color: string; tokenHint: string; byof?: boolean; intake?: string; guide?: string[] }) => {
     const { Icon } = meta;
     const rows = byChannel(key);
     const primary = rows[0];
+    // Latest thread for this account (account id first, channel fallback for
+    // legacy rows) — powers the honest "last received message" line.
+    const latestThread = primary
+      ? (threads || [])
+        .filter((t: any) => primary.id && t.channelAccountId ? t.channelAccountId === primary.id : t.channel === key)
+        .sort((a: any, b: any) => String(b.updatedAt || b.lastMessageTime || '').localeCompare(String(a.updatedAt || a.lastMessageTime || '')))[0]
+      : undefined;
+    const hookup: any = primary?.metadata?.webhook_registration;
     return (
       <div key={key} style={{ padding: 16, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface-1)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -149,6 +160,31 @@ export function ChannelsPanel({ showToast, local, onToggleLocal, workspaceId }: 
                 <span style={{ fontSize: 11, color: 'var(--stone-gray)', display: 'block', marginTop: 2 }}>
                   📁 folder {primary.tenancy.folder}{primary.tenancy.keyProvisioned ? ' · 🔑 key linked' : ' · key pending'}
                   {primary.tenancy.lastTest ? ` · ${TEST_LABEL[primary.tenancy.lastTest] || primary.tenancy.lastTest}` : ''}
+                </span>
+              )}
+              {/* Account identity: external id + workspace, so same-name
+                  accounts from two businesses stay distinguishable. */}
+              {primary && (primary.external_account_id || primary.username) && (
+                <span style={{ fontSize: 11, color: 'var(--stone-gray)', display: 'block', marginTop: 2 }}>
+                  🆔 {primary.external_account_id || `@${primary.username}`}
+                  {primary.workspace_id ? ` · ws ${String(primary.workspace_id).slice(-6)}` : ''}
+                </span>
+              )}
+              {/* Intake path: static per-channel model + live registration state. */}
+              {meta.intake && (
+                <span style={{ fontSize: 11, color: 'var(--stone-gray)', display: 'block', marginTop: 2 }}>
+                  🔗 {meta.intake}{hookup ? (hookup.ok ? ' · webhook registered ✅' : ` · auto-registration failed${hookup.error ? ` (${hookup.error})` : ''}`) : ''}
+                </span>
+              )}
+              {/* Last error (scrubbed server-side) and last received message. */}
+              {primary?.last_error && (
+                <span style={{ fontSize: 11, color: 'var(--burnt-coral)', display: 'block', marginTop: 2 }}>
+                  ⚠️ {String(primary.last_error).slice(0, 120)}
+                </span>
+              )}
+              {primary && (
+                <span style={{ fontSize: 11, color: 'var(--stone-gray)', display: 'block', marginTop: 2 }}>
+                  💬 {latestThread ? `${String(latestThread.lastMessage || '').slice(0, 60)} · ${formatListTime(latestThread.lastMessageTime)}` : 'No messages yet'}
                 </span>
               )}
               {primary && (

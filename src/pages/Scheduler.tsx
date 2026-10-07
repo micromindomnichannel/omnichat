@@ -129,6 +129,23 @@ export function Scheduler() {
       />
 
       {/* Post Grid */}
+      {/* Honest roadmap strip: drafts, approval queue, and campaign grouping
+          have no backend model yet — shown as unavailable, never faked. */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {['Drafts', 'Approval queue', 'Campaigns'].map((label) => (
+          <span
+            key={label}
+            title="Not available yet — no backend support"
+            style={{
+              fontSize: 11.5, fontWeight: 700, color: 'var(--ink-400)',
+              background: 'var(--surface-1)', border: '1px dashed var(--border)',
+              borderRadius: 20, padding: '5px 12px', cursor: 'not-allowed',
+            }}
+          >
+            {label} · coming soon
+          </span>
+        ))}
+      </div>
       {posts.length === 0 ? (
         <Card>
           <EmptyState

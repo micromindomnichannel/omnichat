@@ -38,6 +38,7 @@ export interface Conversation {
   id: string;
   customerId: string;
   channel: Channel;
+  channelAccountId?: string;
   status: 'ai_handling' | 'human' | 'unread' | 'resolved' | 'escalated';
   intent: 'purchase' | 'booking' | 'browsing' | 'support';
   lastMessage: string;

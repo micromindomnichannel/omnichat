@@ -9,6 +9,7 @@ import {
   Upload, Check, X, Plus, Trash2, UserPlus, Instagram, MessageCircle, Facebook, Globe, Sparkles, Shield, LogOut
 } from 'lucide-react';
 import { ChannelsPanel } from '../components/settings/ChannelsPanel';
+import { AiCorePanel } from '../components/settings/AiCorePanel';
 import { PageHeader, Card, SectionTitle, ChannelDot } from '../components/dash/kit';
 import { api } from '../services/api';
 import { clearSessionCache, getMemberships } from '../services/session';
@@ -197,6 +198,7 @@ export function Settings() {
                 showToast={showToast}
                 local={state.channelsConnected}
                 onToggleLocal={handleToggleChannel}
+                threads={state.conversations}
               />
             </Card>
             <Card>
@@ -244,6 +246,7 @@ export function Settings() {
 
       case 'AI Settings':
         return (
+          <>
           <Card>
             <SectionTitle>AI copilot</SectionTitle>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 520 }}>
@@ -345,6 +348,9 @@ export function Settings() {
               </div>
             </div>
           </Card>
+          <div style={{ height: 16 }} />
+          <AiCorePanel workspaceId={workspaceId} showToast={showToast} />
+          </>
         );
 
       case 'Working Hours':

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useStore } from '../state/store';
 import { EmptyState } from '../components/shared/EmptyState';
 import { PageHeader, Card, SectionTitle, Stat } from '../components/dash/kit';
-import { bucketMessagesByDay, countByChannel } from '../services/normalize';
+import { bucketMessagesByDay, countByChannel, countBySender, avgResponseMs, formatDurationMs } from '../services/normalize';
 import { api } from '../services/api';
 import {
   BarChart3, TrendingUp, Users, MessageSquare, DollarSign, Clock, Instagram, Facebook, MessageCircle, Globe, FileText, Sparkles, Send, CheckCircle2, Download, Copy, Check
@@ -14,6 +14,7 @@ import {
 export function Analytics() {
   const { state, showToast } = useStore();
   const [platform, setPlatform] = useState<string>('all');
+  const [chartRange, setChartRange] = useState<'7d' | '30d'>('7d');
   const [reportPeriod, setReportPeriod] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
   const [reportGenerated, setReportGenerated] = useState(false);
   const [reportText, setReportText] = useState('');
@@ -36,13 +37,18 @@ export function Analytics() {
     return () => { cancelled = true; };
   }, []);
 
-  // Real calculations over backend rows — no demo fallbacks.
+  // Real calculations over backend rows — no demo fallbacks. Anything the
+  // rows cannot answer renders as "Not available yet", never a guess.
   const totalRevenue = orders.reduce((sum, o) => sum + Number(o.total || 0), 0);
   const totalOrdersCount = orders.length;
   const totalInquiriesCount = conversations.length;
 
   const aiHandledCount = conversations.filter(c => c.status === 'ai_handling' || c.status === 'resolved').length;
   const aiResolutionPct = conversations.length ? ((aiHandledCount / conversations.length) * 100).toFixed(1) : null;
+  const unreadCount = conversations.reduce((s, c) => s + Number(c.unreadCount || 0), 0);
+  const resolvedCount = conversations.filter(c => c.status === 'resolved').length;
+  const senderCounts = countBySender(allMessages as any);
+  const response = avgResponseMs(allMessages as any);
 
   const outOfStockItems = products.filter(p => p.stock <= 5);
   const channelCounts = countByChannel(conversations as any);
@@ -89,9 +95,13 @@ export function Analytics() {
     color: channelMeta[ch]?.color || '#6B7280',
   }));
 
-  const volumeSeries = bucketMessagesByDay(allMessages, 7)
-    .map(d => ({ day: d.label, total: d.messages }));
+  const volumeSeries = bucketMessagesByDay(allMessages, chartRange === '7d' ? 7 : 30)
+    .map(d => ({ day: d.label, total: d.messages, ai: d.aiReplies }));
   const volumeEmpty = volumeSeries.every(d => d.total === 0);
+  const replySplit = [
+    { name: 'AI replies', value: senderCounts.ai, color: 'var(--signal-orange)' },
+    { name: 'Human replies', value: senderCounts.human, color: 'var(--midnight-ink)' },
+  ].filter(s => s.value > 0);
 
   const handleGenerateReport = async () => {
     setReportLoading(true);
@@ -173,6 +183,15 @@ Strategic notes:
               <Sparkles size={16} color="var(--signal-orange)" />
               {reportLoading ? 'Generating…' : 'Generate AI Report'}
             </button>
+            <button
+              className="btn btn-outline"
+              disabled
+              title="Export is not available yet — the backend has no export endpoint"
+              style={{ height: 40, padding: '0 18px', gap: 8, opacity: 0.6, cursor: 'not-allowed' }}
+            >
+              <Download size={16} />
+              Export (not available yet)
+            </button>
           </div>
         }
       />
@@ -230,12 +249,50 @@ Strategic notes:
           value={currentStats.aiResolution}
           tone={aiResolutionPct === null ? 'neutral' : 'up'}
         />
+        <Stat
+          label="AI Replies"
+          value={senderCounts.ai.toLocaleString()}
+        />
+        <Stat
+          label="Human Replies"
+          value={senderCounts.human.toLocaleString()}
+        />
+        <Stat
+          label="Avg First Response"
+          value={formatDurationMs(response.avgMs)}
+          tone={response.avgMs === null ? 'neutral' : 'up'}
+        />
+        <Stat
+          label="Unread / Resolved"
+          value={`${unreadCount.toLocaleString()} / ${resolvedCount.toLocaleString()}`}
+        />
       </div>
 
       {/* Charts Section */}
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
         <Card style={{ padding: 20 }}>
-          <SectionTitle>Inquiry Volume (Last 7 Days)</SectionTitle>
+          <SectionTitle
+            action={
+              <div style={{ display: 'flex', background: 'var(--surface-0)', borderRadius: 8, padding: 3, border: '1px solid var(--border)' }}>
+                {(['7d', '30d'] as const).map(r => (
+                  <button
+                    key={r}
+                    onClick={() => setChartRange(r)}
+                    style={{
+                      padding: '4px 10px', borderRadius: 6, border: 'none',
+                      background: chartRange === r ? 'var(--signal-orange)' : 'transparent',
+                      color: chartRange === r ? 'white' : 'var(--ink-600)',
+                      fontSize: 12, fontWeight: 650, cursor: 'pointer',
+                    }}
+                  >
+                    {r === '7d' ? '7 days' : '30 days'}
+                  </button>
+                ))}
+              </div>
+            }
+          >
+            Inquiry Volume ({chartRange === '7d' ? 'Last 7 Days' : 'Last 30 Days'})
+          </SectionTitle>
           <div style={{ height: 280 }}>
             {volumeEmpty ? (
               <EmptyState
@@ -249,13 +306,15 @@ Strategic notes:
                 <XAxis dataKey="day" />
                 <YAxis allowDecimals={false} />
                 <Tooltip />
-                <Area type="monotone" dataKey="total" stroke="var(--signal-orange)" fill="var(--signal-orange-subtle)" strokeWidth={2} />
+                <Area type="monotone" dataKey="total" name="Messages" stroke="var(--signal-orange)" fill="var(--signal-orange-subtle)" strokeWidth={2} />
+                <Area type="monotone" dataKey="ai" name="AI replies" stroke="#0F8357" fill="rgba(15,131,87,0.08)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
             )}
           </div>
         </Card>
 
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <Card style={{ padding: 20 }}>
           <SectionTitle>Conversations Share by Channel</SectionTitle>
           <div style={{ height: 200 }}>
@@ -278,6 +337,29 @@ Strategic notes:
             )}
           </div>
         </Card>
+        <Card style={{ padding: 20 }}>
+          <SectionTitle>AI vs Human Replies</SectionTitle>
+          <div style={{ height: 200 }}>
+            {replySplit.length === 0 ? (
+              <EmptyState
+                title="No replies yet"
+                description="The reply split appears here once AI or agents answer."
+              />
+            ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={replySplit} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} label>
+                  {replySplit.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value: any) => `${value} replies`} />
+              </PieChart>
+            </ResponsiveContainer>
+            )}
+          </div>
+        </Card>
+        </div>
       </div>
 
       {/* Generated Executive Report Box */}

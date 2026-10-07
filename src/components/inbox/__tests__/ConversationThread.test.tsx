@@ -15,6 +15,10 @@ const telegramConv = {
 };
 
 function mockBootstrap(customers: any[]) {
+  return mockBootstrapFull(customers, []);
+}
+
+function mockBootstrapFull(customers: any[], messages: any[]) {
   (globalThis as any).fetch = vi.fn(async (url: string) => {
     if (String(url).includes('/bootstrap')) {
       return {
@@ -57,5 +61,32 @@ describe('ConversationThread customer fallback', () => {
     mockBootstrap([{ id: 'telegram_abc123xyz', name: 'Omar Farouk', channels: ['telegram'] }]);
     renderThread();
     await waitFor(() => expect(screen.getByText('Omar Farouk')).toBeInTheDocument());
+  });
+
+  it('formats raw ISO message stamps as short local times', async () => {
+    const stamp = new Date(Date.now() - 60000).toISOString();
+    const expected = new Date(stamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    (globalThis as any).fetch = vi.fn(async (url: string) => {
+      if (String(url).includes('/bootstrap')) {
+        return {
+          ok: true,
+          json: async () => ({
+            products: [], services: [],
+            customers: [{ id: 'telegram_abc123xyz', name: 'Omar Farouk', channels: ['telegram'] }],
+            conversations: [{
+              id: 'conv_tg1', customer_id: 'telegram_abc123xyz', channel: 'telegram', status: 'ai_handling',
+              intent: 'support', last_message: 'hi', last_message_time: stamp,
+              unread_count: 0, updated_at: stamp, ai_context: {},
+            }],
+            messages: [{ id: 'm1', conversation_id: 'conv_tg1', sender: 'customer', content: 'hi', timestamp: stamp }],
+            orders: [], appointments: [], automations: [], faqs: [],
+          }),
+        };
+      }
+      return { ok: true, json: async () => [] };
+    });
+    renderThread();
+    expect(await screen.findByText(expected)).toBeInTheDocument();
+    expect(screen.queryByText(new RegExp(stamp.slice(0, 10)))).not.toBeInTheDocument();
   });
 });

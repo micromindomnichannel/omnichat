@@ -50,6 +50,7 @@ export function normalizeConversation(row: any): Conversation {
     id: String(row.id),
     customerId: String(row.customer_id || ''),
     channel: toChannel(row.channel),
+    channelAccountId: row.channel_account_id ? String(row.channel_account_id) : undefined,
     status: row.status || 'ai_handling',
     intent: row.intent || 'support',
     lastMessage: row.last_message || '',
@@ -204,6 +205,91 @@ export function countByChannel(conversations: Conversation[]): Record<string, nu
   const counts: Record<string, number> = {};
   for (const c of conversations) counts[c.channel] = (counts[c.channel] || 0) + 1;
   return counts;
+}
+
+// Thread timestamps: webhook/AI rows carry raw ISO (backend stores ISO), while
+// human sends use locale strings. Render a short local time when parseable so
+// threads never show a raw `2026-10-03T01:56:35Z` stamp mid-conversation.
+export function formatThreadTime(v: any, now = Date.now()): string {
+  if (v === null || v === undefined) return '';
+  const s = String(v).trim();
+  if (!s) return '';
+  const t = new Date(s).getTime();
+  if (!Number.isFinite(t)) return s; // already friendly (locale string)
+  const time = new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const day = new Date(now);
+  const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const d0 = startOf(day);
+  const dt = startOf(new Date(t));
+  if (dt === d0) return time;
+  if (dt === d0 - 86400000) return `Yesterday ${time}`;
+  if (d0 - dt < 7 * 86400000 && d0 >= dt) return `${new Date(t).toLocaleDateString([], { weekday: 'short' })} ${time}`;
+  return new Date(t).toLocaleDateString([], { month: 'short', day: 'numeric' });
+}
+
+// Average AI first-response latency: per conversation, pair each customer
+// message with the next AI message. Returns null when nothing is pairable
+// (callers must render "Not available yet", never a guessed number).
+export function avgResponseMs(messages: Message[]): { avgMs: number | null; samples: number } {
+  const byConv: Record<string, Message[]> = {};
+  for (const m of messages) (byConv[m.conversationId] = byConv[m.conversationId] || []).push(m);
+  let sum = 0;
+  let n = 0;
+  for (const list of Object.values(byConv)) {
+    const ordered = list
+      .map((m) => ({ m, t: parseTime((m as any).timestamp || (m as any).created_at) }))
+      .filter((x) => x.t !== null)
+      .sort((a, b) => (a.t as number) - (b.t as number));
+    for (let i = 0; i < ordered.length; i++) {
+      if (ordered[i].m.sender !== 'customer') continue;
+      const reply = ordered.slice(i + 1).find((x) => x.m.sender === 'ai' || x.m.sender === 'human');
+      if (reply) {
+        sum += (reply.t as number) - (ordered[i].t as number);
+        n++;
+      }
+    }
+  }
+  return { avgMs: n ? Math.round(sum / n) : null, samples: n };
+}
+
+export function formatDurationMs(ms: number | null): string {
+  if (ms === null) return 'Not available yet';
+  const s = Math.round(ms / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ${s % 60}s`;
+  return `${Math.floor(m / 60)}h ${m % 60}m`;
+}
+
+export function countBySender(messages: Message[]): Record<'customer' | 'ai' | 'human' | 'system', number> {
+  const out = { customer: 0, ai: 0, human: 0, system: 0 };
+  for (const m of messages) {
+    if (m.sender === 'customer' || m.sender === 'ai' || m.sender === 'human' || m.sender === 'system') out[m.sender]++;
+  }
+  return out;
+}
+
+// Buying-intent threads, from the intents the backend already stores.
+export function countLeads(conversations: Conversation[]): number {
+  return conversations.filter((c) => c.intent === 'purchase' || c.intent === 'booking').length;
+}
+
+export function activeChannelList(conversations: Conversation[]): string[] {
+  return Array.from(new Set(conversations.map((c) => c.channel).filter(Boolean)));
+}
+
+// Latest activity per channel (for "recent channel activity" lists).
+export function recentChannelActivity(conversations: Conversation[]): Array<{ channel: string; at: number | null; threads: number }> {
+  const byChannel: Record<string, { at: number | null; threads: number }> = {};
+  for (const c of conversations) {
+    const slot = (byChannel[c.channel] = byChannel[c.channel] || { at: null, threads: 0 });
+    slot.threads++;
+    const t = parseTime((c as any).updatedAt || (c as any).lastMessageTime);
+    if (t !== null && (slot.at === null || t > slot.at)) slot.at = t;
+  }
+  return Object.entries(byChannel)
+    .map(([channel, v]) => ({ channel, ...v }))
+    .sort((a, b) => (b.at || 0) - (a.at || 0));
 }
 
 export function normalizeFAQ(row: any): FAQ {

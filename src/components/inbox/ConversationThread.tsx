@@ -5,6 +5,7 @@ import { useVertical } from '../../state/verticalContext';
 import { ChannelIcon } from '../../components/shared/ChannelIcon';
 import { Send, User, Bot, Loader2, Image as ImageIcon, Sparkles } from 'lucide-react';
 import { getAvatar } from '../../state/mockData';
+import { formatThreadTime } from '../../services/normalize';
 
 interface Props {
   conversationId: string;
@@ -263,7 +264,7 @@ export function ConversationThread({ conversationId }: Props) {
                   textAlign: isCustomer ? 'left' : 'right',
                   fontFamily: 'var(--font-mono)'
                 }}>
-                  {msg.timestamp}
+                  {msg.timestamp ? formatThreadTime(msg.timestamp) : ''}
                 </p>
               </div>
             </div>

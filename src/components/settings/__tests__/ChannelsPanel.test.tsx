@@ -330,4 +330,45 @@ describe('ChannelsPanel matrix', () => {
       expect(showToast).toHaveBeenCalledWith('messenger active', 'success');
     });
   });
+
+  it('shows account identity, intake, last error, and last message per card', async () => {
+    const mockAccounts = [
+      {
+        id: 'acc_tg9', channel: 'telegram', status: 'active',
+        display_name: 'Luna Bot', username: 'luna_store_bot',
+        external_account_id: '987654321', workspace_id: 'ws_abc123456',
+        micromind_flow_id: 'flow_1',
+        last_error: 'provision glitch (retried)',
+        metadata: { webhook_registration: { ok: true, url: 'https://api.example/webhooks/telegram', at: '2026-10-04' } },
+        tenancy: { folder: 'ready', folderId: 'f_1', keyProvisioned: true, lastTest: 'test_ok' },
+      },
+    ];
+    (globalThis as any).fetch = vi.fn(async (url: string) => {
+      if (String(url).includes('/channels')) {
+        return { ok: true, json: async () => mockAccounts };
+      }
+      return { ok: true, json: async () => ({}) };
+    });
+
+    render(
+      <ChannelsPanel
+        showToast={showToast} local={{}} onToggleLocal={onToggleLocal}
+        threads={[
+          {
+            id: 'conv_1', customerId: 'c1', channel: 'telegram', channelAccountId: 'acc_tg9',
+            status: 'ai_handling', lastMessage: 'hello there', lastMessageTime: '2026-10-04T10:00:00.000Z',
+            unreadCount: 1, updatedAt: '2026-10-04T10:00:00.000Z',
+          },
+        ]}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText(/987654321/)).toBeInTheDocument());
+    expect(screen.getByText(/ws 123456/)).toBeInTheDocument();
+    expect(screen.getByText(/webhook registered/i)).toBeInTheDocument();
+    expect(screen.getByText(/provision glitch/i)).toBeInTheDocument();
+    expect(screen.getByText(/hello there/)).toBeInTheDocument();
+    // Secrets-adjacent values are never rendered
+    expect(screen.queryByText(/webhook-secret|secret_token/i)).not.toBeInTheDocument();
+  });
 });

@@ -11,16 +11,21 @@ const POLL_MS = 10000;
 
 export function Inbox() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [lastSync, setLastSync] = useState<string | null>(null);
   const { state, dispatch } = useStore();
 
-  // Realtime sync: refresh list + open thread while the inbox is mounted.
+  // Realtime sync: refresh list + customers + open thread while mounted.
   // Silent no-ops when the backend is unreachable (api returns null).
   useEffect(() => {
     let cancelled = false;
     const sync = async () => {
       const [convs, custs] = await Promise.all([api.getConversations(), api.getCustomers()]);
-      if (!cancelled && convs) dispatch({ type: 'SET_CONVERSATIONS', conversations: convs });
-      if (!cancelled && custs) dispatch({ type: 'SET_CUSTOMERS', customers: custs });
+      if (cancelled) return;
+      if (convs) {
+        dispatch({ type: 'SET_CONVERSATIONS', conversations: convs });
+        setLastSync(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+      }
+      if (custs) dispatch({ type: 'SET_CUSTOMERS', customers: custs });
       if (selectedId) {
         const msgs = await api.getThreadMessages(selectedId);
         if (!cancelled && msgs) dispatch({ type: 'SET_THREAD_MESSAGES', conversationId: selectedId, messages: msgs });
@@ -51,6 +56,9 @@ export function Inbox() {
             </>
           }
         />
+        <div style={{ fontSize: 11.5, color: 'var(--ink-400)', marginTop: -12, marginBottom: 8 }} aria-live="polite">
+          {conversations.length === 0 && !lastSync ? 'Loading conversations…' : lastSync ? `Last synced ${lastSync} · auto-refresh every 10s` : ''}
+        </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
         {state.dbOnline === false && (

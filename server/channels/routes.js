@@ -59,24 +59,33 @@ function oauthCallbackPage(res, status, payload, returnTo) {
 function safeAccount(row) {
   if (!row) return row;
   const { ...safe } = row;
+  const scrub = (text) => String(text || '').replace(/EA[A-Za-z0-9]+/g, '[redacted-token]');
+  const hookup = safe.metadata?.webhook_registration || null;
   return {
     id: safe.id,
     workspace_id: safe.workspace_id,
     channel: safe.channel,
-    external_account_id: safe.external_account_id,
+    external_account_id: safe.external_account_id || null,
     display_name: safe.display_name,
     username: safe.username,
     micromind_flow_id: safe.micromind_flow_id,
     status: safe.status,
+    last_error: safe.metadata?.provision_error ? scrub(safe.metadata.provision_error) : null,
     metadata: {
       verify_token: safe.metadata?.verify_token,
       webhook_name: safe.metadata?.webhook_name,
       phone_number_id: safe.metadata?.phone_number_id,
+      webhook_registration: hookup ? {
+        ok: hookup.ok === true,
+        url: hookup.url || null,
+        error: hookup.error ? scrub(hookup.error) : undefined,
+        at: hookup.at || null,
+      } : undefined,
       history_sync: safe.metadata?.history_sync ? {
         status: safe.metadata.history_sync.status,
         conversations: safe.metadata.history_sync.conversations || 0,
         messages: safe.metadata.history_sync.messages || 0,
-        error: safe.metadata.history_sync.error ? String(safe.metadata.history_sync.error).replace(/EA[A-Za-z0-9]+/g, '[redacted-token]') : undefined,
+        error: safe.metadata.history_sync.error ? scrub(safe.metadata.history_sync.error) : undefined,
       } : undefined,
     },
     created_at: safe.created_at,

@@ -29,6 +29,14 @@ describe('Scheduler', () => {
     await waitFor(() => expect(screen.getByText(/nothing scheduled/i)).toBeInTheDocument());
   });
 
+  it('marks drafts, approval, and campaigns honestly unavailable (no fake publishing)', async () => {
+    (globalThis as any).fetch = vi.fn(async () => ({ ok: true, json: async () => [] }));
+    renderScheduler();
+    await waitFor(() => expect(screen.getByText(/drafts · coming soon/i)).toBeInTheDocument());
+    expect(screen.getByText(/approval queue · coming soon/i)).toBeInTheDocument();
+    expect(screen.getByText(/campaigns · coming soon/i)).toBeInTheDocument();
+  });
+
   it('renders live rows with a publish action each', async () => {
     (globalThis as any).fetch = vi.fn(async () => ({
       ok: true,

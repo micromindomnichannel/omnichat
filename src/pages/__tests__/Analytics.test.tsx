@@ -70,6 +70,24 @@ describe('Analytics page', () => {
     expect(screen.getByText('No conversations yet')).toBeInTheDocument();
   });
 
+  it('shows real reply/response metrics, a chart range, and an honest export state', () => {
+    renderAnalytics();
+
+    expect(screen.getByText('AI Replies')).toBeInTheDocument();
+    expect(screen.getByText('Human Replies')).toBeInTheDocument();
+    expect(screen.getByText('Avg First Response')).toBeInTheDocument();
+    expect(screen.getByText('Unread / Resolved')).toBeInTheDocument();
+    // Honest unavailable states, never invented numbers
+    expect(screen.getByText('Not available yet')).toBeInTheDocument();
+    expect(screen.getByText('No replies yet')).toBeInTheDocument();
+    const exportBtn = screen.getByRole('button', { name: /export/i });
+    expect(exportBtn).toBeDisabled();
+    expect(exportBtn).toHaveAttribute('title', expect.stringContaining('not available yet'));
+
+    fireEvent.click(screen.getByRole('button', { name: '30 days' }));
+    expect(screen.getByText(/last 30 days/i)).toBeInTheDocument();
+  });
+
   it('generates report using live AI insights from backend', async () => {
     const mockReport = {
       id: 'rep_1',

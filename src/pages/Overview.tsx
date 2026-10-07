@@ -2,10 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVertical } from '../state/verticalContext';
 import { useStore } from '../state/store';
-import { PageHeader, Card, SectionTitle, Stat, EmptyState as KitEmptyState } from '../components/dash/kit';
-import { bucketMessagesByDay } from '../services/normalize';
+import { PageHeader, Card, SectionTitle, Stat, EmptyState as KitEmptyState, ChannelDot } from '../components/dash/kit';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+  bucketMessagesByDay, parseTime, formatListTime, countByChannel, countBySender,
+  avgResponseMs, formatDurationMs, countLeads, activeChannelList, recentChannelActivity,
+} from '../services/normalize';
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell,
 } from 'recharts';
 import {
   MessageSquare, CheckCircle, AlertTriangle, ArrowRight,
@@ -17,6 +21,7 @@ export function Overview() {
   const { state } = useStore();
   const navigate = useNavigate();
   const [chartPeriod, setChartPeriod] = useState<'7d' | '30d'>('7d');
+  const [pulseRange, setPulseRange] = useState<'7d' | '30d'>('7d');
 
   const orders = state.orders || [];
   const conversations = state.conversations || [];
@@ -63,6 +68,28 @@ export function Overview() {
   const chartEmpty = chartData.every(d => d.conversations === 0);
 
   const recentConversations = conversations.slice(0, 5);
+
+  // Live inbox pulse: every metric below derives from backend rows in range.
+  // Anything unmeasurable renders an honest "Not available yet", never a guess.
+  const pulseCutoff = Date.now() - (pulseRange === '7d' ? 7 : 30) * 86400000;
+  const inRange = (v: any) => {
+    const t = parseTime(v);
+    return t !== null && t >= pulseCutoff;
+  };
+  const pulseConvs = conversations.filter((c) => inRange((c as any).updatedAt || (c as any).lastMessageTime));
+  const pulseMsgs = allMessages.filter((m: any) => inRange((m as any).timestamp || (m as any).created_at));
+  const pulseUnread = pulseConvs.reduce((s, c) => s + Number(c.unreadCount || 0), 0);
+  const pulseAi = pulseConvs.filter((c) => c.status === 'ai_handling' || c.status === 'resolved').length;
+  const pulseHuman = pulseConvs.filter((c) => c.status === 'human' || c.status === 'escalated').length;
+  const pulseSenders = countBySender(pulseMsgs as any);
+  const pulseResp = avgResponseMs(pulseMsgs as any);
+  const pulseChannels = countByChannel(pulseConvs as any);
+  const pulseChannelMax = Math.max(1, ...Object.values(pulseChannels));
+  const pulseActivity = recentChannelActivity(pulseConvs as any).slice(0, 4);
+  const handlingSplit = [
+    { name: 'AI replies', value: pulseSenders.ai, color: 'var(--signal-orange)' },
+    { name: 'Human replies', value: pulseSenders.human, color: 'var(--midnight-ink)' },
+  ].filter((s) => s.value > 0);
   void vertical;
   void accentColor;
 
@@ -91,6 +118,116 @@ export function Overview() {
           <Stat key={idx} label={s.label} value={s.value} tone="neutral" />
         ))}
       </div>
+
+      {/* Live inbox pulse: backend-derived metrics, Chatwoot-style coverage,
+          Tremor-style presentation, ORBIT identity. No demo numbers. */}
+      <Card style={{ padding: 20 }}>
+        <SectionTitle
+          action={
+            <div style={{ display: 'flex', background: 'var(--surface-0)', borderRadius: 8, padding: 3, border: '1px solid var(--border)' }}>
+              {(['7d', '30d'] as const).map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setPulseRange(r)}
+                  style={{
+                    padding: '4px 10px', borderRadius: 6, border: 'none',
+                    background: pulseRange === r ? 'var(--signal-orange)' : 'transparent',
+                    color: pulseRange === r ? 'white' : 'var(--ink-600)',
+                    fontSize: 12, fontWeight: 650, cursor: 'pointer',
+                  }}
+                >
+                  {r === '7d' ? '7 days' : '30 days'}
+                </button>
+              ))}
+            </div>
+          }
+        >
+          Live inbox pulse (last {pulseRange === '7d' ? '7' : '30'} days)
+        </SectionTitle>
+        {pulseConvs.length === 0 ? (
+          <KitEmptyState
+            icon={<MessageSquare size={24} color="var(--signal-orange)" />}
+            title="No conversations in range"
+            copy="Threads that receive messages in this period will light up every metric below."
+          />
+        ) : (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 16 }}>
+              <Stat label="Threads" value={pulseConvs.length.toLocaleString()} />
+              <Stat label="Unread" value={pulseUnread.toLocaleString()} tone={pulseUnread > 0 ? 'down' : 'neutral'} />
+              <Stat label="AI handling" value={pulseAi.toLocaleString()} />
+              <Stat label="Human" value={pulseHuman.toLocaleString()} />
+              <Stat label="Active channels" value={activeChannelList(pulseConvs as any).length} />
+              <Stat label="AI replies" value={pulseSenders.ai.toLocaleString()} />
+              <Stat label="Human replies" value={pulseSenders.human.toLocaleString()} />
+              <Stat label="Avg response" value={formatDurationMs(pulseResp.avgMs)} />
+              <Stat label="Buying intent" value={countLeads(pulseConvs as any).toLocaleString()} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
+              <div>
+                <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-400)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 10px' }}>
+                  Messages by channel
+                </p>
+                {Object.keys(pulseChannels).length === 0 ? (
+                  <p style={{ fontSize: 12, color: 'var(--ink-400)' }}>No channel activity in range.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {Object.entries(pulseChannels).sort((a, b) => b[1] - a[1]).map(([ch, n]) => (
+                      <div key={ch} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ width: 90 }}><ChannelDot channel={ch} label={ch} /></span>
+                        <div style={{ flex: 1, height: 8, borderRadius: 4, background: 'var(--surface-0)', overflow: 'hidden' }}>
+                          <div style={{ width: `${Math.round((n / pulseChannelMax) * 100)}%`, height: '100%', background: 'var(--signal-orange)', borderRadius: 4 }} />
+                        </div>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-900)', minWidth: 28, textAlign: 'right' }}>{n}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div>
+                <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-400)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 10px' }}>
+                  AI vs human replies
+                </p>
+                {handlingSplit.length === 0 ? (
+                  <p style={{ fontSize: 12, color: 'var(--ink-400)' }}>No replies in range yet.</p>
+                ) : (
+                  <div style={{ height: 150 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie data={handlingSplit} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={60} label>
+                          {handlingSplit.map((entry, i) => (
+                            <Cell key={`cell-${i}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value: any) => `${value} replies`} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+              <div>
+                <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-400)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 10px' }}>
+                  Recent channel activity
+                </p>
+                {pulseActivity.length === 0 ? (
+                  <p style={{ fontSize: 12, color: 'var(--ink-400)' }}>Nothing yet.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {pulseActivity.map((a) => (
+                      <div key={a.channel} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5 }}>
+                        <ChannelDot channel={a.channel} label={a.channel} />
+                        <span style={{ color: 'var(--ink-400)', marginLeft: 'auto' }}>
+                          {a.threads} thread{a.threads === 1 ? '' : 's'} · {a.at ? formatListTime(new Date(a.at).toISOString()) : '—'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </Card>
 
       {/* Chart & Low Stock Alerts */}
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
