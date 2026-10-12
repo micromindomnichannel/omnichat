@@ -41,6 +41,7 @@ interface AppState {
 
 type Action =
   | { type: 'SET_BOOTSTRAP_DATA'; payload: any }
+  | { type: 'LOAD_DUMMY_DATA' }
   | { type: 'SET_DB_STATUS'; online: boolean }
   | { type: 'SET_SESSION_USER'; name: string; email: string }
   | { type: 'SET_CONVERSATIONS'; conversations: any[] }
@@ -119,7 +120,7 @@ const initialState: AppState = {
   hydrated: false
 };
 
-function reducer(state: AppState, action: Action): AppState {
+export function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     // Realtime sync: replace conversation list / single thread with fresh rows.
     case 'SET_CONVERSATIONS':
@@ -156,6 +157,35 @@ function reducer(state: AppState, action: Action): AppState {
         dbConnected: true,
         dbOnline: true,
         hydrated: true
+      };
+
+    // Dummy-data mode: hydrate every slice from mockData so all pages render
+    // with realistic shapes and no backend. Interactive fallbacks (offline AI
+    // replies, local toasts) keep working because api.* resolves to null.
+    // The dummy user carries the owner email so /admin also opens locally.
+    case 'LOAD_DUMMY_DATA':
+      return {
+        ...state,
+        conversations: mockData.conversations,
+        messages: mockData.messages,
+        customers: mockData.customers,
+        products: mockData.products,
+        services: mockData.services,
+        orders: mockData.orders,
+        appointments: mockData.appointments,
+        automations: mockData.automations,
+        faqs: mockData.faqs,
+        sources: mockData.sources,
+        followUps: mockData.followUps,
+        teamMembers: mockData.teamMembers,
+        currentUser: {
+          name: 'Demo Owner',
+          email: 'micromindomnichannel@gmail.com',
+          avatar: mockData.getAvatar('Demo Owner'),
+        },
+        dbConnected: true,
+        dbOnline: true,
+        hydrated: true,
       };
 
     case 'SET_DB_STATUS':

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { OrbitLogo } from '../components/shared/OrbitLogo';
 import { Eye, EyeOff, ArrowRight, Mail, Lock, Sparkles } from 'lucide-react';
 import { api } from '../services/api';
+import { enableDummyMode } from '../services/session';
 
 export function Login() {
   const navigate = useNavigate();
@@ -233,6 +234,20 @@ export function Login() {
                 Create your free account
               </Link>
             </p>
+          </div>
+
+          <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px dashed var(--border)', textAlign: 'center' }}>
+            <p style={{ fontSize: 12, color: 'var(--stone-gray)', margin: '0 0 8px' }}>
+              Backend offline? Explore every screen with local sample data.
+            </p>
+            <button
+              type="button"
+              onClick={() => { enableDummyMode(); window.location.assign('/overview?dummy=1'); }}
+              className="btn btn-outline"
+              style={{ width: '100%', height: 42, gap: 8 }}
+            >
+              <Sparkles size={16} color="var(--signal-orange)" /> Try dummy mode (no backend)
+            </button>
           </div>
 
           <div style={{ marginTop: 40, textAlign: 'center' }}>

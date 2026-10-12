@@ -32,7 +32,7 @@ import { Terms } from './pages/Terms';
 import { Scheduler } from './pages/Scheduler';
 import { Toast } from './components/shared/Toast';
 import { api } from './services/api';
-import { isAdmin } from './services/session';
+import { isAdmin, isDummyMode, disableDummyMode } from './services/session';
 
 // Session guard: the server cookie is the source of truth. We always start at
 // 'checking' — a stale localStorage flag from older builds must never route
@@ -89,7 +89,18 @@ function App() {
   const isPrivacy = location.pathname === '/privacy';
   const isTerms = location.pathname === '/terms';
   const isAuthEntry = isLanding || isLogin || isSignup;
-  const session = useSession(!isAuthEntry);
+  // Dummy mode: ?dummy=1 (persisted) hydrates mockData and skips the session
+  // guard entirely — full frontend testing with zero backend.
+  const dummy = isDummyMode();
+  const checked = useSession(!isAuthEntry && !dummy);
+  const session = dummy ? 'in' : checked;
+
+  useEffect(() => {
+    if (dummy) {
+      dispatch({ type: 'LOAD_DUMMY_DATA' });
+      dispatch({ type: 'SET_SESSION_USER', name: 'Demo Owner', email: 'micromindomnichannel@gmail.com' });
+    }
+  }, [dummy]);
 
   useEffect(() => {
     if (isAuthEntry) {
@@ -176,6 +187,21 @@ function App() {
       <Sidebar />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <TopBar />
+        {dummy && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+            background: 'var(--midnight-ink)', color: 'white', fontSize: 12, fontWeight: 700,
+            padding: '6px 12px',
+          }}>
+            <span>Dummy-data mode — no backend. Buttons and logic work against local sample data.</span>
+            <button
+              onClick={() => { disableDummyMode(); window.location.assign('/login'); }}
+              style={{ background: 'var(--signal-orange)', color: 'white', border: 'none', borderRadius: 6, padding: '3px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+            >
+              Exit dummy mode
+            </button>
+          </div>
+        )}
         <main style={{ flex: 1, overflow: 'auto', padding: '24px', background: 'var(--surface-0)' }}>
           <Routes>
             <Route path="/overview" element={<Overview />} />

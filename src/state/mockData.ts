@@ -332,6 +332,48 @@ export const customers: Customer[] = [
     totalOrders: 1,
     totalAppointments: 0,
     reliability: { status: 'Fair', completed: 1, cancellations: 1, returns: 0, noShows: 0 }
+  },
+  {
+    id: 'c11',
+    name: 'Mona Adel',
+    avatar: getAvatar('Mona Adel'),
+    phone: '0100 111 2233',
+    channels: ['messenger'],
+    customerSince: '2024-08-10',
+    tags: ['New'],
+    status: 'New',
+    totalSpent: 0,
+    totalOrders: 0,
+    totalAppointments: 0,
+    reliability: { status: 'Good', completed: 0, cancellations: 0, returns: 0, noShows: 0 }
+  },
+  {
+    id: 'c12',
+    name: 'Karim Samy',
+    avatar: getAvatar('Karim Samy'),
+    phone: '0115 666 7788',
+    channels: ['telegram'],
+    customerSince: '2024-08-12',
+    tags: ['New'],
+    status: 'New',
+    totalSpent: 0,
+    totalOrders: 0,
+    totalAppointments: 0,
+    reliability: { status: 'Good', completed: 0, cancellations: 0, returns: 0, noShows: 0 }
+  },
+  {
+    id: 'c13',
+    name: 'Dina Fouad',
+    avatar: getAvatar('Dina Fouad'),
+    phone: '0127 444 5566',
+    channels: ['discord'],
+    customerSince: '2024-08-14',
+    tags: ['New'],
+    status: 'New',
+    totalSpent: 0,
+    totalOrders: 0,
+    totalAppointments: 0,
+    reliability: { status: 'Good', completed: 0, cancellations: 0, returns: 0, noShows: 0 }
   }
 ];
 
@@ -559,6 +601,54 @@ export const conversations: Conversation[] = [
       aiStatus: 'Waiting on customer',
       toolsUsed: ['Product catalog']
     }
+  },
+  {
+    id: 'conv15',
+    customerId: 'c11',
+    channel: 'messenger',
+    status: 'ai_handling',
+    intent: 'purchase',
+    lastMessage: 'بكام التوصيل للمعادي؟',
+    lastMessageTime: '1 min ago',
+    unreadCount: 1,
+    aiContext: {
+      intent: 'High purchase intent',
+      stage: 'Availability check',
+      aiStatus: 'Handling automatically',
+      toolsUsed: ['Product catalog']
+    }
+  },
+  {
+    id: 'conv16',
+    customerId: 'c12',
+    channel: 'telegram',
+    status: 'ai_handling',
+    intent: 'support',
+    lastMessage: 'Is the black hoodie in stock?',
+    lastMessageTime: '4 min ago',
+    unreadCount: 1,
+    aiContext: {
+      intent: 'Product inquiry',
+      stage: 'Availability check',
+      aiStatus: 'Handling automatically',
+      toolsUsed: ['Product catalog', 'Inventory']
+    }
+  },
+  {
+    id: 'conv17',
+    customerId: 'c13',
+    channel: 'discord',
+    status: 'human',
+    intent: 'booking',
+    lastMessage: 'Can I book a consultation for Friday?',
+    lastMessageTime: '9 min ago',
+    unreadCount: 0,
+    aiContext: {
+      intent: 'Booking intent',
+      stage: 'Time selection',
+      aiStatus: 'Escalated',
+      toolsUsed: ['Availability calendar']
+    }
   }
 ];
 
@@ -647,6 +737,20 @@ export const messages: Record<string, Message[]> = {
   conv14: [
     { id: 'm1', conversationId: 'conv14', sender: 'customer', content: 'How do I track my order?', timestamp: '3:00 AM' },
     { id: 'm2', conversationId: 'conv14', sender: 'ai', content: 'You can track your order using the tracking number sent to your WhatsApp. Would you like me to resend it?', timestamp: '3:01 AM' }
+  ],
+  conv15: [
+    { id: 'm1', conversationId: 'conv15', sender: 'customer', content: 'بكام التوصيل للمعادي؟', timestamp: '2:40 AM', isArabic: true },
+    { id: 'm2', conversationId: 'conv15', sender: 'ai', content: 'التوصيل للمعادي 40 جنيه يا فندم، والطلبات فوق 1000 جنيه التوصيل مجاني. تحب أعملك الأوردر؟', timestamp: '2:41 AM', isArabic: true }
+  ],
+  conv16: [
+    { id: 'm1', conversationId: 'conv16', sender: 'customer', content: 'Is the black hoodie in stock?', timestamp: '2:35 AM' },
+    { id: 'm2', conversationId: 'conv16', sender: 'system', content: 'AI checked product availability', timestamp: '2:35 AM' },
+    { id: 'm3', conversationId: 'conv16', sender: 'ai', content: 'Yes! The black hoodie is in stock in all sizes. Want me to reserve one for you?', timestamp: '2:36 AM' }
+  ],
+  conv17: [
+    { id: 'm1', conversationId: 'conv17', sender: 'customer', content: 'Can I book a consultation for Friday?', timestamp: '2:20 AM' },
+    { id: 'm2', conversationId: 'conv17', sender: 'ai', content: 'Friday works! We have 10:00, 12:30, and 17:00 open. Which suits you?', timestamp: '2:21 AM' },
+    { id: 'm3', conversationId: 'conv17', sender: 'human', content: 'Hi Dina, I will personally confirm your Friday slot — one moment please.', timestamp: '2:25 AM', agentName: 'Agent' }
   ]
 };
 

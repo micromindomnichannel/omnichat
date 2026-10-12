@@ -1,6 +1,6 @@
 // Session helpers: localStorage cache only; corrupt data must never throw.
-import { describe, it, expect, beforeEach } from 'vitest';
-import { getMemberships, isAdmin, clearSessionCache } from '../session';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { getMemberships, isAdmin, clearSessionCache, isDummyMode, enableDummyMode, disableDummyMode } from '../session';
 
 beforeEach(() => localStorage.clear());
 
@@ -42,5 +42,33 @@ describe('clearSessionCache', () => {
     expect(localStorage.getItem('orbit_authenticated')).toBeNull();
     expect(localStorage.getItem('orbit_user')).toBeNull();
     expect(localStorage.getItem('orbit_memberships')).toBeNull();
+  });
+});
+
+describe('dummy mode', () => {
+  const BASE_URL = window.location.href;
+
+  afterEach(() => {
+    window.history.replaceState({}, '', BASE_URL.split('?')[0]);
+  });
+
+  it('is off by default', () => {
+    expect(isDummyMode()).toBe(false);
+  });
+
+  it('enable/disable round-trips the flag', () => {
+    enableDummyMode();
+    expect(isDummyMode()).toBe(true);
+    disableDummyMode();
+    expect(isDummyMode()).toBe(false);
+  });
+
+  it('?dummy=1 enables and persists; ?dummy=0 disables', () => {
+    window.history.replaceState({}, '', '/login?dummy=1');
+    expect(isDummyMode()).toBe(true);
+    expect(localStorage.getItem('orbit_dummy')).toBe('1');
+    window.history.replaceState({}, '', '/overview?dummy=0');
+    expect(isDummyMode()).toBe(false);
+    expect(localStorage.getItem('orbit_dummy')).toBeNull();
   });
 });

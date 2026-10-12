@@ -82,4 +82,18 @@ describe('Login', () => {
     await waitFor(() => expect(screen.getByText(/cannot reach the backend/i)).toBeInTheDocument());
     expect(assignSpy).not.toHaveBeenCalled();
   });
+
+  it('dummy mode enters without any backend call', async () => {
+    const f = vi.fn(async () => { throw new TypeError('Failed to fetch'); });
+    (globalThis as any).fetch = f;
+    render(
+      <MemoryRouter initialEntries={['/login']}>
+        <Login />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole('button', { name: /try dummy mode/i }));
+    expect(localStorage.getItem('orbit_dummy')).toBe('1');
+    expect(assignSpy).toHaveBeenCalledWith('/overview?dummy=1');
+    expect(f).not.toHaveBeenCalled();
+  });
 });
