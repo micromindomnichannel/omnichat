@@ -1,6 +1,6 @@
 
 # 🛰️ ORBIT — AI Omnichannel Sales & Booking Platform  
-![ORBIT Logo](./orbit%20logo.png)
+![ORBIT Logo](./orbitlogo.png)
 
 
 <div align="center">
