@@ -1,6 +1,9 @@
 
 # 🛰️ ORBIT — AI Omnichannel Sales & Booking Platform  
-![ORBIT Logo](./orbitlogo.png)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/micromindomnichannel/omnichat/main/orbitlogo.png"
+       alt="ORBIT Logo" width="260">
+</p>
 
 
 <div align="center">
